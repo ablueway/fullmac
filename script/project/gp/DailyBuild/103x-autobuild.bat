@@ -1,0 +1,1 @@
+perl run-daily-build.pl K:\HourBuild\103x\iot-host K:\HourBuild\103x\gp\build 15

@@ -1,0 +1,1 @@
+perl autoTestch.pl K:\DailyBuild\trunk\iot-host K:\DailyBuild\trunk\gp\report 11

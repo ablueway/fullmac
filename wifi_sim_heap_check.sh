@@ -1,0 +1,1 @@
+MALLOC_TRACE=heap.log ./wifi-sim

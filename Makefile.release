@@ -1,0 +1,224 @@
+
+###########################################################
+# Function to switch driver between relay device and SDIO 
+# bridge device
+# Enable ->Relay device	(CHAR)
+# Disable->SDIO bridge device
+
+DRV_OPT =  SDIO_LINUX_HCI_DRV
+
+TOPDIR			:= .
+
+OS_DIR                  := $(TOPDIR)/os/LinuxSIM
+SIM_OS_DIR              := $(TOPDIR)/os/LinuxSIM/rtos
+HOST_DIR                := $(TOPDIR)/host
+
+LWIP_DIR		:= $(HOST_DIR)/tcpip/lwip-1.4.0
+
+
+CC      := gcc
+# Changed __linux__ to __SSV_UNIX_SIM__ for CYGWIN compatible
+CFLAGS  := -D__SSV_UNIX_SIM__
+CFLAGS  += -DAUTO_INIT_CONFIG_FW
+LDFLAGS := -lpthread
+
+##
+# Note XXXXX:
+# Please keep this order. The simulation include shall be used first.
+
+INCLUDE += -I$(HOST_DIR) \
+          -I$(HOST_DIR)/include \
+	  -I$(HOST_DIR)/include/priv \
+          -I$(HOST_DIR)/include/priv/hw
+
+INCLUDE += -I$(HOST_DIR)/app \
+           -I$(HOST_DIR)/drv \
+	   -I$(HOST_DIR)/os_wrapper/LinuxSIM \
+
+INCLUDE += -I$(OS_DIR) \
+           -I$(SIM_OS_DIR)/include \
+           -I$(SIM_OS_DIR)/portable \
+           -I$(SIM_OS_DIR)/portable/GCC/Posix
+           
+INCLUDE += -I$(LWIP_DIR)/src/include/ \
+           -I$(LWIP_DIR)/ports/icomm/include \
+           -I$(LWIP_DIR)/src/include/ipv4 \
+           -I$(LWIP_DIR)/src/include/lwip \
+           -I$(LWIP_DIR)/src/include/netif \
+           -I$(LWIP_DIR)/ports/icomm/include/arch
+
+#SUPPLICANT_SRC     := $(WPA_SUPL_OBJS)
+#SUPPLICANT_SRC     := $(addprefix $(SUPPLICANT_DIR)/, $(SUPPLICANT_SRC))
+
+SIM_OS_SRC     := croutine.c \
+                    list.c \
+                    queue.c \
+                    tasks.c \
+                    timers.c \
+                    portable/GCC/Posix/port.c \
+                    portable/MemMang/heap_3.c
+
+
+SIM_OS_SRC     := $(addprefix $(SIM_OS_DIR)/, $(SIM_OS_SRC))
+
+ARCH_DIR     := $(HOST_DIR)/lib/apps
+ARCH_SRC     := msgevt.c \
+                pbuf.c \
+                host_log.c \
+                host_global.c
+                	
+ARCH_SRC     := $(addprefix $(ARCH_DIR)/, $(ARCH_SRC))
+
+CLI_DIR      := $(HOST_DIR)/app/cli
+CLI_SRC	     := cli.c \
+                cli_key.c \
+                cmds/cli_cmd.c \
+                cmds/cli_cmd_net.c \
+                cmds/cli_cmd_soc.c \
+                cmds/cli_cmd_wifi.c 
+CLI_SRC	     := $(addprefix $(CLI_DIR)/, $(CLI_SRC))
+
+
+LIBS_DIR     := $(HOST_DIR)/lib
+LIBS_SRC     := ssv_lib.c
+                
+LIBS_SRC     := $(addprefix $(LIBS_DIR)/, $(LIBS_SRC))
+
+LWIP_API_DIR := $(LWIP_DIR)/src/api
+LWIP_API_SRC := api_lib.c \
+                api_msg.c \
+                err.c \
+                netbuf.c \
+                netdb.c \
+                netifapi.c \
+                sockets.c \
+                tcpip.c
+LWIP_API_SRC := $(addprefix $(LWIP_API_DIR)/, $(LWIP_API_SRC))
+
+LWIP_CORE_DIR := $(LWIP_DIR)/src/core
+LWIP_CORE_SRC := def.c \
+                 dhcp.c \
+                 dns.c \
+                 init.c \
+                 lwip_timers.c \
+                 mem.c \
+                 memp.c \
+                 netif.c \
+                 pbuf.c \
+                 raw.c \
+                 stats.c \
+                 sys.c \
+                 tcp.c \
+                 tcp_in.c \
+                 tcp_out.c \
+                 udp.c
+LWIP_CORE_SRC := $(addprefix $(LWIP_CORE_DIR)/, $(LWIP_CORE_SRC))
+
+LWIP_CORE_IPV4_DIR := $(LWIP_DIR)/src/core/ipv4
+LWIP_CORE_IPV4_SRC := autoip.c \
+                      icmp.c \
+                      igmp.c \
+                      inet.c \
+                      inet_chksum.c \
+                      ip.c \
+                      ip_addr.c \
+                      ip_frag.c
+LWIP_CORE_IPV4_SRC := $(addprefix $(LWIP_CORE_IPV4_DIR)/, $(LWIP_CORE_IPV4_SRC))
+
+LWIP_CORE_SNMP_DIR := $(LWIP_DIR)/src/core/snmp
+LWIP_CORE_SNMP_SRC := asn1_dec.c \
+                      asn1_enc.c \
+                      mib_structs.c \
+                      mib2.c \
+                      msg_in.c \
+                      msg_out.c
+LWIP_CORE_SNMP_SRC := $(addprefix $(LWIP_CORE_SNMP_DIR)/, $(LWIP_CORE_SNMP_SRC))
+
+LWIP_NETIF_DIR := $(LWIP_DIR)/src/netif
+LWIP_NETIF_SRC := etharp.c \
+                  ethernetif.c
+LWIP_NETIF_SRC := $(addprefix $(LWIP_NETIF_DIR)/, $(LWIP_NETIF_SRC))
+
+LWIP_PORTS_DIR := $(LWIP_DIR)/ports/icomm
+LWIP_PORTS_SRC := sys_arch.c
+LWIP_PORTS_SRC := $(addprefix $(LWIP_PORTS_DIR)/, $(LWIP_PORTS_SRC))
+
+OS_WRAPPER_DIR     := $(HOST_DIR)/os_wrapper/LinuxSIM
+OS_WRAPPER_SRC     := os_wrapper.c \
+                   rtos.c \
+                   rtos_glue.c \
+                   porting.c
+OS_WRAPPER_SRC := $(addprefix $(OS_WRAPPER_DIR)/, $(OS_WRAPPER_SRC))
+
+DRV_DIR     := $(HOST_DIR)/drv
+DRV_SRC     := ssv_drv.c
+                    
+ifneq	($(DRV_OPT), SDIO_LINUX_HCI_DRV)
+DRV_SRC     += sdio_linux/sdio_if_impl.c \
+                    sdio_linux/sdio.c
+else
+DRV_SRC     += sdio_linux_hci/sdio_if_impl.c \
+                    sdio_linux_hci/sdio.c
+CFLAGS += -DSDIO_LINUX_HCI_DRV
+endif
+
+DRV_SRC     := $(addprefix $(DRV_DIR)/, $(DRV_SRC))
+
+
+NETAPP_DIR	:= $(HOST_DIR)/app/netapp
+NETAPP_SRC	:= net_app.c \
+                   ping/ping.c \
+                   ttcp/ttcp.c
+                   
+NETAPP_SRC	:= $(addprefix $(NETAPP_DIR)/, $(NETAPP_SRC))
+
+HOST_SRC := main.c 
+HOST_SRC += init.c 
+HOST_SRC := $(addprefix $(HOST_DIR)/, $(HOST_SRC))
+
+WSIMP_DIR    := $(HOST_DIR)/app/wsimp
+WSIMP_SRC    := wsimp_config.c \
+                    wsimp_lib.c \
+                    wsimp_sim.c 
+WSIMP_SRC    := $(addprefix $(WSIMP_DIR)/, $(WSIMP_SRC))
+
+TARGET := wifi-sim
+
+SRCS := $(HOST_SRC)
+SRCS += $(ARCH_SRC)
+SRCS += $(CLI_SRC)
+SRCS += $(LIBS_SRC)
+
+SRCS += $(LWIP_API_SRC)	
+SRCS += $(LWIP_CORE_SRC)
+SRCS += $(LWIP_CORE_IPV4_SRC)
+SRCS += $(LWIP_CORE_SNMP_SRC)
+SRCS += $(LWIP_NETIF_SRC)
+SRCS += $(LWIP_PORTS_SRC)
+SRCS += $(LWIP_APPS_SRC)
+
+SRCS += $(WSIMP_SRC)
+SRCS += $(NETAPP_SRC)
+SRCS += $(OS_WRAPPER_SRC)
+SRCS += $(DRV_SRC)
+
+SRCS += $(SIM_OS_SRC)
+
+OBJS := $(subst .c,.o,$(SRCS))
+
+LIBS :=$(TOPDIR)/lib
+
+
+.PHONY: all wifi-sim clean 
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CC) -m32 -Xlinker -Map=output.map -g -o $@ $(OBJS) $(LDFLAGS) ssv-core.a
+clean:
+	rm -rf $(OBJS) $(TARGET)
+	rm -rf `find . -name "*.o"`
+
+%.o: %.c
+	@echo "Compiling $@"
+	$(CC) -m32 $(CFLAGS) $(INCLUDE) -c -g -o $@ $<
+

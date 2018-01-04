@@ -1,0 +1,1 @@
+netsh wlan disconnect interface="無線網路連線 8"

@@ -1,0 +1,64 @@
+# RedBull Kenrel Module TOP Directory
+
+# not in
+ifneq ($(KBUILD_EXTMOD),)
+KBUILD_TOP := $(KBUILD_EXTMOD)
+include $(KBUILD_EXTMOD)/config.mak
+else
+# KBUILD_TOP = /home/aaron/svn/host/ssv6xxx
+KBUILD_TOP := $(PWD)
+include config.mak
+endif
+
+export KBUILD_TOP
+
+MOD_DEF_H = include/ssv_mod_conf.h
+
+
+###########################################################
+# Kernel Modules to compile: 
+# @ ssvdevice.ko
+# @ ssv6200_sdio.ko
+
+KERNEL_MODULES += hwif/sdio
+KERNEL_MODULES += hwif/usb
+
+
+
+# KERNEL_MODULES = ssvdevice hci smac hwif/sdio hwif/usb
+all: $(MOD_DEF_H)	
+	@for dir in $(KERNEL_MODULES) ; do \
+	    echo "############################################"; \
+	    echo "# Building Kernel Module: $$dir.ko" ; \
+	    echo "############################################"; \
+	    $(MAKE) -C $$dir KBUILD_DIR=$(PWD)/$$dir ; \
+	    echo ""; \
+	    echo ""; \
+	done 
+
+clean:
+	@for dir in $(KERNEL_MODULES) ; do \
+	    $(MAKE) -C $$dir clean KBUILD_DIR=$(PWD)/$$dir ; \
+	done
+	@rm -rf $(MOD_DEF_H)
+
+install:
+	echo "Removing /lib/modules/$(KVERSION)/$(DRVPATH) ..."
+	echo $(PWD)
+	@rm -rf /lib/modules/$(KVERSION)/$(DRVPATH)
+	@for dir in $(KERNEL_MODULES) ; do \
+	    $(MAKE) -C $$dir install KBUILD_DIR=$(PWD)/$$dir ; \
+	done
+	depmod -a
+
+
+$(MOD_DEF_H): config.mak config_common.mak
+	#@echo "#ifndef __SSV_MOD_CONF_H__" > $@
+	#@echo "#define __SSV_MOD_CONF_H__" >> $@
+	#for flag in $(ccflags-y_no_dash); do \
+	#	if [ "$$flag" =~ ^D.* ]; then \
+	#		echo "#define $$flag" | sed -e s/D//g >> $@; \
+	#	fi; \
+	#done
+	#echo "#endif // __SSV_MOD_CONF_H__" >> $@
+	env ccflags="$(ccflags-y)" ./genconf.sh $@
