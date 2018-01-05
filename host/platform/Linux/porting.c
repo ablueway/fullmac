@@ -57,9 +57,10 @@ void OS_MemSET(void *pdest, u8 byte, u32 size)
 }
 
 
-/* TODO:aaron */
+/* TODO: aaron 
+ * Should Linux need this or just GP platform need ??
+ */
 //=====================Platform LDO EN ping setting=======================
-
 void platform_ldo_en_pin_init(void)
 {
 #ifdef __linux__

@@ -10,6 +10,9 @@
 #include "init.h"
 
 
+/*******************************************************************************
+*							Global	Variables								   *
+*******************************************************************************/
 #if SSV_LOG_DEBUG
 u32 g_log_module;
 u32 g_log_min_level;
@@ -534,12 +537,12 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
 
     init_host_default_config(IS_HT_SUPPORT);
 
-        /**
-	 * On simulation/emulation platform, initialize RTOS (simulation OS)
-	 * first. We use this simulation RTOS to create the whole simulation
-	 * and emulation platform.
-	 */
-    /* TODO:aaron */
+	/**
+	* On simulation/emulation platform, initialize RTOS (simulation OS)
+	* first. We use this simulation RTOS to create the whole simulation
+	* and emulation platform.
+	*/
+	/* TODO:aaron */
     OS_Init();
 
     /* TODO:aaron */
