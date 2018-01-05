@@ -3,12 +3,18 @@
 *
 *  All Rights Reserved
 */
-
+#include <linux/kernel.h>
+#include <linux/random.h>
+#include <linux/spinlock.h>
+#include <linux/semaphore.h>
+#include <linux/mutex.h>
+#include <linux/delay.h>
 
 #include "os.h"
 /*TOSO: aaron */
 //#include "os_cfg.h"
-#include <log.h>
+//#include <log.h>
+
 
 
 volatile u8 gOsFromISR;
@@ -25,34 +31,42 @@ OsMutex StkMutex;
 
 u32 task_stack_size = 0;
 
+spinlock_t g_cs_lock;
+unsigned long g_cpu_flags;
+
+
 OS_APIs s32 OS_Init( void )
 {
+	spin_lock_init(&g_cs_lock);
     return OS_SUCCESS;
 }
 
 OS_APIs unsigned long OS_Random(void)
 {
-    return OS_SUCCESS;
+	unsigned long randNum = 0;
+	get_random_bytes(&randNum, sizeof(unsigned long));
+    return randNum;
 }
 
 OS_APIs void OS_Terminate( void )
 {
- 
+
 }
 
 OS_APIs u32 OS_EnterCritical(void)
 {
+	spin_lock_irqsave(&g_cs_lock, g_cpu_flags);
     return OS_SUCCESS;
 }
 
 OS_APIs void OS_ExitCritical(u32 val)
 {
-
+	spin_unlock_irqrestore(&g_cs_lock, g_cpu_flags);
 }
 
 /* Task: */
-
-OS_APIs s32 OS_TaskCreate( OsTask task, const char *name, u32 stackSize, void *param, u32 pri, OsTaskHandle *taskHandle )
+OS_APIs s32 OS_TaskCreate(OsTask task, const char *name, u32 stackSize, 
+					void *param, u32 pri, OsTaskHandle *taskHandle)
 {
     return OS_SUCCESS;
 }
@@ -62,7 +76,6 @@ OS_APIs void OS_TaskDelete(OsTaskHandle taskHandle)
 {
 
 }
-
 
 
 OS_APIs void OS_StartScheduler( void )
@@ -77,12 +90,12 @@ OS_APIs u32 OS_GetSysTick(void)
 
 
 /* Mutex APIs: */
-OS_APIs s32 OS_MutexInit( OsMutex *mutex )
+OS_APIs s32 OS_MutexInit(OsMutex *mutex)
 {
     return OS_SUCCESS;
 }
 
-OS_APIs void OS_MutexLock( OsMutex mutex )
+OS_APIs void OS_MutexLock(OsMutex mutex)
 {
 
 }
@@ -93,12 +106,12 @@ OS_APIs void OS_TickDelay(u32 ticks)
 }
 
 
-OS_APIs void OS_MutexUnLock( OsMutex mutex )
+OS_APIs void OS_MutexUnLock(OsMutex mutex)
 {
 
 }
 
-OS_APIs void OS_MutexDelete( OsMutex mutex )
+OS_APIs void OS_MutexDelete(OsMutex mutex)
 {
 
 }
@@ -204,70 +217,4 @@ OS_APIs void *OS_TimerGetData( OsTimer timer )
 {
    return NULL;
 }
-
-#if 0
-/*==================OS Profiling=========================*/
-#if ((OS_CPU_HOOKS_EN>0)&&(OS_TASK_STAT_EN==1))
-
-extern u8 cmd_top_enable;
-u32 lastTinyCount=0;
-u32 currentTinyCount=0;
-u32 lastTickCount=0;
-u32 currentTickCount=0;
-
-u32 lastTinyCountStatTask=0;
-u32 currentTinyCountStatTask=0;
-u32 lastTickCountStatTask=0;
-u32 currentTickCountStatTask=0;
-
-u32 acc_cpu_usage=0;
-u32 acc_counts=0;
-
-u32 OSCtxSwCtrPerSec;
-#define TINY_COUNT(x) ((x*96)/144) // tiny_counter_get is the reference
-#define TINY_COUNT_TO_US(x) (((x*266)/100) )
-#endif
-
-#if OS_TASK_CREATE_EXT_EN > 0
-TASK_USER_DATA taskUserData[64];
-#endif
-
-#if (OS_CPU_HOOKS_EN > 0) && (OS_TASK_SW_HOOK_EN > 0) && (OS_TASK_CREATE_EXT_EN>0)
-void output_message(char *s)
-{
-    char *p=s;
-    while(*p!='\0'){
-        hal_putchar(*p);
-        p++;
-    }
-
-}
-void TaskSwHook(void)
-{
-
-}
-#endif
-
-#if ((OS_CPU_HOOKS_EN>0)&&(OS_TASK_STAT_EN==1))
-void TaskStatHook(void)
-{
-
-}
-
-void DispTaskStatus(void)
-{
-
-}
-
-void ClearTaskStatus(void)
-{
-  
-}
-#else
-void TaskStatHook(void)
-{
-}
-#endif
-
-#endif
 

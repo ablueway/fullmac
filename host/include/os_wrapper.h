@@ -70,7 +70,7 @@ typedef u32 os_time_t;
 
 
 
-#if defined(WIN32)
+#if (WIN32 == 1)
 
 #define typecheck
 

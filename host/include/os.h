@@ -244,5 +244,4 @@ OS_APIs void OS_MsgFree( void *Msg );
 #if 0 //(__SSV_UNIX_SIM__ == 1)
 OS_APIs s32 OS_SysProfiling( void *ptr);
 #endif
-#endif /* _RTOS_H_ */
-
+#endif /* _OS_H_ */

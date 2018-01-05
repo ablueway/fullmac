@@ -32,6 +32,7 @@ typedef struct OsMsgQ_st
     void *qpool;
     OS_EVENT *msssageQ;
 } OsMessgQ;
+
 typedef void (*OsTask)(void *);
 typedef void *OsTaskHandle;
 typedef void *OsTimer;
@@ -64,13 +65,5 @@ typedef struct {
 
 } TASK_USER_DATA;
 
-#if 0 //OS_TASK_CREATE_EXT_EN > 0
-extern TASK_USER_DATA taskUserData[64];
-#endif
-#if 0 //((OS_CPU_HOOKS_EN>0)&&(OS_TASK_STAT_EN==1))
-extern void TaskStatHook(void);
-extern void DispTaskStatus(void);
-extern void ClearTaskStatus(void);
-#endif
 
 #endif
