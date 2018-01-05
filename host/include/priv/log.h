@@ -49,7 +49,7 @@
 //									Level & Modules definition
 // ===============================================================================================
 
-#if SSV_LOG_DEBUG
+#if (SSV_LOG_DEBUG == 1)
 
 extern u32 g_log_module;
 extern u32 g_log_min_level;
@@ -321,4 +321,3 @@ extern void LOG_init(bool tag_level, bool tag_mod, u32 level, u32 mod_mask, bool
 
 
 #endif	// _LOG_H_
-
