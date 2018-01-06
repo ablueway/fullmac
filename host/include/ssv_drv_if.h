@@ -3,8 +3,6 @@
 *
 *  All Rights Reserved
 */
-
-
 #ifndef _SSV_DRV_IF_H_
 #define _SSV_DRV_IF_H_
 

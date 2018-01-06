@@ -24,22 +24,18 @@
 #include <linux/uaccess.h>
 #include <linux/usb.h>
 #include <linux/mutex.h>
-#include <linux/platform_device.h>
 #include <linux/version.h>
 #include <linux/skbuff.h>
 
-/* in */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,0,0)
-#include <linux/printk.h>
-#else
-#include <linux/kernel.h>
-#endif
+
 
 #include <ssv6200.h>
 //ToDo Liam this is temp for build.
 // it should re-consider for multiple chip use.
 #include <hwif/hwif.h>
 #include "usb.h"
+
+#include <hif_wrapper.h>
 
 //#include "ssv_common.h"
 /* TODO:aaron */
@@ -64,12 +60,13 @@ extern int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode);
 #define USB_CMD_SEQUENCE			255
 #define MAX_RETRY_SSV6XXX_ALLOC_BUF	3
 
+
 #define IS_GLUE_INVALID(usb_glue)  \
-      (   (usb_glue == NULL) \
+      ((usb_glue == NULL) \
        || (usb_glue->dev_ready == false) \
-       || (   (usb_glue->p_wlan_data != NULL) \
-           && (usb_glue->p_wlan_data->is_enabled == false)) \
+       || (usb_glue->wlan_data.is_enabled == false) \
       )
+
 
 /* table of devices that work with this driver */
 static const struct usb_device_id ssv_usb_table[] = {
@@ -81,11 +78,9 @@ MODULE_DEVICE_TABLE(usb, ssv_usb_table);
 /* Structure to hold all of our device specific stuff */
 struct ssv6xxx_usb_glue {
 	struct device                   *dev;			/* driver model's view of this device of usb interface */
-	struct platform_device          *core;
 	struct usb_device               *udev;			/* the usb device for this device */
 	struct usb_interface            *interface;		/* the usb interface device for this device */
-    struct ssv6xxx_platform_data    *p_wlan_data;
-	struct ssv6xxx_platform_data     tmp_data;
+	struct ssv6xxx_platform_data     wlan_data;
 	struct ssv6xxx_cmd_endpoint      cmd_endpoint;	/* command endpoint */
 	struct ssv6xxx_cmd_endpoint      rsp_endpoint;	/* response endpoint */
 	struct ssv6xxx_tx_endpoint       tx_endpoint;	/* tx endpoint */
@@ -172,7 +167,7 @@ static int ssv6xxx_usb_recv_rsp(struct ssv6xxx_usb_glue *usb_glue, int size, int
 	
 	if (retval) {
 		*rsp_len = 0;
-		HWIF_DBG_PRINT(usb_glue->p_wlan_data, "Cannot receive response, error=%d\n", retval);
+		HWIF_DBG_PRINT(&usb_glue->wlan_data, "Cannot receive response, error=%d\n", retval);
 		//if (((usb_glue->err_cnt)++) > 5)
 		//	WARN_ON(1);
 	} else { 
@@ -215,7 +210,7 @@ static int ssv6xxx_usb_send_cmd(struct ssv6xxx_usb_glue *usb_glue,
 
 	/* TODO(aaron): should we use the foolen to protect the bug-free ? */
 	if (retval) { 
-		HWIF_DBG_PRINT(usb_glue->p_wlan_data, "Cannot send cmd data, error=%d\n", retval);
+		HWIF_DBG_PRINT(&usb_glue->wlan_data, "Cannot send cmd data, error=%d\n", retval);
 		//if (((usb_glue->err_cnt)++) > 5)
 		//	WARN_ON(1);
 	} else {
@@ -237,7 +232,7 @@ static int ssv6xxx_usb_cmd(struct ssv6xxx_usb_glue *usb_glue, u8 cmd,
 	retval = ssv6xxx_usb_send_cmd(usb_glue, cmd, sequence, data, data_len);
 
 	if (retval) {
-		HWIF_DBG_PRINT(usb_glue->p_wlan_data, 
+		HWIF_DBG_PRINT(&usb_glue->wlan_data, 
 			"%s: Fail to send cmd, sequence=%d, retval=%d\n", 
 				__FUNCTION__, sequence, retval);
 		goto exit;
@@ -249,14 +244,14 @@ static int ssv6xxx_usb_cmd(struct ssv6xxx_usb_glue *usb_glue, u8 cmd,
 	for (i = 0; i < USB_CMD_SEQUENCE; i++) {
 		retval = ssv6xxx_usb_recv_rsp(usb_glue, SSV6XXX_MAX_RXCMDSZ, &rsp_len);
 		if (retval) {
-			HWIF_DBG_PRINT(usb_glue->p_wlan_data, 
+			HWIF_DBG_PRINT(&usb_glue->wlan_data, 
 				"%s: Fail to receive response, sequence=%d, retval=%d\n", 
 				__FUNCTION__, sequence, retval);
 			goto exit;
 		}
 		/* parse the response context */
 		if (rsp_len < SSV6XXX_CMD_HEADER_SIZE) {
-			HWIF_DBG_PRINT(usb_glue->p_wlan_data, 
+			HWIF_DBG_PRINT(&usb_glue->wlan_data, 
 				"Receviced abnormal response length[%d]\n", rsp_len);
 			goto exit; 
 		}
@@ -264,7 +259,7 @@ static int ssv6xxx_usb_cmd(struct ssv6xxx_usb_glue *usb_glue, u8 cmd,
 		if (sequence == rsphdr->seq) 
 			break;
 		else 
-			HWIF_DBG_PRINT(usb_glue->p_wlan_data, 
+			HWIF_DBG_PRINT(&usb_glue->wlan_data, 
 				"received incorrect sequence=%d[%d]\n", sequence, rsphdr->seq);
 	}
 
@@ -278,7 +273,7 @@ static int ssv6xxx_usb_cmd(struct ssv6xxx_usb_glue *usb_glue, u8 cmd,
 			break;
 		default:
 			retval = -1;
-			HWIF_DBG_PRINT(usb_glue->p_wlan_data, 
+			HWIF_DBG_PRINT(&usb_glue->wlan_data, 
 				"%s: unknown response cmd[%d]\n", 
 				__FUNCTION__, rsphdr->cmd);
 			break;
@@ -300,7 +295,7 @@ static void ssv6xxx_usb_recv_rx_complete(struct urb *urb)
 	usb_glue->rx_endpoint.rx_res = urb->status;
 
 	if (urb->status) {
-		HWIF_DBG_PRINT(usb_glue->p_wlan_data, 
+		HWIF_DBG_PRINT(&usb_glue->wlan_data, 
 			"fail rx status received:%d\n", urb->status);
 
 		usb_glue->rx_endpoint.rx_filled = 0;
@@ -318,7 +313,7 @@ static void ssv6xxx_usb_recv_rx_complete(struct urb *urb)
 	
 	/* recevied invalid frame, MAX_HCI_RX_AGGR_SIZE(9344) */
 	if (usb_glue->rx_endpoint.rx_filled > MAX_HCI_RX_AGGR_SIZE) {
-		HWIF_DBG_PRINT(usb_glue->p_wlan_data, 
+		HWIF_DBG_PRINT(&usb_glue->wlan_data, 
 			"recv invalid data length %d\n", 
 				usb_glue->rx_endpoint.rx_filled);
 		goto skip;
@@ -331,7 +326,7 @@ static void ssv6xxx_usb_recv_rx_complete(struct urb *urb)
  
 		/* MAX_RETRY_SSV6XXX_ALLOC_BUF(3) */
         for (i = 0; i < MAX_RETRY_SSV6XXX_ALLOC_BUF; i++) {
-		    rx_mpdu = usb_glue->p_wlan_data->skb_alloc(usb_glue->p_wlan_data->skb_param, 
+		    rx_mpdu = usb_glue->wlan_data.skb_alloc(usb_glue->wlan_data.skb_param, 
 											MAX_HCI_RX_AGGR_SIZE, GFP_ATOMIC);
 		    if (rx_mpdu != NULL)
                 break;
@@ -374,7 +369,7 @@ static void ssv6xxx_usb_recv_rx(struct work_struct *work)
 	/* do it */
 	retval = usb_submit_urb(usb_glue->rx_endpoint.rx_urb, GFP_ATOMIC);
 	if (retval) {
-		HWIF_DBG_PRINT(usb_glue->p_wlan_data, 
+		HWIF_DBG_PRINT(&usb_glue->wlan_data, 
 			"Fail to submit rx urb, error=%d\n", retval);
 		usb_glue->rx_wq_running = false;
 	}
@@ -409,7 +404,7 @@ static int ssv6xxx_usb_send_tx(struct ssv6xxx_usb_glue *usb_glue, struct sk_buff
 					usb_sndbulkpipe(usb_glue->udev, usb_glue->tx_endpoint.address),
 					skb->data, tx_len, &foolen, TRANSACTION_TIMEOUT);
 	if (retval) 
-		HWIF_DBG_PRINT(usb_glue->p_wlan_data, "Cannot send tx data, retval=%d\n", retval);
+		HWIF_DBG_PRINT(&usb_glue->wlan_data, "Cannot send tx data, retval=%d\n", retval);
 	
 
     //printk(KERN_INFO "<==%s()\n", __func__);
@@ -430,7 +425,7 @@ static int __must_check ssv6xxx_usb_write(struct device *child,
 	//ssv6xxx_dump_tx_desc(buf);
 	/* use urb to send tx data */
     if ((retval = ssv6xxx_usb_send_tx(usb_glue, (struct sk_buff *)buf, len)) < 0) {
-		HWIF_DBG_PRINT(usb_glue->p_wlan_data, "%s: Fail to send tx data\n", __FUNCTION__);
+		HWIF_DBG_PRINT(&usb_glue->wlan_data, "%s: Fail to send tx data\n", __FUNCTION__);
 		//if (((usb_glue->err_cnt)++) > 5)
 		//	WARN_ON(1);
 	} else {
@@ -466,7 +461,7 @@ static int __must_check __ssv6xxx_usb_read_reg(struct ssv6xxx_usb_glue *usb_glue
 		*buf = le32_to_cpu(result.value);
 	} else { 
 		*buf = 0xffffffff;
-		HWIF_DBG_PRINT(usb_glue->p_wlan_data, 
+		HWIF_DBG_PRINT(&usb_glue->wlan_data, 
 			"%s: Fail to read register address %x\n", __FUNCTION__, addr);
 	}
 
@@ -497,7 +492,7 @@ static int __must_check __ssv6xxx_usb_write_reg(struct ssv6xxx_usb_glue *usb_glu
 	write_reg.value = cpu_to_le32(buf);
 	retval = ssv6xxx_usb_cmd(usb_glue, SSV6200_CMD_WRITE_REG, &write_reg, sizeof(struct ssv6xxx_write_reg), NULL);
 	if (retval) 
-		HWIF_DBG_PRINT(usb_glue->p_wlan_data, "%s: Fail to write register address %x, value %x\n", __FUNCTION__, addr, buf);
+		HWIF_DBG_PRINT(&usb_glue->wlan_data, "%s: Fail to write register address %x, value %x\n", __FUNCTION__, addr, buf);
 
     //printk(KERN_INFO "<==%s()\n", __func__);	
 	return retval;
@@ -561,7 +556,7 @@ static int ssv6xxx_usb_load_firmware(struct device *child,
 	
 		if (send_length < 0) {
 			retval = send_length;
-			HWIF_DBG_PRINT(usb_glue->p_wlan_data, 
+			HWIF_DBG_PRINT(&usb_glue->wlan_data, 
 				"Load Firmware Fail, retval=%d, sram=0x%08x\n", retval, (laddr|haddr));
 			break;
 		}
@@ -634,7 +629,7 @@ static int ssv6xxx_usb_start_acc(struct device *child, u8 epnum)
 
     //only high speed use USB acc
     if (ssv6xxx_chk_usb_speed(usb_glue) == USB_SPEED_HIGH)
-        usb_glue->p_wlan_data->enable_usb_acc(usb_glue->p_wlan_data->usb_param, epnum);
+        usb_glue->wlan_data.enable_usb_acc(usb_glue->wlan_data.usb_param, epnum);
 
 	printk(KERN_INFO "<==%s()\n", __func__);
     return 0;
@@ -652,7 +647,7 @@ static int ssv6xxx_usb_stop_acc(struct device *child, u8 epnum)
 
     //only high speed use USB acc
     if (ssv6xxx_chk_usb_speed(usb_glue) == USB_SPEED_HIGH)
-        usb_glue->p_wlan_data->disable_usb_acc(usb_glue->p_wlan_data->usb_param, epnum);
+        usb_glue->wlan_data.disable_usb_acc(usb_glue->wlan_data.usb_param, epnum);
 
 	printk(KERN_INFO "<==%s()\n", __func__);
     return 0;
@@ -669,7 +664,7 @@ static int ssv6xxx_usb_jump_to_rom(struct device *child)
         return -1;
     }
     
-    usb_glue->p_wlan_data->jump_to_rom(usb_glue->p_wlan_data->usb_param);
+    usb_glue->wlan_data.jump_to_rom(usb_glue->wlan_data.usb_param);
 
 	printk(KERN_INFO "<==%s()\n", __func__);
 	return 0;
@@ -700,7 +695,7 @@ static void ssv6xxx_usb_sysplf_reset(struct device *child, u32 addr, u32 value)
      */
 	retval = ssv6xxx_usb_send_cmd(usb_glue, SSV6200_CMD_WRITE_REG, sequence, &write_reg, sizeof(struct ssv6xxx_write_reg));
 	if (retval)  
-	    HWIF_DBG_PRINT(usb_glue->p_wlan_data, "%s: Fail to reset sysplf\n", __FUNCTION__);
+	    HWIF_DBG_PRINT(&usb_glue->wlan_data, "%s: Fail to reset sysplf\n", __FUNCTION__);
 	
     retval = ssv6xxx_usb_recv_rsp(usb_glue, SSV6XXX_MAX_RXCMDSZ, &rsp_len);
 	
@@ -710,6 +705,7 @@ static void ssv6xxx_usb_sysplf_reset(struct device *child, u32 addr, u32 value)
 	printk(KERN_INFO "<==%s()\n", __func__);	
 }
 
+#if 0
 static struct ssv6xxx_hwif_ops usb_ops =
 {
     .read            		= ssv6xxx_usb_read,
@@ -730,6 +726,32 @@ static struct ssv6xxx_hwif_ops usb_ops =
     .jump_to_rom     		= ssv6xxx_usb_jump_to_rom,
 	.sysplf_reset    		= ssv6xxx_usb_sysplf_reset, 
 };
+#endif
+
+static struct unified_drv_ops usb_ops = 
+{
+	.drv_info.flags = 0x0,
+	.drv_ops = 
+	{
+	    .read            		= ssv6xxx_usb_read,
+	    .write           		= ssv6xxx_usb_write,
+	    .readreg	     		= ssv6xxx_usb_read_reg,
+	    .writereg        		= ssv6xxx_usb_write_reg,
+	    .safe_readreg    		= ssv6xxx_usb_read_reg,
+	    .safe_writereg   		= ssv6xxx_usb_write_reg,
+	    .burst_readreg   		= ssv6xxx_usb_burst_read_reg,
+	    .burst_writereg  		= ssv6xxx_usb_burst_write_reg,    
+	    .burst_safe_readreg   	= ssv6xxx_usb_burst_read_reg,
+	    .burst_safe_writereg  	= ssv6xxx_usb_burst_write_reg,    
+	    .load_fw         		= ssv6xxx_usb_load_firmware,
+	    .property        		= ssv6xxx_usb_property,
+	    .hwif_rx_task    		= ssv6xxx_usb_rx_task,
+	    .start_usb_acc   		= ssv6xxx_usb_start_acc,
+	    .stop_usb_acc    		= ssv6xxx_usb_stop_acc,
+	    .jump_to_rom     		= ssv6xxx_usb_jump_to_rom,
+		.sysplf_reset    		= ssv6xxx_usb_sysplf_reset, 
+	}
+};
 
 static void ssv6xxx_usb_power_on(struct ssv6xxx_platform_data * pdata, struct usb_interface *interface)
 {
@@ -739,7 +761,7 @@ static void ssv6xxx_usb_power_on(struct ssv6xxx_platform_data * pdata, struct us
 	pdata->is_enabled = true;
 }
 
-static void ssv6xxx_usb_power_off(struct ssv6xxx_platform_data * pdata, struct usb_interface *interface)
+static void ssv6xxx_usb_power_off(struct ssv6xxx_platform_data *pdata, struct usb_interface *interface)
 {
 	if (pdata->is_enabled == false)
 		return;
@@ -790,27 +812,27 @@ static void _read_chip_id (struct ssv6xxx_usb_glue *usb_glue)
     if (*c != 0) {		
 
 		/* TODO(aaron): why we can specific strncopy len 24 not 17 ? */
-        strncpy(usb_glue->tmp_data.chip_id, c, SSV6XXX_CHIP_ID_LENGTH);
+        strncpy(usb_glue->wlan_data.chip_id, c, SSV6XXX_CHIP_ID_LENGTH);
 
-		/* usb_glue->tmp_data.chip_id=SSV6006C0 */
-		printk("usb_glue->tmp_data.chip_id=%s\n", usb_glue->tmp_data.chip_id);
+		/* usb_glue->wlan_data.chip_id=SSV6006C0 */
+		printk("usb_glue->wlan_data.chip_id=%s\n", usb_glue->wlan_data.chip_id);
 
 		/* SSV6XXX_USB 1-2:1.0: CHIP ID: SSV6006C0 */
-		dev_info(usb_glue->dev, "CHIP ID: %s \n", usb_glue->tmp_data.chip_id);
+		dev_info(usb_glue->dev, "CHIP ID: %s \n", usb_glue->wlan_data.chip_id);
 
-        strncpy(usb_glue->tmp_data.short_chip_id, c, SSV6XXX_CHIP_ID_SHORT_LENGTH);
+        strncpy(usb_glue->wlan_data.short_chip_id, c, SSV6XXX_CHIP_ID_SHORT_LENGTH);
 
 		/* before: short_chip_id=SSV6006C0 */
-		printk("before: short_chip_id=%s\n", usb_glue->tmp_data.short_chip_id);
+		printk("before: short_chip_id=%s\n", usb_glue->wlan_data.short_chip_id);
 
 		/* why need do this ?? maybe set 0 in SSV6XXX_CHIP_ID_SHORT_LENGTH+1 ?? */
-        usb_glue->tmp_data.short_chip_id[SSV6XXX_CHIP_ID_SHORT_LENGTH] = 0;
+        usb_glue->wlan_data.short_chip_id[SSV6XXX_CHIP_ID_SHORT_LENGTH] = 0;
 
 		/* after : short_chip_id=SSV6006C0 */			
-		printk("after : short_chip_id=%s\n", usb_glue->tmp_data.short_chip_id);
+		printk("after : short_chip_id=%s\n", usb_glue->wlan_data.short_chip_id);
     } else {
         dev_err(usb_glue->dev, "Failed to read chip ID");
-        usb_glue->tmp_data.chip_id[0] = 0;
+        usb_glue->wlan_data.chip_id[0] = 0;
     }
 }
 
@@ -865,7 +887,7 @@ static int ssv_usb_probe(struct usb_interface *interface,
 	usb_glue->dev_ready = true;
 
 	/* Tell PM core that we don't need the card to be powered now */ 
-	pwlan_data = &usb_glue->tmp_data;
+	pwlan_data = &usb_glue->wlan_data;
 	memset(pwlan_data, 0, sizeof(struct ssv6xxx_platform_data));
 	atomic_set(&pwlan_data->irq_handling, 0);
 
@@ -874,7 +896,7 @@ static int ssv_usb_probe(struct usb_interface *interface,
 	pwlan_data->device = id->idProduct;
 	
 	/* Set hwif operation */
-	pwlan_data->ops = &usb_ops;
+	pwlan_data->unify = &usb_ops;
 	
 	/* setup the endpoint information */
 	iface_desc = interface->cur_altsetting;
@@ -942,42 +964,10 @@ static int ssv_usb_probe(struct usb_interface *interface,
 
 	_read_chip_id(usb_glue);
 
- 
-	/* usb_glue->tmp_data.short_chip_id = pwlan_data->short_chip_id=SSV6006C0 */
-	usb_glue->core = platform_device_alloc(pwlan_data->short_chip_id, -1);
-	if (!usb_glue->core) {
-		dev_err(usb_glue->dev, "can't allocate platform_device");
-		retval = -ENOMEM;
-		goto error;
-	}
-
-	usb_glue->core->dev.parent = &interface->dev;
-
-
-	/* save our wlan data pointer in this platform device */
-	retval = platform_device_add_data(usb_glue->core, pwlan_data, sizeof(*pwlan_data));
-	if (retval) {
-		dev_err(usb_glue->dev, "can't add platform data\n");
-		goto out_dev_put;
-	}
-
-	/* update the new p_wlan_data pointer */
-    usb_glue->p_wlan_data = usb_glue->core->dev.platform_data;
-
-	retval = platform_device_add(usb_glue->core);
-	if (retval) {
-		dev_err(usb_glue->dev, "can't add platform device\n");
-		goto out_dev_put;
-	}
-
-
 	ssv6xxx_dev_init(SSV6XXX_HWM_STA);
 	 
     printk(KERN_INFO "<==%s()\n", __func__);
 	return 0;
-
-out_dev_put:
-	platform_device_put(usb_glue->core);
 
 error:
 	if (usb_glue)
@@ -997,16 +987,7 @@ static void ssv_usb_disconnect(struct usb_interface *interface)
 	usb_set_intfdata(interface, NULL);
 	if (usb_glue) {
 		usb_glue->dev_ready = false;
-
-		ssv6xxx_usb_power_off(usb_glue->p_wlan_data, interface);
-
-		printk("platform_device_del \n");
-		
-		platform_device_del(usb_glue->core);
-
-		printk("platform_device_put \n");
-
-		platform_device_put(usb_glue->core);
+		ssv6xxx_usb_power_off(&usb_glue->wlan_data, interface);
 	}
 	/* prevent more I/O from starting */
 	mutex_lock(&usb_glue->io_mutex);
@@ -1031,7 +1012,7 @@ static int ssv_usb_suspend(struct usb_interface *interface, pm_message_t message
 	if (!usb_glue)
 		return 0;
 
-	usb_glue->p_wlan_data->suspend(usb_glue->p_wlan_data->pm_param);
+	usb_glue->wlan_data.suspend(usb_glue->wlan_data.pm_param);
 
 	/* cancel urb */
 	usb_kill_urb(usb_glue->rx_endpoint.rx_urb);
@@ -1051,7 +1032,7 @@ static int ssv_usb_resume(struct usb_interface *interface)
 	if (!usb_glue)
 		return 0;
 	
-	usb_glue->p_wlan_data->resume(usb_glue->p_wlan_data->pm_param);    
+	usb_glue->wlan_data.resume(usb_glue->wlan_data.pm_param);    
 
     if (usb_glue->rx_wq_running == false) {
         /* start a new rx workq after resume */
@@ -1095,30 +1076,10 @@ static int ssv_usb_do_device_exit(struct device *d, void *arg)
 {
 	struct usb_interface *intf = to_usb_interface(d);
 	struct ssv6xxx_usb_glue *usb_glue = usb_get_intfdata(intf);
-//	u32 regval;
-//	int ret;
 
 	if (usb_glue != NULL) {
 		//TODO: replace direct address access
 		printk(KERN_INFO "ssv_usb_do_device_exit: JUMP to ROM\n");
-#if 0        
-		/* Jump to ROM for next time load up driver */
-		//disable MCU N10
-		ret = __ssv6xxx_usb_read_reg(usb_glue, 0xc000001c, &regval);
-		if (__ssv6xxx_usb_write_reg(usb_glue, 0xc000001c, (regval & 0xfeffffff)));
-		
-		//swicth to boot from ILM mode
-		ret = __ssv6xxx_usb_read_reg(usb_glue, 0xc00000ec, &regval);
-		if (__ssv6xxx_usb_write_reg(usb_glue, 0xc00000ec, (regval & 0xffffefff)));
-
-		//set IVB to ROM code address: 0x40000
-		ret = __ssv6xxx_usb_read_reg(usb_glue, 0xc00000e8, &regval);
-		if (__ssv6xxx_usb_write_reg(usb_glue, 0xc00000e8, (regval | 0x00000004)));
-
-		//enable MCU N10
-		ret = __ssv6xxx_usb_read_reg(usb_glue, 0xc000001c, &regval);
-		if (__ssv6xxx_usb_write_reg(usb_glue, 0xc000001c, (regval | 0x01000000)));
-#endif
 	}    
 	msleep(50);
 	return 0;

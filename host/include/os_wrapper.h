@@ -22,9 +22,6 @@
 
 #define OS_TIMER_DESP_NUM 15
 
-
-
-
 #define FREEIF( _p )  \
 	if( _p )              \
 {                     \
@@ -70,7 +67,7 @@ typedef u32 os_time_t;
 
 
 
-#if (WIN32 == 1)
+#if defined(WIN32)
 
 #define typecheck
 
@@ -195,8 +192,8 @@ enum ssv6xxx_tx_type {
 //Use to send command to host command engine
 void os_msg_free(void *msg);
 void* os_msg_alloc(void);
-s32 os_msg_send(void* msg, void *pBuffer);
-s32 os_msg_send_tx_drv(void* msg, void *pBuffer);
+s32 os_msg_send(void *msg, void *pBuffer);
+s32 os_msg_send_tx_drv(void *msg, void *pBuffer);
 
 
 #endif	/* _OS_WRAPPER_H */

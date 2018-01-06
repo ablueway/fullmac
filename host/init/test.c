@@ -3,8 +3,14 @@
 *
 *  All Rights Reserved
 */
+#ifdef __linux__
+#include <linux/kernel.h>
+#endif
 
-#include <priv/ssv_types.h>
+#include <ssv_types.h>
+
+#include "hif_wrapper.h"
+
 /************************************************************************************************************************************************************************
 *
 *   This main function just use in FREERTOS """"""SIM"""" platform
