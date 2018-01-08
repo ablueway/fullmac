@@ -317,7 +317,7 @@ BIT[19]=CHAN5G(5825, 165)
 #define AMPDU_TX_ENABLE 0
 #define AMPDU_RX_ENABLE 0
 /* in */
-#if(CONFIG_CHIP_ID==SSV6006C)||(CONFIG_CHIP_ID==SSV6006B)
+#if(CONFIG_CHIP_ID == SSV6006C) || (CONFIG_CHIP_ID == SSV6006B)
 #define AMPDU_RX_MAX_STATION WLAN_MAX_STA
 /* not in */
 #else
@@ -326,8 +326,8 @@ BIT[19]=CHAN5G(5825, 165)
 #define AMPDU_RX_BUF_SIZE 64
 
 //==============EDCA===============
-//#define EDCA_PATTERN_TEST
-#ifdef EDCA_PATTERN_TEST
+#define EDCA_PATTERN_TEST  0
+#if (EDCA_PATTERN_TEST == 1)
 #define EDCA_DBG						1		//Enable to test edca function
 #define MACTXRX_CONTROL_ENABLE			1		//To simulate MAC TX operation. It's also enable ASIC queue empty interrupt.
 #define MACTXRX_CONTROL_DURATION_SIM	1		//TX control use softmain edca handler to test MAC TX EDCA function
@@ -368,7 +368,7 @@ BIT[19]=CHAN5G(5825, 165)
 
 
 /* watchdog */
-#if((CONFIG_CHIP_ID==SSV6006B)||(CONFIG_CHIP_ID==SSV6006C))
+#if((CONFIG_CHIP_ID == SSV6006B) || (CONFIG_CHIP_ID == SSV6006C))
 #define RECOVER_ENABLE                  0
 #else
 #define RECOVER_ENABLE                  1
@@ -421,7 +421,7 @@ BIT[19]=CHAN5G(5825, 165)
    3: 177KB
 */
 #define LWIP_PARAM_SET                  3
-#if USE_ICOMM_LWIP
+#if (USE_ICOMM_LWIP == 1)
 #define HTTPD_SUPPORT 1
 #define DHCPD_SUPPORT 1
 #define CONFIG_USE_LWIP_PBUF    1
@@ -444,7 +444,7 @@ BIT[19]=CHAN5G(5825, 165)
 #endif //#if USE_ICOMM_LWIP
 
 /* in */
-#if CONFIG_USE_LWIP_PBUF
+#if (CONFIG_USE_LWIP_PBUF == 1)
 #define POOL_SIZE PBUF_POOL_SIZE			//72
 #define POOL_SEC_SIZE PBUF_POOL_SEC_SIZE	//16
 #define RECV_BUF_SIZE MAX_RECV_BUF
@@ -466,7 +466,7 @@ BIT[19]=CHAN5G(5825, 165)
 //------------------------8023 <-> 80211--------------------
 #define SW_8023TO80211 0 
 
-#if((CONFIG_CHIP_ID!=SSV6006B)&&(CONFIG_CHIP_ID!=SSV6006C))
+#if((CONFIG_CHIP_ID != SSV6006B) && (CONFIG_CHIP_ID != SSV6006C))
 #undef SW_8023TO80211
 #define SW_8023TO80211 0
 #endif

@@ -117,30 +117,60 @@ bool usb_detect_card(void)
 	return true;
 }
 
-const struct ssv6xxx_drv_ops g_drv_usb_linux =
+#if 0
+struct unified_drv_ops g_drv_usb_linux = 
 {
-	DRV_NAME_USB,
-			NULL,
-			NULL,
-			NULL,			
-			NULL,
-			NULL,
-			NULL,
-			NULL,
-			NULL,
-			NULL,
-			NULL,
-			NULL,
-			NULL,
-			NULL,
-			NULL,
-			NULL,
-			NULL,
-			NULL,
-			NULL,
-			NULL,
-			NULL			
+	.name = "SSV6XXX_USB";
+	.drv_info.flags = UNIFY_RTOS_USB_DRV_INFO_FLAGS,
+	.drv_ops = 
+	{
+	    .read            		= NULL,
+	    .write           		= NULL,
+	    .readreg	     		= NULL,
+	    .writereg        		= NULL,
+	    .safe_readreg    		= NULL,
+	    .safe_writereg   		= NULL,
+	    .burst_readreg   		= NULL,
+	    .burst_writereg  		= NULL,    
+	    .burst_safe_readreg   	= NULL,
+	    .burst_safe_writereg  	= NULL,    
+	    .load_fw         		= NULL,
+	    .property        		= NULL,
+	    .hwif_rx_task    		= NULL,
+	    .start_usb_acc   		= NULL,
+	    .stop_usb_acc    		= NULL,
+	    .jump_to_rom     		= NULL,
+		.sysplf_reset    		= NULL, 
+	};
 };
+
+
+const struct unified_drv_ops g_drv_usb_linux = 
+{
+	.name = "SSV6XXX_USB";
+	.drv_info.flags = UNIFY_USB_DRV_INFO_FLAGS,
+	.drv_ops = 
+	{
+	    .read            		= ssv6xxx_usb_read,
+	    .write           		= ssv6xxx_usb_write,
+	    .readreg	     		= ssv6xxx_usb_read_reg,
+	    .writereg        		= ssv6xxx_usb_write_reg,
+	    .safe_readreg    		= ssv6xxx_usb_read_reg,
+	    .safe_writereg   		= ssv6xxx_usb_write_reg,
+	    .burst_readreg   		= ssv6xxx_usb_burst_read_reg,
+	    .burst_writereg  		= ssv6xxx_usb_burst_write_reg,    
+	    .burst_safe_readreg   	= ssv6xxx_usb_burst_read_reg,
+	    .burst_safe_writereg  	= ssv6xxx_usb_burst_write_reg,    
+	    .load_fw         		= ssv6xxx_usb_load_firmware,
+	    .property        		= ssv6xxx_usb_property,
+	    .hwif_rx_task    		= ssv6xxx_usb_rx_task,
+	    .start_usb_acc   		= ssv6xxx_usb_start_acc,
+	    .stop_usb_acc    		= ssv6xxx_usb_stop_acc,
+	    .jump_to_rom     		= ssv6xxx_usb_jump_to_rom,
+		.sysplf_reset    		= ssv6xxx_usb_sysplf_reset, 
+	}
+};
+#endif
 #if 0
 const struct ssv6xxx_drv_ops g_drv_usb_linux =
 {

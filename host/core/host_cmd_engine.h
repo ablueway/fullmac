@@ -8,7 +8,11 @@
 #ifndef _HOST_CMD_ENGINE_H_
 #define _HOST_CMD_ENGINE_H_
 
+#ifdef __linux__
+int CmdEng_Task(void *args);
+#else
 void CmdEng_Task( void *args );
+#endif
 s32 CmdEng_Init( void );
 ssv6xxx_result SSVHostCmdEng_Start( void );
 ssv6xxx_result SSVHostCmdEng_Stop( void );

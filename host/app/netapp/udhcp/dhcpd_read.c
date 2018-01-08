@@ -8,7 +8,7 @@
  */
 
 #include "udhcp/udhcp_common.h"
-#if DHCPD_SUPPORT
+#if (DHCPD_SUPPORT == 1)
 
 extern struct sockaddr * dest_sin;
 extern socklen_t dest_length;

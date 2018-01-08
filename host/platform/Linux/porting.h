@@ -65,7 +65,9 @@
 /*============SSV-DRV setting===================*/
 #define	CONFIG_RX_POLL      0
 //#define INTERFACE "sdio"
-#define INTERFACE "spi"
+//#define INTERFACE "spi"
+#define INTERFACE "usb"
+
 #define SDRV_INCLUDE_SPI    0
 #define SDRV_INCLUDE_SDIO   0
 

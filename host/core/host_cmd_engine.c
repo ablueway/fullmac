@@ -30,6 +30,7 @@
 #include <wtypes.h>
 #include <Dbt.h>
 #endif
+
 #include "host_cmd_engine.h"
 #include "host_cmd_engine_priv.h"
 #include "host_cmd_engine_sm.h"
@@ -132,7 +133,7 @@ void CmdEng_HandleQueue(void *frame)
             if(pcmd!=NULL)
             {
                                 pcmd->frame = frame;
-                list_q_qtail_safe(&gHCmdEngInfo->pending_cmds, (struct list_q *)pcmd, &gHCmdEngInfo->CmdEng_mtx);
+                list_q_qtail_safe(&gHCmdEngInfo->pending_cmds, (struct ssv_list_q *)pcmd, &gHCmdEngInfo->CmdEng_mtx);
 
                 LOG_DEBUGF(LOG_CMDENG, ("[CmdEng]: Pending cmd %d\r\n", hCmd->cmd_seq_no));
             }
@@ -160,11 +161,11 @@ ssv6xxx_result CmdEng_GetStatus(void *stp)
     if(st == NULL)
         return SSV6XXX_INVA_PARAM;
 
-    OS_MutexLock(gHCmdEngInfo->CmdEng_mtx);
+    OS_MutexLock(&gHCmdEngInfo->CmdEng_mtx);
     st->mode = gHCmdEngInfo->curr_mode;
     st->BlkCmdIn = gHCmdEngInfo->blockcmd_in_q;
     st->BlkCmdNum = list_q_len(&gHCmdEngInfo->pending_cmds);
-    OS_MutexUnLock(gHCmdEngInfo->CmdEng_mtx);
+    OS_MutexUnLock(&gHCmdEngInfo->CmdEng_mtx);
 
     return SSV6XXX_SUCCESS;
 }
@@ -180,7 +181,11 @@ ssv6xxx_result CmdEng_GetStatus(void *stp)
 extern s32 AP_Start(void);
 extern s32 AP_Stop( void );
 
-void CmdEng_Task( void *args )
+#ifdef __linux__
+int CmdEng_Task(void *args)
+#else
+void CmdEng_Task(void *args)
+#endif
 {
 	MsgEvent *MsgEv;
 	s32 res;
@@ -210,12 +215,12 @@ void CmdEng_Task( void *args )
             hCmd = (struct cfg_host_cmd *)OS_FRAME_GET_DATA(pcmd->frame);
             LOG_DEBUGF(LOG_CMDENG, ("[CmdEng]: Pop pending cmd %d to execute\r\n", hCmd->cmd_seq_no));
             CmdEng_TxHdlCmd(pcmd->frame);
-            OS_MutexLock(gHCmdEngInfo->CmdEng_mtx);
+            OS_MutexLock(&gHCmdEngInfo->CmdEng_mtx);
             if(list_q_len(&gHCmdEngInfo->free_FrmQ) < FREE_FRM_NUM)
-                list_q_qtail(&gHCmdEngInfo->free_FrmQ, (struct list_q *)pcmd);
+                list_q_qtail(&gHCmdEngInfo->free_FrmQ, (struct ssv_list_q *)pcmd);
             else
                 FREE(pcmd);
-            OS_MutexUnLock(gHCmdEngInfo->CmdEng_mtx);
+            OS_MutexUnLock(&gHCmdEngInfo->CmdEng_mtx);
         }
         else
         {
@@ -283,6 +288,9 @@ void CmdEng_Task( void *args )
         }
 
 	}
+#ifdef __linux__
+	return 0;
+#endif
 }
 
 #if (_WIN32 == 1 && CONFIG_RX_POLL == 0)
@@ -438,7 +446,7 @@ void CmdEng_FlushPendingCmds(void)
         }
         else
         {
-            list_q_qtail(&gHCmdEngInfo->free_FrmQ, (struct list_q *)pcmd);
+            list_q_qtail(&gHCmdEngInfo->free_FrmQ, (struct ssv_list_q *)pcmd);
         }
     }
     //LOG_DEBUG("[CmdEng]: CmdEng_FlushPendingCmds\n");
@@ -451,7 +459,7 @@ ssv6xxx_result CmdEng_SetOpMode(ModeType mode)
     if(mode > MT_EXIT)
         return SSV6XXX_INVA_PARAM;
 
-    OS_MutexLock(gHCmdEngInfo->CmdEng_mtx);
+    OS_MutexLock(&gHCmdEngInfo->CmdEng_mtx);
 
     switch (gHCmdEngInfo->curr_mode)
     {
@@ -493,77 +501,7 @@ ssv6xxx_result CmdEng_SetOpMode(ModeType mode)
     if(ret == SSV6XXX_SUCCESS)
         gHCmdEngInfo->curr_mode = mode;
 
-    OS_MutexUnLock(gHCmdEngInfo->CmdEng_mtx);
+    OS_MutexUnLock(&gHCmdEngInfo->CmdEng_mtx);
 
     return ret;
 }
-
-
-#if 0
-void RX_public_host_event(u32 nEvtId, void *data)
-{
-
-	HDR_HostEvent *HostEvent;
-	HostEvent= (HDR_HostEvent *)data;
-
-	switch(nEvtId){
-	case HOST_EVT_HW_MODE_RESP:
-		SM_ENTER(HCMDE, RUNNING, NULL);
-
-		//LOG_TRACE(SSV_STA,"set hw mode sucessful\n");
-		break;
-	case HOST_EVT_SCAN_RESULT:
-		//LOG_TRACE(SSV_STA, "scan sucessful\n");
-		break;
-	case HOST_EVT_JOIN_RESULT:
-		{
-			struct resp_evt_result *join_resp ;
-
-			join_resp=(struct resp_evt_result *)HostEvent->dat;
-			//struct netif *netif;
-			//char *name="wlan0";
-			if(join_resp->u.status_code==0)
-			{
-				/*netif = netif_find(name);
-				if(netif!=NULL)
-				{
-				netifapi_dhcp_start(netif);
-				}*/
-				//LOG_TRACE(SSV_STA, "join sucessful\n");
-
-			}
-
-			break;
-		}
-
-	case HOST_EVT_LEAVE_RESULT:
-		break;
-
-	}
-
-}
-
-#endif
-
-// ssv6xxx_result SSVHostCmdEng_Start()
-// {
-//
-//
-//
-// 	//gHCmdEngInfo->state = SSV_STATE_IDLE;
-// 	return SSV6XXX_SUCCESS;
-// }
-// ssv6xxx_result SSVHostCmdEng_Stop()
-// {
-//
-//
-//
-//
-// 	return SSV6XXX_SUCCESS;
-// }
-
-
-
-
-
-

@@ -42,18 +42,30 @@
 	(flag = ((val << DRV_INFO_FLAG_REGISTER_TYPE_SHIFT) & DRV_INFO_FLAG_REGISTER_TYPE_MASK))
 
 
+#define DRV_INFO_FLAG_HW_TYPE_SHIFT				0x10
+#define DRV_INFO_FLAG_HW_TYPE_MASK				0x00FF0000
+#define DRV_INFO_FLAG_HW_TYPE_USB				0x0
+#define DRV_INFO_FLAG_HW_TYPE_SDIO				0x1
+#define DRV_INFO_FLAG_HW_TYPE_SPI				0x2
+
+#define SET_DRV_INFO_FLAG_HW_TYPE(flag, val)	\
+	(flag = ((val << DRV_INFO_FLAG_HW_TYPE_SHIFT) & DRV_INFO_FLAG_HW_TYPE_MASK))
+
+
 union ssv_drv_info
 {
 	struct 
 	{
 		u32 os_type:8;
 		u32 register_type:8;
-		u32 rsvd:16;
+		u32 hw_type:8;
+		u32 rsvd:8;
 	} fields;
 	u32	flags;
 };
 
 struct unified_drv_ops {
+	char name[32];
 	union ssv_drv_info drv_info;
 
 #ifdef __linux__

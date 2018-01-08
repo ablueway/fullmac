@@ -74,43 +74,43 @@ struct sdio_scatter_req;
 * Hardware Interface (SDIO/SPI) APIs for ssv6200 on Linux platform.
 */
 struct ssv6xxx_hwif_ops {
-    int __must_check (*read)(struct device *child, void *buf,size_t *size, int mode);
-    int __must_check (*write)(struct device *child, void *buf, size_t len,u8 queue_num);
-    int __must_check (*readreg)(struct device *child, u32 addr, u32 *buf);
-    int __must_check (*writereg)(struct device *child, u32 addr, u32 buf);
-    int __must_check (*safe_readreg)(struct device *child, u32 addr, u32 *buf);
-    int __must_check (*safe_writereg)(struct device *child, u32 addr, u32 buf);
-    int __must_check (*burst_readreg)(struct device *child, u32 *addr, u32 *buf, u8 reg_amount);
-    int __must_check (*burst_writereg)(struct device *child, u32 *addr, u32 *buf, u8 reg_amount);    
-    int __must_check (*burst_safe_readreg)(struct device *child, u32 *addr, u32 *buf, u8 reg_amount);
-    int __must_check (*burst_safe_writereg)(struct device *child, u32 *addr, u32 *buf, u8 reg_amount);    
+    int __must_check (*read)(void *dev, void *buf,size_t *size, int mode);
+    int __must_check (*write)(void *dev, void *buf, size_t len,u8 queue_num);
+    int __must_check (*readreg)(void *dev, u32 addr, u32 *buf);
+    int __must_check (*writereg)(void *dev, u32 addr, u32 buf);
+    int __must_check (*safe_readreg)(void *dev, u32 addr, u32 *buf);
+    int __must_check (*safe_writereg)(void *dev, u32 addr, u32 buf);
+    int __must_check (*burst_readreg)(void *dev, u32 *addr, u32 *buf, u8 reg_amount);
+    int __must_check (*burst_writereg)(void *dev, u32 *addr, u32 *buf, u8 reg_amount);    
+    int __must_check (*burst_safe_readreg)(void *dev, u32 *addr, u32 *buf, u8 reg_amount);
+    int __must_check (*burst_safe_writereg)(void *dev, u32 *addr, u32 *buf, u8 reg_amount);    
 
-	int (*trigger_tx_rx)(struct device *child);
-    int (*irq_getmask)(struct device *child, u32 *mask);
-    void (*irq_setmask)(struct device *child,int mask);
-    void (*irq_enable)(struct device *child);
-    void (*irq_disable)(struct device *child,bool iswaitirq);
-    int (*irq_getstatus)(struct device *child,int *status);
-    void (*irq_request)(struct device *child,irq_handler_t irq_handler,void *irq_dev);
-    void (*irq_trigger)(struct device *child);
+	int (*trigger_tx_rx)(void *dev);
+    int (*irq_getmask)(void *dev, u32 *mask);
+    void (*irq_setmask)(void *dev,int mask);
+    void (*irq_enable)(void *dev);
+    void (*irq_disable)(void *dev,bool iswaitirq);
+    int (*irq_getstatus)(void *dev,int *status);
+    void (*irq_request)(void *dev,irq_handler_t irq_handler,void *irq_dev);
+    void (*irq_trigger)(void *dev);
 
-	void (*pmu_wakeup)(struct device *child);
-    int __must_check (*load_fw)(struct device *child, u32 start_addr, u8 *data, int data_length);
-    void (*load_fw_pre_config_device)(struct device *child);
-    void (*load_fw_post_config_device)(struct device *child);
-    int (*cmd52_read)(struct device *child, u32 addr, u32 *value);
-    int (*cmd52_write)(struct device *child, u32 addr, u32 value);
-    bool (*support_scatter)(struct device *child);    
-    int (*rw_scatter)(struct device *child, struct sdio_scatter_req *scat_req);
-    bool (*is_ready)(struct device *child);
-    int (*write_sram)(struct device *child, u32 addr, u8 *data, u32 size);
-    void (*interface_reset)(struct device *child);    
-    int (*start_usb_acc)(struct device *child, u8 epnum);
-    int (*stop_usb_acc)(struct device *child, u8 epnum);
-    int (*jump_to_rom)(struct device *child);
-    int (*property)(struct device *child);
-    void (*sysplf_reset)(struct device *child, u32 addr, u32 value);
-    void (*hwif_rx_task)(struct device *child, int (*rx_cb)(struct sk_buff *rx_skb, void *args), void *args, u32 *pkt); 
+	void (*pmu_wakeup)(void *dev);
+    int __must_check (*load_fw)(void *dev, u32 start_addr, u8 *data, int data_length);
+    void (*load_fw_pre_config_device)(void *dev);
+    void (*load_fw_post_config_device)(void *dev);
+    int (*cmd52_read)(void *dev, u32 addr, u32 *value);
+    int (*cmd52_write)(void *dev, u32 addr, u32 value);
+    bool (*support_scatter)(void *dev);    
+    int (*rw_scatter)(void *dev, void *scat_req);
+    bool (*is_ready)(void *dev);
+    int (*write_sram)(void *dev, u32 addr, u8 *data, u32 size);
+    void (*interface_reset)(void *dev);    
+    int (*start_usb_acc)(void *dev, u8 epnum);
+    int (*stop_usb_acc)(void *dev, u8 epnum);
+    int (*jump_to_rom)(void *dev);
+    int (*property)(void *dev);
+    void (*sysplf_reset)(void *dev, u32 addr, u32 value);
+    void (*hwif_rx_task)(void *dev, int (*rx_cb)(struct sk_buff *rx_skb, void *args), void *args, u32 *pkt); 
 };
 
 

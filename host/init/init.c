@@ -214,7 +214,7 @@ void ssv6xxx_init_task_para(void)
     st_dhcpd_task[0].prio = OS_DHCPD_TASK_PRIO;
 #endif
     /* not in */
-#if (MLME_TASK==1)
+#if (MLME_TASK == 1)
     g_mlme_task_info[0].prio = OS_MLME_TASK_PRIO;
 #endif
 }
@@ -516,8 +516,9 @@ ssv6xxx_result wifi_start_by_host_mode(ssv6xxx_hw_mode hmode)
 int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
 {
     ssv6xxx_result res = SSV6XXX_SUCCESS;
+	union ssv_drv_info drv_info;
 
-    /* TODO:aaron */
+	/* TODO:aaron */
     // #ifndef __SSV_UNIX_SIM__
 #if (__SSV_UNIX_SIM__ == 0)
     platform_ldo_en_pin_init();
@@ -566,7 +567,11 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
 
     LOG_PRINTF("Try to connecting CABRIO via %s...\n\r", INTERFACE);
     /* #define INTERFACE "spi" */
-    if (ssv6xxx_drv_select(INTERFACE) == false)
+	drv_info.fields.os_type = DRV_INFO_FLAG_OS_TYPE_LINUX;
+	drv_info.fields.register_type = DRV_INFO_FLAG_REGISTER_TYPE_PASSIVE;
+	drv_info.fields.hw_type = DRV_INFO_FLAG_HW_TYPE_USB;	
+
+    if (ssv6xxx_drv_select(INTERFACE, drv_info) == false)
     {
         LOG_PRINTF("==============================\n\r");
         LOG_PRINTF("Please Insert %s wifi device\n", INTERFACE);

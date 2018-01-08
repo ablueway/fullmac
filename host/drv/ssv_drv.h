@@ -8,6 +8,8 @@
 #ifndef _SSV_DRV_H_
 #define _SSV_DRV_H_
 
+#include <hif_wrapper.h>
+
 //#if (defined _WIN32)
 #if (_WIN32 == 1)
 	#include "types.h"
@@ -21,7 +23,7 @@
 
 #include <ssv_hal.h>
 
-
+//#include <hif_wrapper.h>
 
 //#ifndef MAX_BUF
 //#define MAX_BUF			(8*1024)
@@ -57,6 +59,12 @@
 
 #define PRI_Q_NUM 5
 
+
+#define UNIFY_RTOS_USB_DRV_INFO_FLAGS	((DRV_INFO_FLAG_OS_TYPE_RTOS << DRV_INFO_FLAG_OS_TYPE_SHIFT) 	|| \
+							(DRV_INFO_FLAG_REGISTER_TYPE_ACTIVE << DRV_INFO_FLAG_REGISTER_TYPE_SHIFT) 	|| \
+							(DRV_INFO_FLAG_HW_TYPE_USB << DRV_INFO_FLAG_HW_TYPE_SHIFT))
+
+
 bool	ssv6xxx_drv_module_init(void);
 void	ssv6xxx_drv_module_release(void);
 
@@ -69,7 +77,8 @@ Note :
 
 	if Fail!, this func will do nothing.
 --------------------------------------------------------------- */
-bool	ssv6xxx_drv_select(char name[32]);
+//bool	ssv6xxx_drv_select(u32 drv_info);
+bool	ssv6xxx_drv_select(char name[32], union ssv_drv_info drv_info);
 void	ssv6xxx_drv_list(void);
 
 

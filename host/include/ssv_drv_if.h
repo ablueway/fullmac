@@ -22,21 +22,20 @@ typedef enum
 
 struct ssv6xxx_drv_ops
 {
-	char	name[32];
 	// SSV6XXX_DRV_TYPE		type;
-	bool	(* open)(void);
-	bool	(* close)(void);
-	bool	(* init)(void);
+	bool	(*open)(void);
+	bool	(*close)(void);
+	bool	(*init)(void);
 	// return
 	//  < 0 : fail
 	// >= 0 : # of bytes recieve
-	s32 	(* recv)(u8 *dat, size_t len);
+	s32 	(*recv)(u8 *dat, size_t len);
     // return
 	//  < 0 : fail
 	// >= 0 : # of bytes send
-	s32 	(* send)(void *dat, size_t len);
-	bool	(* get_name)(char name[32]);
-	bool	(* ioctl)(u32 ctl_code,
+	s32 	(*send)(void *dat, size_t len);
+	bool	(*get_name)(char name[32]);
+	bool	(*ioctl)(u32 ctl_code,
 					  void *in_buf, size_t in_size,
 					  void *out_buf, size_t out_size,
 					  size_t *bytes_ret);
@@ -47,15 +46,18 @@ struct ssv6xxx_drv_ops
     bool    (*write_reg)(u32 addr, u32 data);
     u32     (*read_reg)(u32 addr);
     bool    (*write_byte)(u8 func,u32 addr, u8 data);
-    u32    (*read_byte)(u8 func,u32 addr);
-	u32    (*write_fw_to_sram)(u8 *bin, u32 bin_len, u32 block_size);
-    s32    (*start)(void);
-    s32    (*stop)(void);
+    u32    	(*read_byte)(u8 func,u32 addr);
+	u32    	(*write_fw_to_sram)(u8 *bin, u32 bin_len, u32 block_size);
+    s32    	(*start)(void);
+    s32    	(*stop)(void);
 	void    (*ssv_irq_enable)(void);
     void    (*ssv_irq_disable)(void);
     bool    (*wakeup_wifi)(bool sw);
     bool	(*detect_card)(void);
 };
+
+
+
 
 /* TODO:aaron linux flag */
 //extern struct ssv6xxx_drv_ops g_drv_usb_linux;

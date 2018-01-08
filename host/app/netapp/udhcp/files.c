@@ -10,7 +10,7 @@
 
 #include "udhcp/udhcp_common.h"
 #include "udhcp/dhcpd.h"
-#if DHCPD_SUPPORT
+#if (DHCPD_SUPPORT == 1)
 
 static struct server_config_t *please_config = NULL;
 

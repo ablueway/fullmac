@@ -23,7 +23,7 @@ typedef enum
 
 typedef struct os_timer
 {
-    struct list_q tmr_list;
+    struct ssv_list_q tmr_list;
     u32             nMsgType;
     timer_handler   handler;
     void*           infombx;
@@ -45,7 +45,7 @@ enum msgtype_tmr
 //Timer related
 s32 os_create_timer(u32 ms, timer_handler handler, void *data1, void *data2, void* mbx);
 s32 os_cancel_timer(timer_handler handler, u32 data1, u32 data2);
-s32 os_free_timer(struct os_timer* free_tmr);
+s32 os_free_timer(struct os_timer *free_tmr);
 void os_timer_expired(void* evt);
 
 #endif

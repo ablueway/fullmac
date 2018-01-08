@@ -33,7 +33,7 @@
 #define os_ms2tick OS_MS2TICK
 
 //portTICK_RATE_MS    ==>   ?ms/1ticks
-#define os_tick2ms(_tick) ((_tick)*TICK_RATE_MS)
+#define os_tick2ms(_tick) ((_tick) * TICK_RATE_MS)
 #define os_getSysTime (os_tick2ms(os_sys_jiffies())/MSEC_PER_SEC)
 
 
@@ -100,59 +100,77 @@ typedef u32 os_time_t;
  * good compiler would generate better code (and a really good compiler
  * wouldn't care). Gcc is currently neither.
  */
-#if 1
-#define time_after(a,b)		\
-	((long)(b) - (long)(a) < 0)
-#define time_before(a,b)	time_after(b,a)
-
-#define time_after_eq(a,b)	\
-	((long)(a) - (long)(b) >= 0)
-
+#ifndef time_after 
+#ifdef __linux__
 #else
-#define time_after(a,b)		\
-	(typecheck(unsigned long, a) && \
-	 typecheck(unsigned long, b) && \
-	 ((long)(b) - (long)(a) < 0))
-#define time_before(a,b)	time_after(b,a)
-
-#define time_after_eq(a,b)	\
-	(typecheck(unsigned long, a) && \
-	 typecheck(unsigned long, b) && \
-	 ((long)(a) - (long)(b) >= 0))
-
+#define time_after(a,b)		((long)(b) - (long)(a) < 0)
+#endif
 #endif
 
-#define time_before_eq(a,b)	time_after_eq(b,a)
+#ifndef time_before 
+#define time_before(a,b)	time_after(b,a)
+#endif
 
+#ifndef time_after_eq 
+#ifdef __linux__
+#else
+#define time_after_eq(a,b)	((long)(a) - (long)(b) >= 0)
+#endif
+#endif
+
+
+#ifndef time_before_eq 
+#define time_before_eq(a,b)	time_after_eq(b,a)
+#endif
 /*
  * Calculate whether a is in the range of [b, c].
  */
-#define time_in_range(a,b,c) \
-	(time_after_eq(a,b) && \
-	 time_before_eq(a,c))
-
+#ifndef time_in_range 
+#define time_in_range(a,b,c) (time_after_eq(a,b) && time_before_eq(a,c))
+#endif
 /*
  * Calculate whether a is in the range of [b, c).
  */
-#define time_in_range_open(a,b,c) \
-	(time_after_eq(a,b) && \
-	 time_before(a,c))
+#ifndef time_in_range_open 
+#define time_in_range_open(a,b,c) (time_after_eq(a,b) && time_before(a,c))
+#endif
 	 
 /*
  * These four macros compare jiffies and 'a' for convenience.
  */
 
 /* time_is_before_jiffies(a) return true if a is before jiffies */
+#ifndef time_is_before_jiffies 
+#ifdef __linux__
+#else
 #define time_is_before_jiffies(a) time_after(os_sys_jiffies(), a)
+#endif
+#endif
 
 /* time_is_after_jiffies(a) return true if a is after jiffies */
+#ifndef time_is_after_jiffies
+#ifdef __linux__
+#else
 #define time_is_after_jiffies(a) time_before(os_sys_jiffies(), a)
+#endif
+#endif
 
 /* time_is_before_eq_jiffies(a) return true if a is before or equal to jiffies*/
+#ifndef time_is_before_eq_jiffies 
+#ifdef __linux__
+#else
 #define time_is_before_eq_jiffies(a) time_after_eq(os_sys_jiffies(), a)
+#endif
+#endif
 
 /* time_is_after_eq_jiffies(a) return true if a is after or equal to jiffies*/
+#ifndef time_is_after_eq_jiffies
+#ifdef __linux__
+#else
 #define time_is_after_eq_jiffies(a) time_before_eq(os_sys_jiffies(), a)
+#endif
+#endif
+
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------
 //																Network related

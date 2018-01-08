@@ -22,7 +22,7 @@
  */
 typedef struct HW_PBUF_Info_st 
 {
-    struct list_q pbf_list;
+    struct ssv_list_q pbf_list;
     u16         valid;
     u16         pbuf_id;
     u16         size;
@@ -41,8 +41,8 @@ typedef struct HW_PBUF_Info_st
 } HW_PBUF_Info, *PHW_PBUF_Info;
 
 //#define PBUF_VA_BASE                    0x8000
-struct list_q free_notype_pbuf_hd;
-struct list_q free_rxpbuf_hd;
+struct ssv_list_q free_notype_pbuf_hd;
+struct ssv_list_q free_rxpbuf_hd;
 
 #define MAX_RX_PBUF_NO   16
 
@@ -84,7 +84,7 @@ s32 PBUF_Init(u32 pbuf_no)
         return OS_FAILED;
     }
     OS_MemSET((void *)NoType_PBUF_Pool, 0, sizeof(HW_PBUF_Info)*g_notype_pbuf_max_no);
-    list_q_init((struct list_q*)&free_notype_pbuf_hd);
+    list_q_init((struct ssv_list_q *)&free_notype_pbuf_hd);
 
     Rx_PBUF_Pool = (HW_PBUF_Info *)OS_MemAlloc(sizeof(HW_PBUF_Info)*MAX_RX_PBUF_NO);
     if(!Rx_PBUF_Pool)
@@ -93,7 +93,7 @@ s32 PBUF_Init(u32 pbuf_no)
         return OS_FAILED;
     }
     OS_MemSET((void *)Rx_PBUF_Pool, 0, sizeof(HW_PBUF_Info)*MAX_RX_PBUF_NO);
-    list_q_init((struct list_q*)&free_rxpbuf_hd);
+    list_q_init((struct ssv_list_q *)&free_rxpbuf_hd);
 
     OS_MutexInit(&PBUF_LogMutex);
 #endif    
@@ -118,7 +118,7 @@ void SSV_PBUF_Status(void){
 }
 #endif//CONFIG_STATUS_CHECK
 
-PKT_Info *__get_pbuf_from_freeQ(u32 size,struct list_q* fqd,PBuf_Type_E buf_type)
+PKT_Info *__get_pbuf_from_freeQ(u32 size,struct ssv_list_q* fqd,PBuf_Type_E buf_type)
 {
     HW_PBUF_Info* hpbf;
     PKT_Info *pkt_info=NULL;
@@ -151,7 +151,7 @@ void *PBUF_MAlloc_Raw(u32 size, u32 need_header, PBuf_Type_E buf_type)
     PKT_Info *pkt_info=NULL;
 	u32 extra_header=0;
     u32 i;
-    OS_MutexLock(sg_pbuf_mutex);
+    OS_MutexLock(&sg_pbuf_mutex);
     if (need_header)
     {
         extra_header = (PBU_OFFSET+ TXPB_RVSD*TX_PKT_RES_BASE);
@@ -206,7 +206,7 @@ void *PBUF_MAlloc_Raw(u32 size, u32 need_header, PBuf_Type_E buf_type)
                     if(pkt_info == NULL)
                     {
                         LOG_PRINTF("rxpbuf mem fail\r\n");
-                        OS_MutexUnLock(sg_pbuf_mutex);    
+                        OS_MutexUnLock(&sg_pbuf_mutex);    
                         return (void *)pkt_info;
                     }
 
@@ -239,7 +239,7 @@ void *PBUF_MAlloc_Raw(u32 size, u32 need_header, PBuf_Type_E buf_type)
         default:
         break;
     }
-    OS_MutexUnLock(sg_pbuf_mutex);    
+    OS_MutexUnLock(&sg_pbuf_mutex);    
 
     return (void *)pkt_info;
 }
@@ -257,7 +257,7 @@ static void __PBUF_MFree_0(void *PKTMSG)
         if ((u32)NoType_PBUF_Pool[i].pa != (u32)PKTMSG)
         continue;
         //FREE(PKTMSG); //keep to use next time.
-        list_q_qtail(&free_notype_pbuf_hd,(struct list_q*)(&NoType_PBUF_Pool[i]));
+        list_q_qtail(&free_notype_pbuf_hd,(struct ssv_list_q *)(&NoType_PBUF_Pool[i]));
         //NoType_PBUF_Pool[i].valid = 0;
                         
         break;
@@ -272,7 +272,7 @@ static void __PBUF_MFree_0(void *PKTMSG)
             if ((u32)Rx_PBUF_Pool[i].pa != (u32)PKTMSG)
                 continue;
             //FREE(PKTMSG); //keep to use next time.
-            list_q_qtail(&free_rxpbuf_hd,(struct list_q*)(&Rx_PBUF_Pool[i]));
+            list_q_qtail(&free_rxpbuf_hd,(struct ssv_list_q *)(&Rx_PBUF_Pool[i]));
                                     
             break;
     }
@@ -285,11 +285,11 @@ static void __PBUF_MFree_0(void *PKTMSG)
 
 static inline void __PBUF_MFree_1(void *PKTMSG)
 {   
-    OS_MutexLock(sg_pbuf_mutex);
+    OS_MutexLock(&sg_pbuf_mutex);
 
     __PBUF_MFree_0(PKTMSG);    
 
-    OS_MutexUnLock(sg_pbuf_mutex);
+    OS_MutexUnLock(&sg_pbuf_mutex);
 }
 
 void _PBUF_MFree (void *PKTMSG)

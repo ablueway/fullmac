@@ -7,8 +7,12 @@
 #include <linux/random.h>
 #include <linux/spinlock.h>
 #include <linux/semaphore.h>
+//#include <semaphore.h>
 #include <linux/mutex.h>
 #include <linux/delay.h>
+
+#include <linux/kthread.h>
+#include <linux/timer.h>
 
 #include "os.h"
 /*TOSO: aaron */
@@ -31,13 +35,15 @@ OsMutex StkMutex;
 
 u32 task_stack_size = 0;
 
-spinlock_t g_cs_lock;
-unsigned long g_cpu_flags;
+spinlock_t g_os_cs_lock;
+unsigned long g_os_cpu_flags;
 
+wait_queue_head_t g_os_task_wait_q;
 
 OS_APIs s32 OS_Init( void )
 {
-	spin_lock_init(&g_cs_lock);
+	spin_lock_init(&g_os_cs_lock);
+	init_waitqueue_head(&g_os_task_wait_q);
     return OS_SUCCESS;
 }
 
@@ -48,37 +54,42 @@ OS_APIs unsigned long OS_Random(void)
     return randNum;
 }
 
-OS_APIs void OS_Terminate( void )
+OS_APIs void OS_Terminate(void)
 {
 
 }
 
 OS_APIs u32 OS_EnterCritical(void)
 {
-	spin_lock_irqsave(&g_cs_lock, g_cpu_flags);
+	spin_lock_irqsave(&g_os_cs_lock, g_os_cpu_flags);
     return OS_SUCCESS;
 }
 
 OS_APIs void OS_ExitCritical(u32 val)
 {
-	spin_unlock_irqrestore(&g_cs_lock, g_cpu_flags);
+	spin_unlock_irqrestore(&g_os_cs_lock, g_os_cpu_flags);
 }
 
 /* Task: */
 OS_APIs s32 OS_TaskCreate(OsTask task, const char *name, u32 stackSize, 
 					void *param, u32 pri, OsTaskHandle *taskHandle)
 {
-    return OS_SUCCESS;
+	struct task_struct *new_task = kthread_create(task, param, name);
+	if (IS_ERR(new_task))
+	{
+		return OS_FAILED;
+	}
+	return OS_SUCCESS;
 }
 
 
 OS_APIs void OS_TaskDelete(OsTaskHandle taskHandle)
 {
-
+	kthread_stop((struct task_struct *)(taskHandle));
 }
 
 
-OS_APIs void OS_StartScheduler( void )
+OS_APIs void OS_StartScheduler(void)
 {
 
 }
@@ -92,12 +103,21 @@ OS_APIs u32 OS_GetSysTick(void)
 /* Mutex APIs: */
 OS_APIs s32 OS_MutexInit(OsMutex *mutex)
 {
+	struct mutex *lock = (struct mutex *)mutex;
+	mutex_init(lock);
     return OS_SUCCESS;
 }
 
-OS_APIs void OS_MutexLock(OsMutex mutex)
+OS_APIs void OS_MutexLock(OsMutex *mutex)
 {
+	struct mutex *lock = (struct mutex *)mutex;
+	mutex_lock(lock);
+}
 
+OS_APIs void OS_MutexUnLock(OsMutex *mutex)
+{
+	struct mutex *lock = (struct mutex *)mutex;
+	mutex_unlock(lock);
 }
 
 OS_APIs void OS_TickDelay(u32 ticks)
@@ -106,52 +126,59 @@ OS_APIs void OS_TickDelay(u32 ticks)
 }
 
 
-OS_APIs void OS_MutexUnLock(OsMutex mutex)
-{
-
-}
-
-OS_APIs void OS_MutexDelete(OsMutex mutex)
+OS_APIs void OS_MutexDelete(OsMutex *mutex)
 {
 
 }
 
 OS_APIs void OS_MsDelay(u32 ms)
 {
-
+	msleep(ms);
 }
 
 #define SEMA_LOCK()		OSSchedLock()
 #define SEMA_UNLOCK()		OSSchedUnlock()
 
-OS_APIs s32 OS_SemInit( OsSemaphore* Sem, u16 maxcnt, u16 cnt)
+OS_APIs s32 OS_SemInit(OsSemaphore *Sem, u16 maxcnt, u16 cnt)
+{
+	struct semaphore *sem = (struct semaphore *)Sem;
+
+	sema_init(sem, maxcnt);
+	return OS_SUCCESS;
+}
+
+OS_APIs bool OS_SemWait(OsSemaphore *Sem , u16 timeout)
+{
+	struct semaphore *sem = (struct semaphore *)Sem;
+
+//	down(sem);
+	return down_timeout(sem, timeout);
+//    return OS_SUCCESS;
+}
+
+OS_APIs u8 OS_SemSignal(OsSemaphore *Sem)
+{
+	struct semaphore *sem = (struct semaphore *)Sem;
+
+	up(sem);
+
+    return OS_SUCCESS;
+}
+
+OS_APIs u32 OS_SemCntQuery(OsSemaphore *Sem)
 {
     return OS_SUCCESS;
 }
 
-OS_APIs bool OS_SemWait( OsSemaphore Sem , u16 timeout)
+OS_APIs u8 OS_SemSignal_FromISR(OsSemaphore *Sem)
 {
     return OS_SUCCESS;
 }
 
-OS_APIs u8 OS_SemSignal( OsSemaphore Sem)
+OS_APIs void OS_SemDelete(OsSemaphore *Sem)
 {
-    return OS_SUCCESS;
-}
-
-OS_APIs u32 OS_SemCntQuery( OsSemaphore Sem)
-{
-    return OS_SUCCESS;
-}
-
-OS_APIs u8 OS_SemSignal_FromISR( OsSemaphore Sem)
-{
-    return OS_SUCCESS;
-}
-
-OS_APIs void OS_SemDelete(OsSemaphore Sem)
-{
-
+//	struct semaphore *sem = (struct semaphore *)Sem;
+//	sem_destroy(sem);
 }
 
 #define MSGQ_LOCK()		OSSchedLock()
@@ -193,27 +220,27 @@ OS_APIs s32 OS_MsgQWaitingSize( OsMsgQ MsgQ )
 
 
 /* Timer: */
-OS_APIs s32 OS_TimerCreate( OsTimer *timer, u32 ms, u8 autoReload, void *args, OsTimerHandler timHandler )
+OS_APIs s32 OS_TimerCreate(OsTimer *timer, u32 ms, u8 autoReload, void *args, OsTimerHandler timHandler)
 {    
 	return OS_SUCCESS;
 }
 
-OS_APIs s32 OS_TimerSet( OsTimer timer, u32 ms, u8 autoReload, void *args )
+OS_APIs s32 OS_TimerSet(OsTimer timer, u32 ms, u8 autoReload, void *args)
 {
     return OS_SUCCESS;
 }
 
-OS_APIs s32 OS_TimerStart( OsTimer timer )
+OS_APIs s32 OS_TimerStart(OsTimer timer)
 {
     return OS_SUCCESS;
 }
 
-OS_APIs s32 OS_TimerStop( OsTimer timer )
+OS_APIs s32 OS_TimerStop(OsTimer timer)
 {
     return OS_SUCCESS;
 }
 
-OS_APIs void *OS_TimerGetData( OsTimer timer )
+OS_APIs void *OS_TimerGetData(OsTimer timer)
 {
    return NULL;
 }

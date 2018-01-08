@@ -61,7 +61,7 @@ OsMutex			g_wsimp_mutex;
 
 void host_global_init(void)
 {
-/* in */
+/* not in */
 #if CONFIG_STATUS_CHECK    
     g_l2_tx_packets = 0;
     g_l2_tx_copy=0;
@@ -73,11 +73,9 @@ void host_global_init(void)
     g_tx_allocate_fail = 0;
 #endif 
 
-//    OS_MutexInit(&g_hcmd_blocking_mutex);
     g_RunTaskCount = 0;
-//    g_MaxTaskCount = 0;
+
 /* not in */
-//#ifdef __SSV_UNIX_SIM__
 #if (__SSV_UNIX_SIM__ == 1)
 	OS_MutexInit(&g_wsimp_mutex);
 #endif	

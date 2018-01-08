@@ -7,6 +7,7 @@
 
 #ifdef __linux__
 #include <linux/kernel.h>
+#include <linux/llist.h>
 #endif
 
 #include <log.h>
@@ -24,14 +25,15 @@
 #include "ssv_dev.h"
 
 
+
 #define TX_FRAME_ARRAY_SIZE 20
 u16 tx_frame_len_count=0;
 u16 tx_frame_len[TX_FRAME_ARRAY_SIZE];
 
 typedef struct frameList
 {
-    struct llist  _list;
-    void* frame; //store the address of cmd
+    struct ssv_llist  _list;
+    void *frame; //store the address of cmd
 } FrmL;
 
 //extern OsMutex  g_dev_info_mutex;
@@ -43,8 +45,8 @@ static OsMutex tx_mtx;
 static ModeType  curr_mode;
 static u32 tx_data_frm_num;
 static u32 tx_flush_data_frm_num;
-static struct llist_head tx_hwq[PRI_Q_NUM];
-static struct llist_head free_frmQ;
+static struct ssv_llist_head tx_hwq[PRI_Q_NUM];
+static struct ssv_llist_head free_frmQ;
 
 static OsSemaphore tx_frm_sphr;
 static OsSemaphore rx_frm_sphr;
@@ -56,8 +58,13 @@ FrmL *g_freeFrmList = NULL;
 void TXRXTask_Task(void *args);
 static bool Task_Done = false;
 #else
+#ifdef __linux__
+int TXRXTask_TxTask(void *args);
+int TXRXTask_RxTask(void *args);
+#else
 void TXRXTask_TxTask(void *args);
 void TXRXTask_RxTask(void *args);
+#endif
 static bool TxTask_Done = false;
 static bool RxTask_Done = false;
 #endif
@@ -78,9 +85,9 @@ struct task_info_st g_txrx_task_info[] =
 void TXRXTask_TxLock (bool lock)
 {
     if(lock)
-        OS_MutexLock(tx_mtx);
+        OS_MutexLock(&tx_mtx);
     else
-        OS_MutexUnLock(tx_mtx);
+        OS_MutexUnLock(&tx_mtx);
 }
 
 void _dq_status_handler (void *data)
@@ -265,7 +272,7 @@ void TXRXTask_Task(void *args)
                     if(list_q_len(&free_frmQ) > TXSEMA_MAX_NUM)
                         FREE(outFrm);
                     else
-                        list_q_qtail(&free_frmQ,(struct list_q *)outFrm);
+                        list_q_qtail(&free_frmQ,(struct ssv_list_q *)outFrm);
                     OS_MutexUnLock(tx_mtx);
                     OS_SemSignal(tx_frm_sphr);
                     tFrame = NULL;
@@ -275,7 +282,7 @@ void TXRXTask_Task(void *args)
 #if (__SSV_UNIX_SIM__ == 0)
                 else
                 {
-                    list_q_insert_safe(&tx_hwq[i],&tx_hwq[i], (struct list_q *)outFrm, &tx_mtx);
+                    list_q_insert_safe(&tx_hwq[i],&tx_hwq[i], (struct ssv_list_q *)outFrm, &tx_mtx);
                     outFrm = NULL;
                     break;
                 }
@@ -286,7 +293,11 @@ void TXRXTask_Task(void *args)
     Task_Done = true;
 }
 #else
+#ifdef __linux__
+int TXRXTask_TxTask(void *args)
+#else
 void TXRXTask_TxTask(void *args)
+#endif
 {
     void *tFrame = NULL;
     FrmL *outFrm = NULL;
@@ -298,7 +309,7 @@ void TXRXTask_TxTask(void *args)
     //u32 start_ticks = 0, account_ticks = 0, wakeup_ticks = 0, wakeup_total = 0, wait_ticks = 0, acc_wait = 0;
     //u32 periodic_pktnum = 0;
 
-    while(curr_mode != MT_EXIT)
+    while (curr_mode != MT_EXIT)
     {
         prc_count = 0;
         /*
@@ -314,7 +325,7 @@ void TXRXTask_TxTask(void *args)
             acc_wait = 0;
         }
         start_ticks = OS_GetSysTick();*/
-        OS_SemWait(tx_frm_sphr, sleep_tick);
+        OS_SemWait(&tx_frm_sphr, sleep_tick);
         /*wakeup_ticks = OS_GetSysTick();
         wait_ticks = (wakeup_ticks-start_ticks);
         acc_wait += wait_ticks;*/
@@ -336,12 +347,12 @@ void TXRXTask_TxTask(void *args)
 					};
 #endif
                     //LOG_PRINTF("%s:  Send tx frame %08x with FrmQ %08X!!\r\n", __FUNCTION__, tFrame, outFrm);
-                    OS_MutexLock(tx_mtx);
+                    OS_MutexLock(&tx_mtx);
                     flush_frm = (tx_flush_data_frm_num == 0)?false:true;
                     tx_data_frm_num --;
                     if(flush_frm == true)
                         tx_flush_data_frm_num--;
-                    OS_MutexUnLock(tx_mtx);
+                    OS_MutexUnLock(&tx_mtx);
 
                     if (flush_frm == false)
                     {
@@ -404,14 +415,14 @@ TX_RESEND:
                     outFrm->frame = NULL;
                     //periodic_pktnum++;
                     prc_count++;
-                    llist_push_safe(&free_frmQ,(struct llist *)outFrm, &tx_mtx);
+                    llist_push_safe(&free_frmQ,(struct ssv_llist *)outFrm, &tx_mtx);
 
                     tFrame = NULL;
                     outFrm = NULL;
 
                     if(prc_count > 1)
                     {
-                        OS_SemWait(tx_frm_sphr, sleep_tick); //More frames are sent and resource should be pulled out.
+                        OS_SemWait(&tx_frm_sphr, sleep_tick); //More frames are sent and resource should be pulled out.
                         //LOG_PRINTF("******************%s: push back due to multi-send:%d !!\r\n", __FUNCTION__, tx_count);
                     }
 
@@ -439,6 +450,10 @@ TX_RESEND:
         }
     }
     TxTask_Done = true;
+
+#ifdef __linux__
+	return 0;
+#endif	
 }
 
 
@@ -446,8 +461,13 @@ extern u32 g_hw_enable;
 //u32 RxTaskRetryCount[32]={0};
 u32 chip_interrupt;
 extern HOST_API_STATE active_host_api;
-static u8* hcirxAggtempbuf;
+static u8 *hcirxAggtempbuf;
+
+#ifdef __linux__
+int TXRXTask_RxTask(void *args)
+#else
 void TXRXTask_RxTask(void *args)
+#endif
 {
     void * rFrame = NULL;
     u8  *msg_data = NULL;
@@ -456,7 +476,7 @@ void TXRXTask_RxTask(void *args)
     size_t next_pkt_len = 0;
     while(curr_mode != MT_EXIT)
     {
-        OS_SemWait(rx_frm_sphr, 0);
+        OS_SemWait(&rx_frm_sphr, 0);
 
         for(retry=0;retry<32;retry++)
         {
@@ -564,6 +584,10 @@ void TXRXTask_RxTask(void *args)
         os_frame_free(rFrame);
         rFrame = NULL;
     }
+	
+#ifdef __linux__
+	return 0;
+#endif
 }
 #endif
 
@@ -622,11 +646,11 @@ s32 TXRXTask_Init(void)
 
 s32 TXRXTask_DeInit(void)
 {
-    OS_MutexDelete(task_mtx);
-    OS_MutexDelete(tx_mtx);
+    OS_MutexDelete(&task_mtx);
+    OS_MutexDelete(&tx_mtx);
 
-    OS_SemDelete(tx_frm_sphr);
-    OS_SemDelete(rx_frm_sphr);
+    OS_SemDelete(&tx_frm_sphr);
+    OS_SemDelete(&rx_frm_sphr);
 
     OS_MemFree((void*)hcirxAggtempbuf);
     hcirxAggtempbuf=NULL;
@@ -634,7 +658,7 @@ s32 TXRXTask_DeInit(void)
 	return 0;
 }
 //TXRX_FrameEnqueue Enqueue tx frames
-s32 TXRXTask_FrameEnqueue(void* frame, u32 priority)
+s32 TXRXTask_FrameEnqueue(void *frame, u32 priority)
 {
     FrmL *dataFrm = NULL;
 
@@ -645,16 +669,18 @@ s32 TXRXTask_FrameEnqueue(void* frame, u32 priority)
     if ((curr_mode == MT_STOP) && (M0_TXREQ==ssv_hal_get_txreq0_ctype(req)))
 #endif
     {
-        LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_WARNING, ("[TxRx_task]: No enqueue frame due to mode = stop and frame type = data\r\n"));
+        LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_WARNING, 
+			("[TxRx_task]: No enqueue frame due to mode = stop and frame type = data\r\n"));
         return false;
     }
 
-    OS_MutexLock(tx_mtx);
+    OS_MutexLock(&tx_mtx);
     dataFrm = (FrmL *)llist_pop(&free_frmQ);
     if (dataFrm == NULL)
     {
-        LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_SERIOUS, ("[TxRx_task]:can not get empty llist for dataFrm\r\n"));
-        OS_MutexUnLock(tx_mtx);
+        LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_SERIOUS, 
+			("[TxRx_task]:can not get empty llist for dataFrm\r\n"));
+        OS_MutexUnLock(&tx_mtx);
         return false;
     }
 
@@ -668,9 +694,9 @@ s32 TXRXTask_FrameEnqueue(void* frame, u32 priority)
 
     llist_push(&tx_hwq[priority], &dataFrm->_list);
     //LOG_DEBUG("****************[TxRx_task]: size of tx_hwq[priority] = %d\r\n", tx_hwq[priority].qlen);
-    OS_MutexUnLock(tx_mtx);
+    OS_MutexUnLock(&tx_mtx);
 
-    while(OS_SemSignal(tx_frm_sphr) != 0)
+    while(OS_SemSignal(&tx_frm_sphr) != 0)
         OS_TickDelay(1);
 
     return true;
@@ -684,7 +710,7 @@ ssv6xxx_result TXRXTask_SetOpMode(ModeType mode)
     if(mode > MT_EXIT)
         return SSV6XXX_INVA_PARAM;
 
-    OS_MutexLock(tx_mtx);
+    OS_MutexLock(&tx_mtx);
 
     switch (curr_mode)
     {
@@ -718,7 +744,7 @@ ssv6xxx_result TXRXTask_SetOpMode(ModeType mode)
     if(ret == SSV6XXX_SUCCESS)
         curr_mode = mode;
 
-    OS_MutexUnLock(tx_mtx);
+    OS_MutexUnLock(&tx_mtx);
     LOG_DEBUGF(LOG_TXRX, ("[TxRx_task]: curr_mode = %d\r\n", curr_mode));
 
     if(curr_mode == MT_EXIT)
@@ -745,19 +771,19 @@ void TXRXTask_Isr(u32 signo,bool isfromIsr)
         ssv6xxx_drv_irq_disable(isfromIsr);
         if(isfromIsr == TRUE)
         {
-            if(OS_SemSignal_FromISR(rx_frm_sphr) !=0)
+            if(OS_SemSignal_FromISR(&rx_frm_sphr) !=0)
             {
                 //LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_SERIOUS, ("OS_SemSignal_FromISR fail\r\n"));
-                LOG_PRINTF("1 RX sem cnt=%d\r\n",OS_SemCntQuery(rx_frm_sphr));
+                LOG_PRINTF("1 RX sem cnt=%d\r\n",OS_SemCntQuery(&rx_frm_sphr));
                 //ssv6xxx_drv_irq_enable(true);
             }
         }    
         else
         {
-            if(OS_SemSignal(rx_frm_sphr) !=0)
+            if(OS_SemSignal(&rx_frm_sphr) !=0)
             {
                 //LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_SERIOUS, ("OS_SemSignal fail\r\n"));
-                LOG_PRINTF("2 RX sem cnt=%d\r\n",OS_SemCntQuery(rx_frm_sphr));
+                LOG_PRINTF("2 RX sem cnt=%d\r\n",OS_SemCntQuery(&rx_frm_sphr));
                 //ssv6xxx_drv_irq_enable(false);
             }
         }
@@ -774,7 +800,8 @@ void TXRXTask_ShowSt(void)
     for(i=0;i<TX_FRAME_ARRAY_SIZE;i++){
         LOG_PRINTF("tx frame %d: len=%d\r\n",i,tx_frame_len[i]);
     }
-    LOG_PRINTF("TX sem cnt=%d, RX sem cnt=%d,irq_st=%d\r\n",OS_SemCntQuery(tx_frm_sphr),OS_SemCntQuery(rx_frm_sphr),ssv6xxx_drv_irq_status());
+    LOG_PRINTF("TX sem cnt=%d, RX sem cnt=%d,irq_st=%d\r\n", 
+		OS_SemCntQuery(&tx_frm_sphr),OS_SemCntQuery(&rx_frm_sphr),ssv6xxx_drv_irq_status());
 }
 u32 ssv6xxx_wifi_get_fw_interrupt_cnt(void)
 {

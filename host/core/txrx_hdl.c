@@ -378,13 +378,13 @@ static s32 _RxHdl_FrameProc(void* frame)
         	//802.11
         	if ((wifi_flt_num != 0) && (1==ssv_hal_get_rxpkt_f80211(pPktInfo)))
             {
-                OS_MutexLock(rxhdl_mtx);
+                OS_MutexLock(&rxhdl_mtx);
                 for(;i < RXPKTFLT_NUM; i++)
                 {
                     if ((rx_wifi_flt[i].b7b2mask != 0) && ((b7b2&rx_wifi_flt[i].b7b2mask) == rx_wifi_flt[i].fc_b7b2))
                         data_ret = rx_wifi_flt[i].cb_fn(frame, OS_FRAME_GET_DATA_LEN(frame),bssid_idx);
                 }
-                OS_MutexUnLock(rxhdl_mtx);
+                OS_MutexUnLock(&rxhdl_mtx);
             }
 
 
@@ -396,7 +396,7 @@ static s32 _RxHdl_FrameProc(void* frame)
                 u8* eth_type_addr = (u8*) ((u8*)pPktInfo + (RxHdl_GetRawRxDataOffset((CFG_HOST_RXPKT *)OS_FRAME_GET_DATA(frame)) + 12));
                 eth_type = eth_type_addr[0]<<8|eth_type_addr[1];
 
-                OS_MutexLock(rxhdl_mtx);
+                OS_MutexLock(&rxhdl_mtx);
                 for(i = 0;i < RXPKTFLT_NUM; i++)
                 {
                     
@@ -407,7 +407,7 @@ static s32 _RxHdl_FrameProc(void* frame)
                             data_ret = rx_eth_flt[i].cb_fn(frame, OS_FRAME_GET_DATA_LEN(frame),bssid_idx);
                     }
                 }
-                OS_MutexUnLock(rxhdl_mtx);
+                OS_MutexUnLock(&rxhdl_mtx);
             }
 
             if (data_ret != SSV6XXX_DATA_CONT)
@@ -438,9 +438,9 @@ static s32 _RxHdl_FrameProc(void* frame)
                 if(tid_agg_rx->buf_size!=0)
                 {
                     start_seq_num = (bar_data->start_seq_num) >> 4;
-                    OS_MutexLock(tid_agg_rx->reorder_lock);
+                    OS_MutexLock(&tid_agg_rx->reorder_lock);
                     ieee80211_release_reorder_frames(tid_agg_rx,start_seq_num);
-                    OS_MutexUnLock(tid_agg_rx->reorder_lock);
+                    OS_MutexUnLock(&tid_agg_rx->reorder_lock);
                 }
 
             }
@@ -494,7 +494,7 @@ s32 RxHdl_SetWifiRxFlt(struct wifi_flt *flt, ssv6xxx_cb_action act)
     bool ret = false;
     s8 i = 0, empty = -1, exist = -1;
 
-    OS_MutexLock(rxhdl_mtx);
+    OS_MutexLock(&rxhdl_mtx);
     for (;i < RXPKTFLT_NUM; i++)
     {
         if(rx_wifi_flt[i].cb_fn == NULL)
@@ -529,7 +529,7 @@ s32 RxHdl_SetWifiRxFlt(struct wifi_flt *flt, ssv6xxx_cb_action act)
             ret = true;
         }
     }
-    OS_MutexUnLock(rxhdl_mtx);
+    OS_MutexUnLock(&rxhdl_mtx);
 
     return ret;
 }
@@ -539,7 +539,7 @@ s32 RxHdl_SetEthRxFlt(struct eth_flt *flt, ssv6xxx_cb_action act)
     bool ret = false;
     s8 i = 0, empty = -1, exist = -1;
 
-    OS_MutexLock(rxhdl_mtx);
+    OS_MutexLock(&rxhdl_mtx);
     for (;i < RXPKTFLT_NUM; i++)
     {
         if(rx_eth_flt[i].cb_fn == NULL)
@@ -574,7 +574,7 @@ s32 RxHdl_SetEthRxFlt(struct eth_flt *flt, ssv6xxx_cb_action act)
             ret = true;
         }
     }
-    OS_MutexUnLock(rxhdl_mtx);
+    OS_MutexUnLock(&rxhdl_mtx);
 
     return ret;
 }
@@ -664,9 +664,9 @@ void timer_sta_reorder_release(void* data1, void* data2)
             if (tid_agg_rx->buf_size == 0)
                 continue;
 
-            OS_MutexLock(tid_agg_rx->reorder_lock);
+            OS_MutexLock(&tid_agg_rx->reorder_lock);
             ieee80211_sta_reorder_release(tid_agg_rx);
-            OS_MutexUnLock(tid_agg_rx->reorder_lock);
+            OS_MutexUnLock(&tid_agg_rx->reorder_lock);
         }
     }
     os_create_timer(HT_RX_REORDER_BUF_TIMEOUT,timer_sta_reorder_release,NULL,NULL,(void*)TIMEOUT_TASK);
@@ -764,7 +764,7 @@ static bool ieee80211_sta_manage_reorder_buf(struct rx_ba_session_desc *tid_agg_
  	int index;
  	bool ret = true;
     //Need to get by FW
-    OS_MutexLock(tid_agg_rx->reorder_lock);
+    OS_MutexLock(&tid_agg_rx->reorder_lock);
  	buf_size=tid_agg_rx->buf_size;//tid_agg_rx->buf_size;
  	head_seq_num=tid_agg_rx->head_seq_num;//tid_agg_rx->head_seq_num;
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -830,7 +830,7 @@ static bool ieee80211_sta_manage_reorder_buf(struct rx_ba_session_desc *tid_agg_
 	ieee80211_sta_reorder_release(tid_agg_rx);
     //return;
  out:
-    OS_MutexUnLock(tid_agg_rx->reorder_lock);
+    OS_MutexUnLock(&tid_agg_rx->reorder_lock);
 	return ret;
 }
 
@@ -899,7 +899,7 @@ void ieee80211_delete_ampdu_rx(u8 wsid)
         {
             //OsMutex reorder_lock_temp;
             tid_agg_rx=&g_ba_rx_session_desc[wsid][tid];
-            OS_MutexLock(tid_agg_rx->reorder_lock);
+            OS_MutexLock(&tid_agg_rx->reorder_lock);
             for(index = 0;index<g_host_cfg.ampdu_rx_buf_size;index++)
             {
                 ieee80211_release_reorder_frame(tid_agg_rx, index);
@@ -909,7 +909,7 @@ void ieee80211_delete_ampdu_rx(u8 wsid)
         	tid_agg_rx->stored_mpdu_num=0;
         	tid_agg_rx->ssn=0;
         	tid_agg_rx->buf_size=0;
-            OS_MutexUnLock(tid_agg_rx->reorder_lock);
+            OS_MutexUnLock(&tid_agg_rx->reorder_lock);
         }
     }
     return ;
@@ -937,13 +937,13 @@ void ieee80211_addba_handler (void *data)
     if ((wsid < RX_AGG_RX_BA_MAX_STATION) && (tid < RX_AGG_RX_BA_MAX_SESSIONS))
     {
         tid_agg_rx=&g_ba_rx_session_desc[wsid][tid];
-        OS_MutexLock(tid_agg_rx->reorder_lock);
+        OS_MutexLock(&tid_agg_rx->reorder_lock);
         for (index = 0; index<g_host_cfg.ampdu_rx_buf_size; index++)//RX_AGG_RX_BA_MAX_BUF_SIZE
             ieee80211_release_reorder_frame(tid_agg_rx, index);
         tid_agg_rx->buf_size = addbainfo->buf_size;
         tid_agg_rx->ssn = addbainfo->ssn;
         tid_agg_rx->head_seq_num = addbainfo->ssn;
-        OS_MutexUnLock(tid_agg_rx->reorder_lock);
+        OS_MutexUnLock(&tid_agg_rx->reorder_lock);
         LOG_PRINTF("addba: wsid:%d,tid:%d,ssn:%d,buf_size:%d\r\n",addbainfo->wsid,addbainfo->tid,addbainfo->ssn,addbainfo->buf_size);
         os_cancel_timer(timer_sta_reorder_release,(u32)NULL,(u32)NULL);
         os_create_timer(HT_RX_REORDER_BUF_TIMEOUT,timer_sta_reorder_release,NULL,NULL,(void*)TIMEOUT_TASK);
