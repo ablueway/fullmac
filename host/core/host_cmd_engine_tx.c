@@ -27,7 +27,7 @@
 #include "host_cmd_engine_sm.h"
 #include "host_cmd_engine_tx.h"
 
-#include <drv/ssv_drv.h>
+#include <ssv_drv.h>
 #include <dev.h>
 #include <txrx_hdl.h>
 //extern void pendingcmd_expired_handler(void* data1, void* data2);

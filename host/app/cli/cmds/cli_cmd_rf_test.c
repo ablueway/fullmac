@@ -7,7 +7,7 @@
 
 #include <os_wrapper.h>
 #include <log.h>
-#include <drv/ssv_drv.h>
+#include <ssv_drv.h>
 #include <ssv_lib.h>
 #include <dev.h>
 #include "cli_cmd_rf_test.h"

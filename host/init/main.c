@@ -10,7 +10,7 @@
 #include <pbuf.h>
 #include <cmd_def.h>
 #include <cli/cli.h>
-#include <drv/ssv_drv.h>
+#include <ssv_drv.h>
 #include <host_apis.h>
 
 #include <netapp/net_app.h>

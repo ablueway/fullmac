@@ -32,7 +32,7 @@
 #include <ssv6200_aux.h>
 #endif
 
-#include <hwif/hwif.h>
+#include <hwif.h>
 //#include <hci/ssv_hci.h>
 
 #include "ssv6200_common.h"

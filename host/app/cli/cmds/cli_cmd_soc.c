@@ -8,7 +8,7 @@
 #include <os_wrapper.h>
 #include <host_apis.h>
 #include <log.h>
-#include <drv/ssv_drv.h>
+#include <ssv_drv.h>
 
 #include "cli_cmd.h"
 #include "cli_cmd_soc.h"
