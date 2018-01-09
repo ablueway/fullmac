@@ -49,7 +49,7 @@ extern TimerClientData JunkClientData;	/* for use when you don't care */
 ** the TimerClientData associated with the timer, and a timeval in case
 ** it wants to schedule another timer.
 */
-typedef void TimerProc( TimerClientData client_data, struct timeval* nowP );
+typedef void TimerProc( TimerClientData client_data, struct timeval *nowP);
 
 /* The Timer struct. */
 typedef struct TimerStruct

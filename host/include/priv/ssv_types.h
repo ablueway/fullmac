@@ -54,8 +54,11 @@ typedef u32                size_t;
 
 typedef volatile u32                SSV6XXX_REG;
 
-
+#ifdef __linux__
+typedef int (*TASK_FUNC)(void *data);
+#else
 typedef void (*TASK_FUNC)(void *);
+#endif
 
 #ifndef __SSS8_T_
 #define __SSS8_T_
@@ -123,9 +126,11 @@ typedef unsigned int __u32;
 #endif
 
 #ifndef __FUNCTION__
+#ifdef __linux__
+#else
 #define __FUNCTION__ __func__
 #endif
-
+#endif
 /* TODO:aaron */    
 #if 0
 #define ASSERT(x) \
@@ -225,9 +230,11 @@ typedef unsigned int __u32;
 #endif
 
 #ifndef ARRAY_SIZE
+#ifdef __linux__
+#else
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 #endif
-
+#endif
 #ifndef ARRAY_ELEM_SIZE
 #define ARRAY_ELEM_SIZE(TYPE)   ((size_t)(&((TYPE *)100)[1]) - 100U)
 #endif

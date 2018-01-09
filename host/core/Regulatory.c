@@ -17,20 +17,8 @@
  * abs() should not be used for 64-bit types (s64, u64, long long) - use abs64()
  * for those.
  */
-#if 1
+#ifndef abs
 #define abs(x) (((int)(x)<0)?-(x):x)
-#else
-#define abs(x) ({						\
-		long ret;					\
-		if (sizeof(x) == sizeof(long)) {		\
-			long __x = (x);				\
-			ret = (__x < 0) ? -__x : __x;		\
-		} else {					\
-			int __x = (x);				\
-			ret = (__x < 0) ? -__x : __x;		\
-		}						\
-		ret;						\
-	})
 #endif
 /**
  * freq_in_rule_band - tells us if a frequency is in a frequency band

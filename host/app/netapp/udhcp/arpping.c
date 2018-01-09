@@ -7,7 +7,7 @@
  */
 #include "udhcp/udhcp_common.h"
 #include "udhcp/dhcpd.h"
-#if DHCPD_SUPPORT
+#if (DHCPD_SUPPORT == 1)
 #if 0
 struct arpMsg {
 	/* Ethernet header */

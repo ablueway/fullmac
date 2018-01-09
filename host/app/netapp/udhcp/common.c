@@ -7,7 +7,7 @@
 #include "udhcp/udhcp_common.h"
 #include "log.h"
 #include <stdarg.h>
-#if DHCPD_SUPPORT
+#if (DHCPD_SUPPORT == 1)
 
 #if defined CONFIG_UDHCP_DEBUG && CONFIG_UDHCP_DEBUG >= 1
 unsigned dhcp_verbose = 2;

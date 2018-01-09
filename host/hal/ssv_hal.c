@@ -120,7 +120,7 @@ bool ssv_hal_init(void)
     s_hal_cur = 0;
 
 /* not in */
-#if(CONFIG_CHIP_ID==SSV6030P)
+#if(CONFIG_CHIP_ID == SSV6030P)
 	_ssv_hal_register(&g_hal_ssv6030);
 	_ssv_hal_select(g_hal_ssv6030.name);
 #endif

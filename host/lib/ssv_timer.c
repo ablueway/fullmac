@@ -16,13 +16,17 @@
 extern void os_msg_free(void *msg);
 
 OsMutex g_tmr_mutex;
-struct list_q tmr_hd;
-struct list_q free_tmr_hd;
-struct list_q expired_tmr_hd;
+struct ssv_list_q tmr_hd;
+struct ssv_list_q free_tmr_hd;
+struct ssv_list_q expired_tmr_hd;
 extern struct task_info_st g_host_task_info[];
 struct os_timer g_ssv_timer[SSV_TMR_MAX];
 
+#ifdef __linux__
+int SSV_Timer_Task( void *args );
+#else
 void SSV_Timer_Task( void *args );
+#endif
 
 struct task_info_st g_timer_task_info[] =
 {
@@ -35,14 +39,14 @@ void os_timer_init(void)
     int i;
     struct os_timer *pOSTimer;
 
-    OS_MutexInit( &g_tmr_mutex );
-    list_q_init((struct list_q*)&tmr_hd);
-    list_q_init((struct list_q*)&free_tmr_hd);
-    list_q_init((struct list_q*)&expired_tmr_hd);
+    OS_MutexInit(&g_tmr_mutex);
+    list_q_init((struct ssv_list_q *)&tmr_hd);
+    list_q_init((struct ssv_list_q *)&free_tmr_hd);
+    list_q_init((struct ssv_list_q *)&expired_tmr_hd);
 
     if (g_timer_task_info[0].qlength> 0) {
         ASSERT(OS_MsgQCreate(&g_timer_task_info[0].qevt,
-        (u32)g_timer_task_info[0].qlength)==OS_SUCCESS);
+        	(u32)g_timer_task_info[0].qlength) == OS_SUCCESS);
     }
 
     /* Create Registered Task: */
@@ -53,33 +57,33 @@ void os_timer_init(void)
     g_timer_task_info[0].prio,
     NULL);
 
-    MEMSET((void*)&g_ssv_timer,0,sizeof(g_ssv_timer));
-    for(i=0;i<SSV_TMR_MAX;i++)
+    MEMSET((void *)&g_ssv_timer,0,sizeof(g_ssv_timer));
+    for (i = 0 ;i < SSV_TMR_MAX; i++)
     {
         pOSTimer = g_ssv_timer+i;//(struct os_timer *)OS_MemAlloc(sizeof(struct os_timer));
-        list_q_qtail(&free_tmr_hd,(struct list_q*)pOSTimer);
+        list_q_qtail(&free_tmr_hd,(struct ssv_list_q *)pOSTimer);
     }
 }
 void _create_timer(struct os_timer *pOSTimer, u32 xElapsed)
 {
-    struct list_q* qhd = &tmr_hd;
-    OS_MutexLock(g_tmr_mutex);
+    struct ssv_list_q *qhd = &tmr_hd;
+    OS_MutexLock(&g_tmr_mutex);
 
     pOSTimer->en_state = EN_TMR_CNT_DWN;
     if(qhd->qlen > 0)
     {
-        struct list_q* next = qhd->next;
-        struct os_timer* tmr_ptr;
+        struct ssv_list_q *next = qhd->next;
+        struct os_timer *tmr_ptr;
 
-        while(next != qhd)
+        while (next != qhd)
         {
-            tmr_ptr = (struct os_timer*)next;
+            tmr_ptr = (struct os_timer *)next;
             if(tmr_ptr->msRemian >= pOSTimer->msRemian)
             {
-                list_q_insert(qhd,next->prev,(struct list_q*)pOSTimer);
+                list_q_insert(qhd,next->prev,(struct ssv_list_q *)pOSTimer);
 
                 //update all timer remain time;
-                next = ((struct list_q*)pOSTimer)->next;				
+                next = ((struct ssv_list_q *)pOSTimer)->next;				
                 while(next != qhd)
                 {
                     tmr_ptr = (struct os_timer*)next;
@@ -97,28 +101,28 @@ void _create_timer(struct os_timer *pOSTimer, u32 xElapsed)
             next = next->next;
         }
 
-        list_q_qtail(qhd,(struct list_q*)pOSTimer);
+        list_q_qtail(qhd,(struct ssv_list_q *)pOSTimer);
     }
     else
     {
-        list_q_qtail(qhd,(struct list_q*)pOSTimer);
+        list_q_qtail(qhd,(struct ssv_list_q *)pOSTimer);
     }
 DONE:
     //LOG_PRINTF("add TMR(%x):%d,%d,%d,tick=%d\r\n",(u32)pOSTimer,pOSTimer->msRemian,pOSTimer->msTimeout,xElapsed,OS_MS2TICK(pOSTimer->msRemian));
     //LOG_PRINTF("%s %d,%d,%d,%d\r\n",__func__,tmr_hd.qlen,expired_tmr_hd.qlen,free_tmr_hd.qlen,pOSTimer->msRemian);
-    OS_MutexUnLock(g_tmr_mutex);
+    OS_MutexUnLock(&g_tmr_mutex);
 
 }
 
 void _update_all_timer(u32 xElapsed)
 {
-    struct list_q* qhd = &tmr_hd;
-    struct list_q* next = NULL;
-    struct os_timer* tmr_ptr;
+    struct ssv_list_q *qhd = &tmr_hd;
+    struct ssv_list_q *next = NULL;
+    struct os_timer *tmr_ptr;
     MsgEvent *pMsgEv=NULL;
     u32 evt_retry = 30;
 
-    OS_MutexLock(g_tmr_mutex);
+    OS_MutexLock(&g_tmr_mutex);
 
     //LOG_PRINTF("\r\nTMR update :%d\r\n",xElapsed);
 
@@ -157,16 +161,16 @@ EVT_AGN:
                         if(tmr_ptr->infombx)
                         {
                             tmr_ptr->en_state = EN_TMR_TICK_POST;
-                            list_q_qtail(&expired_tmr_hd,(struct list_q*)tmr_ptr);
-                            OS_MutexUnLock(g_tmr_mutex);
+                            list_q_qtail(&expired_tmr_hd,(struct ssv_list_q *)tmr_ptr);
+                            OS_MutexUnLock(&g_tmr_mutex);
                             msg_evt_post((OsMsgQ)tmr_ptr->infombx, pMsgEv);
-                            OS_MutexLock(g_tmr_mutex);
+                            OS_MutexLock(&g_tmr_mutex);
                         }
                         else
                         {
                             //OS_MemFree((void*)tmr_ptr);
                             tmr_ptr->en_state = EN_TMR_FREE;
-                            list_q_qtail(&free_tmr_hd,(struct list_q*)tmr_ptr);
+                            list_q_qtail(&free_tmr_hd,(struct ssv_list_q *)tmr_ptr);
                             os_msg_free(pMsgEv);
                             LOG_PRINTF("infombx error\r\n");
                         }
@@ -181,14 +185,14 @@ EVT_AGN:
                             goto EVT_AGN;
                         }
                         tmr_ptr->en_state = EN_TMR_FREE;
-                        list_q_qtail(&free_tmr_hd,(struct list_q*)tmr_ptr);
+                        list_q_qtail(&free_tmr_hd,(struct ssv_list_q *)tmr_ptr);
                         LOG_PRINTF("tmr alloc evt fail %d\r\n",evt_retry);
                     }
                 }
                 else
                 {
                     tmr_ptr->en_state = EN_TMR_FREE;
-                    list_q_qtail(&free_tmr_hd,(struct list_q*)tmr_ptr);
+                    list_q_qtail(&free_tmr_hd,(struct ssv_list_q *)tmr_ptr);
                     LOG_PRINTF("invalid tmr\r\n");
                     //OS_MemFree((void*)tmr_ptr);
                 }
@@ -197,20 +201,20 @@ EVT_AGN:
         }
     }
 
-    OS_MutexUnLock(g_tmr_mutex);
+    OS_MutexUnLock(&g_tmr_mutex);
 
     //LOG_PRINTF("%s %d,%d,%d\r\n",__func__,tmr_hd.qlen,expired_tmr_hd.qlen,free_tmr_hd.qlen);
 }
 
 void _cancel_timer(timer_handler handler, u32 data1, u32 data2)
 {
-    struct list_q* qhd = &tmr_hd;
-    OS_MutexLock(g_tmr_mutex);
+    struct ssv_list_q *qhd = &tmr_hd;
+    OS_MutexLock(&g_tmr_mutex);
 
     if(qhd->qlen > 0)
     {
-        struct list_q* next = qhd->next;
-        struct os_timer* tmr_ptr;        
+        struct ssv_list_q *next = qhd->next;
+        struct os_timer *tmr_ptr;        
         u32   msRemain=0;
         
         while(next != qhd)
@@ -224,8 +228,8 @@ void _cancel_timer(timer_handler handler, u32 data1, u32 data2)
                 msRemain = tmr_ptr->msRemian;
                 tmr_ptr->handler = NULL;
                 tmr_ptr->en_state = EN_TMR_FREE;
-                list_q_remove(qhd,(struct list_q*)tmr_ptr);
-                list_q_qtail(&free_tmr_hd,(struct list_q*)tmr_ptr);
+                list_q_remove(qhd,(struct ssv_list_q*)tmr_ptr);
+                list_q_qtail(&free_tmr_hd,(struct ssv_list_q*)tmr_ptr);
 
                 //re-add remain time for reset timer
                 if(msRemain > 0)
@@ -247,7 +251,7 @@ void _cancel_timer(timer_handler handler, u32 data1, u32 data2)
 
     if(qhd->qlen > 0)
     {
-        struct list_q* next = qhd->next;
+        struct ssv_list_q* next = qhd->next;
         struct os_timer* tmr_ptr;
 
         while(next != qhd)
@@ -263,17 +267,17 @@ void _cancel_timer(timer_handler handler, u32 data1, u32 data2)
             }
         }
     }
-    OS_MutexUnLock(g_tmr_mutex);
+    OS_MutexUnLock(&g_tmr_mutex);
     //LOG_PRINTF("%s %d,%d,%d\r\n",__func__,tmr_hd.qlen,expired_tmr_hd.qlen,free_tmr_hd.qlen);
 }
 
 void _free_timer(struct os_timer* free_tmr)
 {
-    struct list_q* qhd = &expired_tmr_hd;
-    OS_MutexLock(g_tmr_mutex);
+    struct ssv_list_q* qhd = &expired_tmr_hd;
+    OS_MutexLock(&g_tmr_mutex);
     if(qhd->qlen > 0)
     {
-        struct list_q* next = qhd->next;
+        struct ssv_list_q* next = qhd->next;
         struct os_timer* tmr_ptr;
 
         while(next != qhd)
@@ -284,16 +288,21 @@ void _free_timer(struct os_timer* free_tmr)
             {
                 tmr_ptr->handler = NULL;
                 tmr_ptr->en_state = EN_TMR_FREE;
-                list_q_remove(qhd,(struct list_q*)tmr_ptr);
-                list_q_qtail(&free_tmr_hd,(struct list_q*)tmr_ptr);
+                list_q_remove(qhd,(struct ssv_list_q*)tmr_ptr);
+                list_q_qtail(&free_tmr_hd,(struct ssv_list_q*)tmr_ptr);
             }
         }
     }
 
-    OS_MutexUnLock(g_tmr_mutex);
+    OS_MutexUnLock(&g_tmr_mutex);
     //LOG_PRINTF("%s,%d,%d,%d\r\n",__func__,tmr_hd.qlen,expired_tmr_hd.qlen,free_tmr_hd.qlen);
 }
+
+#ifdef __linux__
+int SSV_Timer_Task( void *args )
+#else
 void SSV_Timer_Task( void *args )
+#endif
 {
     u32 xStartTime, xEndTime, xElapsed;
     MsgEvent *MsgEv = NULL;
@@ -366,6 +375,9 @@ void SSV_Timer_Task( void *args )
             _update_all_timer(xElapsed);
         }
     }
+#ifdef __linux__
+	return 0;
+#endif	
 }
 
 s32 os_create_timer(u32 ms, timer_handler handler, void *data1, void *data2, void* mbx)
@@ -377,10 +389,10 @@ s32 os_create_timer(u32 ms, timer_handler handler, void *data1, void *data2, voi
     MsgEvent *pMsgEv=NULL;
 
     //pOSTimer = (struct os_timer *)OS_MemAlloc(sizeof(struct os_timer));
-    OS_MutexLock(g_tmr_mutex);
+    OS_MutexLock(&g_tmr_mutex);
     //LOG_PRINTF("free_tmr_hd len=%d\r\n",free_tmr_hd.qlen);
     pOSTimer = (struct os_timer*)list_q_deq(&free_tmr_hd);
-    OS_MutexUnLock(g_tmr_mutex);
+    OS_MutexUnLock(&g_tmr_mutex);
     //LOG_PRINTF("create TMR=%x\r\n",(u32)pOSTimer);
     if(pOSTimer)
     {

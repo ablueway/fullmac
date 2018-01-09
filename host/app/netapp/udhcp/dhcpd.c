@@ -40,7 +40,7 @@
 #include <log.h>
 #include "os.h"
 #include "msgevt.h"
-#if DHCPD_SUPPORT
+#if (DHCPD_SUPPORT == 1)
 /* globals variable */
 struct sockaddr *dest_sin = NULL;
 socklen_t dest_length = 0;

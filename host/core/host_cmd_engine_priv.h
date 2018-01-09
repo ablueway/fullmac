@@ -80,15 +80,15 @@ typedef enum{
 
 typedef struct frameQ
 {
-    struct list_q  _list;
-    void* frame; //store the address of cmd
+    struct ssv_list_q  _list;
+    void *frame; //store the address of cmd
 } FrmQ;
 
 typedef struct HostCmdEngInfo{
     OsMutex CmdEng_mtx;
     ModeType  curr_mode;    
-    struct list_q  pending_cmds;
-    struct list_q  free_FrmQ;
+    struct ssv_list_q  pending_cmds;
+    struct ssv_list_q  free_FrmQ;
     u32 pending_cmd_seqno;
     bool blockcmd_in_q;
 

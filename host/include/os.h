@@ -130,11 +130,10 @@ typedef struct task_info_st
     u8          stack_size;  /* unit: 16 */
     void        *args;
     TASK_FUNC   task_func; 
-    
 } task_info;
 
 
-#if 1// (CONFIG_HOST_PLATFORM == 1)
+#if (CONFIG_HOST_PLATFORM == 1)
 
 #define OS_INTR_DISABLE()
 #define OS_INTR_ENABLE()
@@ -195,20 +194,34 @@ OS_APIs void OS_StartScheduler( void );
 OS_APIs void OS_Terminate( void );
 
 
-
+#ifdef __linux__
+/* Mutex: */
+OS_APIs s32  OS_MutexInit(OsMutex *mutex);
+OS_APIs void OS_MutexLock(OsMutex *mutex);
+OS_APIs void OS_MutexUnLock(OsMutex *mutex);
+OS_APIs void OS_MutexDelete(OsMutex *mutex);
+/*semaphore*/
+OS_APIs s32 OS_SemInit(OsSemaphore *Sem, u16 maxcnt, u16 cnt);
+OS_APIs bool OS_SemWait(OsSemaphore *Sem, u16 timeout);
+OS_APIs u8 OS_SemSignal(OsSemaphore *Sem);
+OS_APIs u8 OS_SemSignal_FromISR(OsSemaphore *Sem);
+OS_APIs void OS_SemDelete(OsSemaphore *Sem);
+OS_APIs u32 OS_SemCntQuery(OsSemaphore *Sem);
+#else
 /* Mutex: */
 OS_APIs s32  OS_MutexInit( OsMutex *mutex );
 OS_APIs void OS_MutexLock( OsMutex mutex );
 OS_APIs void OS_MutexUnLock( OsMutex mutex );
 OS_APIs void OS_MutexDelete( OsMutex mutex );
-
 /*semaphore*/
-OS_APIs s32 OS_SemInit( OsSemaphore* Sem , u16 maxcnt , u16 cnt);
+OS_APIs s32 OS_SemInit( OsSemaphore *Sem , u16 maxcnt , u16 cnt);
 OS_APIs bool OS_SemWait( OsSemaphore Sem , u16 timeout);
 OS_APIs u8 OS_SemSignal( OsSemaphore Sem);
 OS_APIs u8 OS_SemSignal_FromISR( OsSemaphore Sem);
 OS_APIs void OS_SemDelete(OsSemaphore Sem);
 OS_APIs u32 OS_SemCntQuery( OsSemaphore Sem);
+#endif
+
 
 /* Delay: */
 OS_APIs void OS_MsDelay(u32 ms);

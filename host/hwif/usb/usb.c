@@ -37,6 +37,9 @@
 
 #include <hif_wrapper.h>
 
+
+struct ssv6xxx_usb_glue *usb_glue;
+
 //#include "ssv_common.h"
 /* TODO:aaron */
 typedef enum{
@@ -66,6 +69,10 @@ extern int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode);
        || (usb_glue->dev_ready == false) \
        || (usb_glue->wlan_data.is_enabled == false) \
       )
+
+#define UNIFY_LINUX_USB_DRV_INFO_FLAGS ((DRV_INFO_FLAG_OS_TYPE_LINUX << DRV_INFO_FLAG_OS_TYPE_SHIFT) || \
+					(DRV_INFO_FLAG_REGISTER_TYPE_PASSIVE << DRV_INFO_FLAG_REGISTER_TYPE_SHIFT) || \
+					(DRV_INFO_FLAG_HW_TYPE_USB << DRV_INFO_FLAG_HW_TYPE_SHIFT))
 
 
 /* table of devices that work with this driver */
@@ -378,8 +385,7 @@ static void ssv6xxx_usb_recv_rx(struct work_struct *work)
 /* 
  * For usb interface,  we make use of work queue to receive the rx frame.
  */
-static int __must_check ssv6xxx_usb_read(struct device *child,
-        void *buf, size_t *size, int mode)
+static int __must_check ssv6xxx_usb_read(void *usb_glue, void *buf, size_t *size, int mode)
 {
     //printk(KERN_INFO "==>%s()\n", __func__);
 	*size = 0;
@@ -411,12 +417,11 @@ static int ssv6xxx_usb_send_tx(struct ssv6xxx_usb_glue *usb_glue, struct sk_buff
 	return retval;
 }
 
-static int __must_check ssv6xxx_usb_write(struct device *child,
-        void *buf, size_t len, u8 queue_num)
+static int __must_check ssv6xxx_usb_write(void *dev, void *buf, size_t len, u8 queue_num)
 {
     int retval = (-1);	
-    struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
-
+    //struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
+	struct ssv6xxx_usb_glue *usb_glue = (struct ssv6xxx_usb_glue *)dev;
     //printk(KERN_INFO "==>%s()\n", __func__);
     if (IS_GLUE_INVALID(usb_glue))
         return retval;
@@ -469,11 +474,11 @@ static int __must_check __ssv6xxx_usb_read_reg(struct ssv6xxx_usb_glue *usb_glue
 	return retval;
 }
 
-static int __must_check ssv6xxx_usb_read_reg(struct device *child, u32 addr,
-                                             u32 *buf)
+static int __must_check ssv6xxx_usb_read_reg(void *dev, u32 addr, u32 *buf)
 {
-    struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
-    //printk(KERN_INFO "==>%s()\n", __func__);
+    //struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
+	struct ssv6xxx_usb_glue *usb_glue = (struct ssv6xxx_usb_glue *)dev;
+	//printk(KERN_INFO "==>%s()\n", __func__);
 	return __ssv6xxx_usb_read_reg(usb_glue, addr, buf);
 }
 
@@ -498,16 +503,14 @@ static int __must_check __ssv6xxx_usb_write_reg(struct ssv6xxx_usb_glue *usb_glu
 	return retval;
 }
 
-static int __must_check ssv6xxx_usb_write_reg(struct device *child, u32 addr,
-		u32 buf)
+static int __must_check ssv6xxx_usb_write_reg(void *dev, u32 addr, u32 buf)
 {
-    struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
+	struct ssv6xxx_usb_glue *usb_glue = (struct ssv6xxx_usb_glue *)dev;
     //printk(KERN_INFO "==>%s()\n", __func__);
 	return __ssv6xxx_usb_write_reg(usb_glue, addr, buf);
 }
 
-static int __must_check ssv6xxx_usb_burst_read_reg(struct device *child, u32 *addr,
-        u32 *buf, u8 reg_amount)
+static int __must_check ssv6xxx_usb_burst_read_reg(void *dev, u32 *addr, u32 *buf, u8 reg_amount)
 {
     //not support
     //printk(KERN_INFO "==>%s()\n", __func__);    
@@ -516,8 +519,7 @@ static int __must_check ssv6xxx_usb_burst_read_reg(struct device *child, u32 *ad
 	return -EOPNOTSUPP;
 }
 
-static int __must_check ssv6xxx_usb_burst_write_reg(struct device *child, u32 *addr,
-        u32 *buf, u8 reg_amount)
+static int __must_check ssv6xxx_usb_burst_write_reg(void *dev, u32 *addr, u32 *buf, u8 reg_amount)
 {
     //not support
     //printk(KERN_INFO "==>%s()\n", __func__);    
@@ -526,11 +528,11 @@ static int __must_check ssv6xxx_usb_burst_write_reg(struct device *child, u32 *a
     return -EOPNOTSUPP;
 }
 
-static int ssv6xxx_usb_load_firmware(struct device *child, 
-				u32 start_addr, u8 *data, int data_length)
+static int ssv6xxx_usb_load_firmware(void *dev, u32 start_addr, u8 *data, int data_length)
 {
-	struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
-   	u16 laddr, haddr;
+	//struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
+	struct ssv6xxx_usb_glue *usb_glue = (struct ssv6xxx_usb_glue *)dev;
+	u16 laddr, haddr;
 	u32 addr;
 	int retval = 0, max_usb_block = 512;
 	u8 *pdata;
@@ -571,7 +573,7 @@ static int ssv6xxx_usb_load_firmware(struct device *child,
 	return retval;
 }
 
-static int ssv6xxx_usb_property(struct device *child)
+static int ssv6xxx_usb_property(void *dev)
 {
     //printk(KERN_INFO "==>%s()\n", __func__);    
     printk(KERN_INFO "SSV_HWIF_CAPABILITY_POLLING | SSV_HWIF_INTERFACE_USB\n");
@@ -589,12 +591,12 @@ static int ssv6xxx_chk_usb_speed(struct ssv6xxx_usb_glue *usb_glue)
 }
 
  
-static void ssv6xxx_usb_rx_task(struct device *child, 
-			int (*rx_cb)(struct sk_buff *rx_skb, void *args), 
-			void *args, u32 *pkt) 
+static void ssv6xxx_usb_rx_task(void *dev, 
+					int (*rx_cb)(struct sk_buff *rx_skb, void *args), 
+					void *args, u32 *pkt) 
 {
-    struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
-
+    //struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
+	struct ssv6xxx_usb_glue *usb_glue = (struct ssv6xxx_usb_glue *)dev;
     printk(KERN_INFO "==>%s()\n", __func__);    
 	usb_glue->rx_cb = rx_cb;
 	usb_glue->rx_cb_args = args;
@@ -616,10 +618,10 @@ static void ssv6xxx_usb_rx_task(struct device *child,
 	printk(KERN_INFO "<==%s()\n", __func__);
 }
 
-static int ssv6xxx_usb_start_acc(struct device *child, u8 epnum)
+static int ssv6xxx_usb_start_acc(void *dev, u8 epnum)
 {
-    struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
-
+    //struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
+	struct ssv6xxx_usb_glue *usb_glue = (struct ssv6xxx_usb_glue *)dev;
     printk(KERN_INFO "==>%s()\n", __func__);    
     
     if (IS_GLUE_INVALID(usb_glue)) {
@@ -635,10 +637,10 @@ static int ssv6xxx_usb_start_acc(struct device *child, u8 epnum)
     return 0;
 }
 
-static int ssv6xxx_usb_stop_acc(struct device *child, u8 epnum)
+static int ssv6xxx_usb_stop_acc(void *dev, u8 epnum)
 {   
-    struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
-
+    //struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
+	struct ssv6xxx_usb_glue *usb_glue = (struct ssv6xxx_usb_glue *)dev;
     printk(KERN_INFO "==>%s()\n", __func__);    
     if (IS_GLUE_INVALID(usb_glue)) {
         printk("failed to stop usb acc of ep%d\n", epnum);
@@ -653,10 +655,10 @@ static int ssv6xxx_usb_stop_acc(struct device *child, u8 epnum)
     return 0;
 }
 
-static int ssv6xxx_usb_jump_to_rom(struct device *child)
+static int ssv6xxx_usb_jump_to_rom(void *dev)
 {
-    struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
-
+    //struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
+	struct ssv6xxx_usb_glue *usb_glue = (struct ssv6xxx_usb_glue *)dev;
     printk(KERN_INFO "==>%s()\n", __func__);    
 	
     if (IS_GLUE_INVALID(usb_glue)) {
@@ -670,9 +672,10 @@ static int ssv6xxx_usb_jump_to_rom(struct device *child)
 	return 0;
 }
 
-static void ssv6xxx_usb_sysplf_reset(struct device *child, u32 addr, u32 value)
+static void ssv6xxx_usb_sysplf_reset(void *dev, u32 addr, u32 value)
 {
-    struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
+    //struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
+	struct ssv6xxx_usb_glue *usb_glue = (struct ssv6xxx_usb_glue *)dev;
 	int retval = (-1), rsp_len = 0;
 	u16 sequence;
 	struct ssv6xxx_write_reg write_reg;
@@ -728,9 +731,10 @@ static struct ssv6xxx_hwif_ops usb_ops =
 };
 #endif
 
-static struct unified_drv_ops usb_ops = 
+struct unified_drv_ops usb_ops = 
 {
-	.drv_info.flags = 0x0,
+	.name = "SSV6XXX_USB",
+	.drv_info.flags = UNIFY_LINUX_USB_DRV_INFO_FLAGS,
 	.drv_ops = 
 	{
 	    .read            		= ssv6xxx_usb_read,
@@ -753,7 +757,7 @@ static struct unified_drv_ops usb_ops =
 	}
 };
 
-static void ssv6xxx_usb_power_on(struct ssv6xxx_platform_data * pdata, struct usb_interface *interface)
+static void ssv6xxx_usb_power_on(struct ssv6xxx_platform_data *pdata, struct usb_interface *interface)
 {
 	if (pdata->is_enabled == true)
 		return;
@@ -770,7 +774,7 @@ static void ssv6xxx_usb_power_off(struct ssv6xxx_platform_data *pdata, struct us
 }
 
 
-static void _read_chip_id (struct ssv6xxx_usb_glue *usb_glue)
+static void _read_chip_id(struct ssv6xxx_usb_glue *usb_glue)
 {
     u32 regval;
     int ret;
@@ -841,7 +845,7 @@ static int ssv_usb_probe(struct usb_interface *interface,
 		      const struct usb_device_id *id)
 {
 	struct ssv6xxx_platform_data *pwlan_data;
-	struct ssv6xxx_usb_glue *usb_glue;
+	//struct ssv6xxx_usb_glue *usb_glue;
 	struct usb_host_interface *iface_desc;
 	struct usb_endpoint_descriptor *endpoint;
 	int i;

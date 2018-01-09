@@ -9,7 +9,7 @@
 #include <host_config.h>
 #include <ssv_hal.h>
 
-#include <drv/ssv_drv.h>
+#include <ssv_drv.h>
 
 #include <dev.h>
 #include <netstack.h>
@@ -22,9 +22,11 @@
 
 #ifdef __linux__
 #if !NET_MGR_NO_SYS
-void netmgr_task(void *arg)
+int netmgr_task(void *arg)
 {
+	return 0;
 }
+
 struct task_info_st st_netmgr_task[] =
 {
     { "netmgr_task",  (OsMsgQ)0, 4, OS_NETMGR_TASK_PRIO, NETMGR_STACK_SIZE, NULL, netmgr_task},

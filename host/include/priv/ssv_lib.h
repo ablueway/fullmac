@@ -15,43 +15,49 @@
 #include <stdarg.h>
 #endif
 
-struct llist {
-    struct llist   *next;
+#ifdef __linux__
+//#include <linux/llist.h>
+#include <linux/jiffies.h>
+#endif
+
+struct ssv_llist {
+    struct ssv_llist   *next;
 };
 
-struct llist_head {
-    struct llist   *list;
-    struct llist   *last;
+
+struct ssv_llist_head {
+    struct ssv_llist   *list;
+    struct ssv_llist   *last;
     u32 llen;
 };
 
-struct list_q {
-    struct list_q   *next;
-    struct list_q   *prev;
+struct ssv_list_q {
+    struct ssv_list_q   *next;
+    struct ssv_list_q   *prev;
     unsigned int    qlen;
 };
 
-void llist_head_init(struct llist_head *lhd);
-struct llist *llist_pop(struct llist_head *lhd);
-void llist_push(struct llist_head *lhd, struct llist *new);
-u32 llist_l_len(struct llist_head *lhd);
-struct llist *llist_pop_safe(struct llist_head *lhd, OsMutex *pmtx);
-void llist_push_safe(struct llist_head *lhd, struct llist *new, OsMutex *pmtx);
-u32 llist_l_len_safe(struct llist_head *lhd, OsMutex *pmtx);
+void llist_head_init(struct ssv_llist_head *lhd);
+struct ssv_llist *llist_pop(struct ssv_llist_head *lhd);
+void llist_push(struct ssv_llist_head *lhd, struct ssv_llist *new);
+u32 llist_l_len(struct ssv_llist_head *lhd);
+struct ssv_llist *llist_pop_safe(struct ssv_llist_head *lhd, OsMutex *pmtx);
+void llist_push_safe(struct ssv_llist_head *lhd, struct ssv_llist *new, OsMutex *pmtx);
+u32 llist_l_len_safe(struct ssv_llist_head *lhd, OsMutex *pmtx);
 
 
-void list_q_init(struct list_q *qhd);
-void list_q_qtail(struct list_q *qhd, struct list_q *newq);
-struct list_q * list_q_deq(struct list_q *qhd);
-unsigned int list_q_len(struct list_q *qhd);
-void list_q_insert(struct list_q *qhd, struct list_q *prev, struct list_q *newq);
-void list_q_remove(struct list_q *qhd,struct list_q *curt);
+void list_q_init(struct ssv_list_q *qhd);
+void list_q_qtail(struct ssv_list_q *qhd, struct ssv_list_q *newq);
+struct ssv_list_q *list_q_deq(struct ssv_list_q *qhd);
+unsigned int list_q_len(struct ssv_list_q *qhd);
+void list_q_insert(struct ssv_list_q *qhd, struct ssv_list_q *prev, struct ssv_list_q *newq);
+void list_q_remove(struct ssv_list_q *qhd,struct ssv_list_q *curt);
 
-void list_q_qtail_safe(struct list_q *qhd, struct list_q *newq, OsMutex *pmtx);
-struct list_q * list_q_deq_safe(struct list_q *qhd, OsMutex *pmtx);
-u32 list_q_len_safe(struct list_q *qhd, OsMutex *pmtx);
-void list_q_insert_safe(struct list_q *qhd, struct list_q *prev, struct list_q *newq, OsMutex *pmtx);
-void list_q_remove_safe(struct list_q *qhd,struct list_q *curt, OsMutex *pmtx);
+void list_q_qtail_safe(struct ssv_list_q *qhd, struct ssv_list_q *newq, OsMutex *pmtx);
+struct ssv_list_q *list_q_deq_safe(struct ssv_list_q *qhd, OsMutex *pmtx);
+u32 list_q_len_safe(struct ssv_list_q *qhd, OsMutex *pmtx);
+void list_q_insert_safe(struct ssv_list_q *qhd, struct ssv_list_q *prev, struct ssv_list_q *newq, OsMutex *pmtx);
+void list_q_remove_safe(struct ssv_list_q *qhd,struct ssv_list_q *curt, OsMutex *pmtx);
 
 LIB_APIs u32 ssv6xxx_atoi_base( const char *s, u32 base );
 LIB_APIs s32 ssv6xxx_atoi( const char *s );
@@ -136,4 +142,3 @@ void ssv6xxx_sta_mode_connect(void *Info);
 #endif
 
 #endif /* _SSV_LIB_H_ */
-
