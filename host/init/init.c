@@ -535,7 +535,7 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
 #if (ENABLE_SMART_CONFIG == 1)
     init_smart_config();
 #endif
-
+	printk("line (%d)\n",__LINE__);
     init_host_default_config(IS_HT_SUPPORT);
 
 	/**
@@ -545,25 +545,25 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
 	*/
 	/* TODO:aaron */
     OS_Init();
-
+	printk("line (%d)\n",__LINE__);
     /* TODO:aaron */
     host_global_init();
     ssv6xxx_init_task_para();
-
+	printk("line (%d)\n",__LINE__);
     LOG_init(true, true, LOG_LEVEL_ON, LOG_MODULE_MASK(LOG_MODULE_EMPTY),false);
 
     /* Total = 112 g_host_cfg.pool_size = POOL_SIZE(72),
        g_host_cfg.pool_sec_size = POOL_SEC_SIZE(16) SSV_TMR_MAX(24) */
     msg_evt_init(MAC_EVENT_COUNT);
-
+	printk("line (%d)\n",__LINE__);
     netstack_init(NULL);
-        /**
+     /**
 	 * Initialize Host simulation platform. The Host initialization sequence
 	 * shall be the same as the sequence on the real host platform.
 	 * @ Initialize host device drivers (SDIO/SIM/UART/SPI ...)
 	 */
     ASSERT(ssv6xxx_drv_module_init() == true);
-
+	printk("line (%d)\n",__LINE__);
     LOG_PRINTF("Try to connecting CABRIO via %s...\n\r", INTERFACE);
     /* #define INTERFACE "spi" */
 	drv_info.fields.os_type = DRV_INFO_FLAG_OS_TYPE_LINUX;
@@ -577,14 +577,14 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
         LOG_PRINTF("==============================\n\r");
         return -1;
     }
-
+	printk("line (%d)\n",__LINE__);
     ASSERT(ssv_hal_init() == true);
 
     if (ssv6xxx_wifi_init() != SSV6XXX_SUCCESS)
         return -1;
 
     os_timer_init();
-
+	printk("line (%d)\n",__LINE__);
     ssv6xxx_wifi_init_regdom();
     ssv6xxx_wifi_set_reg(DEFAULT_COUNTRY_CODE);
 
@@ -605,5 +605,6 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
 
     ssv6xxx_wifi_cfg();
 #endif
+	OS_SemInit(NULL, 1, 1);
     return res;
 }

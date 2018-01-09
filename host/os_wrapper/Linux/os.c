@@ -10,7 +10,7 @@
 //#include <semaphore.h>
 #include <linux/mutex.h>
 #include <linux/delay.h>
-
+#include <linux/slab.h>
 #include <linux/kthread.h>
 #include <linux/timer.h>
 
@@ -74,11 +74,21 @@ OS_APIs void OS_ExitCritical(u32 val)
 OS_APIs s32 OS_TaskCreate(OsTask task, const char *name, u32 stackSize, 
 					void *param, u32 pri, OsTaskHandle *taskHandle)
 {
+	/* TODO: aaron 
+	 * For now, task create the sys will hit two kind of kernel panic :
+	 * 1. the null pointer of task function (ex: tx/rx)
+     * 	  the task function need to review and re-program. temply mark it.
+     * 2. for workaround step 1, the task will block too long to make kernel 
+     *    report this as issue. temply mark the api content.				
+	 */
+#if 0
 	struct task_struct *new_task = kthread_create(task, param, name);
 	if (IS_ERR(new_task))
 	{
 		return OS_FAILED;
 	}
+	wake_up_process(new_task);
+#endif
 	return OS_SUCCESS;
 }
 
@@ -103,21 +113,25 @@ OS_APIs u32 OS_GetSysTick(void)
 /* Mutex APIs: */
 OS_APIs s32 OS_MutexInit(OsMutex *mutex)
 {
-	struct mutex *lock = (struct mutex *)mutex;
-	mutex_init(lock);
+//	struct mutex *lock = (struct mutex *)mutex;
+	*mutex = kzalloc(sizeof(struct mutex), GFP_KERNEL);
+	mutex_init(*mutex);
     return OS_SUCCESS;
 }
 
-OS_APIs void OS_MutexLock(OsMutex *mutex)
+OS_APIs void OS_MutexLock(OsMutex mutex)
 {
-	struct mutex *lock = (struct mutex *)mutex;
-	mutex_lock(lock);
+	mutex_lock(mutex);
 }
 
-OS_APIs void OS_MutexUnLock(OsMutex *mutex)
+OS_APIs void OS_MutexUnLock(OsMutex mutex)
 {
-	struct mutex *lock = (struct mutex *)mutex;
-	mutex_unlock(lock);
+	mutex_unlock(mutex);
+}
+
+OS_APIs void OS_MutexDelete(OsMutex mutex)
+{
+
 }
 
 OS_APIs void OS_TickDelay(u32 ticks)
@@ -125,11 +139,6 @@ OS_APIs void OS_TickDelay(u32 ticks)
 
 }
 
-
-OS_APIs void OS_MutexDelete(OsMutex *mutex)
-{
-
-}
 
 OS_APIs void OS_MsDelay(u32 ms)
 {
@@ -141,44 +150,44 @@ OS_APIs void OS_MsDelay(u32 ms)
 
 OS_APIs s32 OS_SemInit(OsSemaphore *Sem, u16 maxcnt, u16 cnt)
 {
-	struct semaphore *sem = (struct semaphore *)Sem;
-
-	sema_init(sem, maxcnt);
+//	struct semaphore *sem = (struct semaphore *)Sem;
+	*Sem = kzalloc(sizeof (struct semaphore), GFP_KERNEL);
+	sema_init(*Sem, maxcnt);
 	return OS_SUCCESS;
 }
 
-OS_APIs bool OS_SemWait(OsSemaphore *Sem , u16 timeout)
+OS_APIs bool OS_SemWait(OsSemaphore Sem , u16 timeout)
 {
-	struct semaphore *sem = (struct semaphore *)Sem;
-
+//	struct semaphore *sem = (struct semaphore *)Sem;
 //	down(sem);
-	return down_timeout(sem, timeout);
+	return down_timeout(Sem, timeout);
 //    return OS_SUCCESS;
 }
 
-OS_APIs u8 OS_SemSignal(OsSemaphore *Sem)
+OS_APIs u8 OS_SemSignal(OsSemaphore Sem)
 {
-	struct semaphore *sem = (struct semaphore *)Sem;
+	//struct semaphore *sem = (struct semaphore *)Sem;
 
-	up(sem);
+	up(Sem);
 
     return OS_SUCCESS;
 }
 
-OS_APIs u32 OS_SemCntQuery(OsSemaphore *Sem)
+OS_APIs u32 OS_SemCntQuery(OsSemaphore Sem)
 {
     return OS_SUCCESS;
 }
 
-OS_APIs u8 OS_SemSignal_FromISR(OsSemaphore *Sem)
+OS_APIs u8 OS_SemSignal_FromISR(OsSemaphore Sem)
 {
     return OS_SUCCESS;
 }
 
-OS_APIs void OS_SemDelete(OsSemaphore *Sem)
+OS_APIs void OS_SemDelete(OsSemaphore Sem)
 {
 //	struct semaphore *sem = (struct semaphore *)Sem;
 //	sem_destroy(sem);
+	kfree(Sem);
 }
 
 #define MSGQ_LOCK()		OSSchedLock()

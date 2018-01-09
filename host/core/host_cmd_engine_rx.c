@@ -228,18 +228,18 @@ s32 leave_host_event_handler_(struct cfg_host_event *pPktInfo)
             mlme_remove_ap(&vif->m_info.StaInfo->joincfg->bss);
         }
 #if(ENABLE_DYNAMIC_RX_SENSITIVE==0)
-		OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+		OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
 		vif->m_info.StaInfo->status= DISCONNECT;
 		MEMSET(vif->m_info.StaInfo->joincfg, 0, sizeof(struct cfg_join_request));
 		if(get_current_vif_state()==VIF_ALL_DEACTIVE)
 			ssv_hal_sta_reject_bcn();
-		OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+		OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
 #else
-		OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+		OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
 		if(get_current_vif_state()==VIF_ALL_DEACTIVE)
 			ssv_hal_sta_reject_bcn();
 
-		OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+		OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
 		ssv6xxx_sta_mode_disconnect((void*)vif->m_info.StaInfo);
 #endif
 
@@ -274,17 +274,17 @@ s32 join_host_event_handler_(struct cfg_host_event *pPktInfo)
         if (join_res->u.join.status_code != 0){
             mlme_remove_ap(&gDeviceInfo->vif[join_res->u.join.bssid_idx].m_info.StaInfo->joincfg->bss);
 #if(ENABLE_DYNAMIC_RX_SENSITIVE==0)
-            OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+            OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
             gDeviceInfo->vif[join_res->bssid_idx].m_info.StaInfo->status = DISCONNECT;
             if(get_current_vif_state()==VIF_ALL_DEACTIVE)
                 ssv_hal_sta_reject_bcn();
             MEMSET(gDeviceInfo->vif[join_res->bssid_idx].m_info.StaInfo->joincfg, 0, sizeof(struct cfg_join_request));
-            OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+            OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
 #else
-			OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+			OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
             if(get_current_vif_state()==VIF_ALL_DEACTIVE)
                 ssv_hal_sta_reject_bcn();
-            OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+            OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
             ssv6xxx_sta_mode_disconnect((void*)gDeviceInfo->vif[join_res->u.join.bssid_idx].m_info.StaInfo);
 #endif
 #if 1
@@ -302,14 +302,14 @@ s32 join_host_event_handler_(struct cfg_host_event *pPktInfo)
         else{
             //Connect sucessulfy with AP, and we don't need to info the netmgr
             #if(ENABLE_DYNAMIC_RX_SENSITIVE==0)
-            OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+            OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
             gDeviceInfo->vif[join_res->bssid_idx].m_info.StaInfo->status = CONNECT;
             ssv_hal_sta_rcv_specific_bcn();
-            OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+            OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
             #else
-            OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+            OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
             ssv_hal_sta_rcv_specific_bcn();
-            OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+            OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
             ssv6xxx_sta_mode_connect((void*)gDeviceInfo->vif[join_res->u.join.bssid_idx].m_info.StaInfo);
             #endif
 
@@ -319,33 +319,33 @@ s32 join_host_event_handler_(struct cfg_host_event *pPktInfo)
     }else{
         if (join_res->u.join.status_code != 0){
             #if(ENABLE_DYNAMIC_RX_SENSITIVE==0)
-            OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+            OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
             gDeviceInfo->vif[join_res->bssid_idx].m_info.StaInfo->status = DISCONNECT;
             if(get_current_vif_state()==VIF_ALL_DEACTIVE)
                 ssv_hal_sta_reject_bcn();
-            OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+            OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
             #else
-            OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+            OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
             if(get_current_vif_state()==VIF_ALL_DEACTIVE)
                 ssv_hal_sta_reject_bcn();
-            OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+            OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
             ssv6xxx_sta_mode_disconnect((void*)gDeviceInfo->vif[join_res->u.join.bssid_idx].m_info.StaInfo);
             #endif
 
         }
         else{
             #if(ENABLE_DYNAMIC_RX_SENSITIVE==0)
-            OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+            OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
             gDeviceInfo->vif[join_res->bssid_idx].m_info.StaInfo->status = CONNECT;
             ssv_hal_sta_rcv_specific_bcn();
             MEMCPY(gDeviceInfo->vif[join_res->bssid_idx].m_info.StaInfo->joincfg, 
                    gDeviceInfo->vif[join_res->bssid_idx].m_info.StaInfo->joincfg_backup, 
                    sizeof(struct cfg_join_request));
-            OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+            OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
             #else
-            OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+            OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
             ssv_hal_sta_rcv_specific_bcn();
-            OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+            OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
             ssv6xxx_sta_mode_connect((void*)gDeviceInfo->vif[join_res->u.join.bssid_idx].m_info.StaInfo);
             #endif
         }
@@ -395,7 +395,7 @@ void CmdEng_RxHdlEvent(void *frame)
 		{
 
 		}*/
-        OS_MutexLock(&gHCmdEngInfo->CmdEng_mtx);
+        OS_MutexLock(gHCmdEngInfo->CmdEng_mtx);
         if ((gHCmdEngInfo->blockcmd_in_q == true) && (pPktInfo->h_event == SOC_EVT_MLME_CMD_DONE) && (pPktInfo->evt_seq_no == gHCmdEngInfo->pending_cmd_seqno))
         {
             LOG_DEBUGF(LOG_CMDENG, ("[CmdEng]: Got SOC_EVT_MLME_CMD_DONE %d for block cmd\r\n", gHCmdEngInfo->pending_cmd_seqno));
@@ -403,7 +403,7 @@ void CmdEng_RxHdlEvent(void *frame)
             gHCmdEngInfo->pending_cmd_seqno = 0;
             //os_cancel_timer(pendingcmd_expired_handler, gHCmdEngInfo, NULL);
         }
-        OS_MutexUnLock(&gHCmdEngInfo->CmdEng_mtx);
+        OS_MutexUnLock(gHCmdEngInfo->CmdEng_mtx);
 
         if (pPktInfo->h_event == SOC_EVT_MLME_CMD_DONE)
         {

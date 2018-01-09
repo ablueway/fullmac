@@ -54,7 +54,7 @@ extern struct Host_cfg g_host_cfg;
 
 void ssvdrv_rx_isr(void)
 {
-    OS_SemSignal(&ssvdrv_rx_sphr);
+    OS_SemSignal(ssvdrv_rx_sphr);
 }
 
 bool ssv6xxx_drv_tx_resource_enough(u32 frame_len)
@@ -68,7 +68,7 @@ bool ssv6xxx_drv_tx_resource_enough(u32 frame_len)
 
     do
     {
-        OS_MUTEX_LOCK(&txsrcMutex);
+        OS_MUTEX_LOCK(txsrcMutex);
         if ((tx_rcs.free_page < page_count) || (tx_rcs.free_id <= 0)|| (tx_rcs.free_space<= 0))
         {
             need_check_tx_src = TRUE;
@@ -82,7 +82,7 @@ bool ssv6xxx_drv_tx_resource_enough(u32 frame_len)
             tx_rcs.free_space--;
             ret = TRUE;
         }
-        OS_MUTEX_UNLOCK(&txsrcMutex);
+        OS_MUTEX_UNLOCK(txsrcMutex);
 
         if(need_check_tx_src)
         {
@@ -90,9 +90,9 @@ bool ssv6xxx_drv_tx_resource_enough(u32 frame_len)
                 rty_cnt--;
 
                 //update_tx_resource
-                OS_MUTEX_LOCK(&txsrcMutex);
+                OS_MUTEX_LOCK(txsrcMutex);
                 ssv_hal_get_tx_resources(&tx_rcs.free_page,&tx_rcs.free_id,&tx_rcs.free_space);
-                OS_MUTEX_UNLOCK(&txsrcMutex);
+                OS_MUTEX_UNLOCK(txsrcMutex);
             }
             else
             {
@@ -121,9 +121,9 @@ bool ssv6xxx_drv_wait_tx_resource(u32 frame_len)
         }
 
         //update_tx_resource
-        OS_MUTEX_LOCK(&txsrcMutex);
+        OS_MUTEX_LOCK(txsrcMutex);
         ssv_hal_get_tx_resources(&tx_rcs.free_page,&tx_rcs.free_id,&tx_rcs.free_space);
-        OS_MUTEX_UNLOCK(&txsrcMutex);
+        OS_MUTEX_UNLOCK(txsrcMutex);
 
         times++;
     }
@@ -150,9 +150,9 @@ u32 ssv6xxx_drv_get_handle(void)
 				__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
         return -1;
     }
-    OS_MUTEX_LOCK(&drvMutex);
+    OS_MUTEX_LOCK(drvMutex);
     retVal = s_drv_cur->drv_ops.handle();
-    OS_MUTEX_UNLOCK(&drvMutex);
+    OS_MUTEX_UNLOCK(drvMutex);
 #endif
 	return retVal;
 }
@@ -171,9 +171,9 @@ bool ssv6xxx_drv_ack_int(void)
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->drv_ops.name);
         return FALSE;
     }
-    OS_MUTEX_LOCK(&drvMutex);
+    OS_MUTEX_LOCK(drvMutex);
     ret = s_drv_cur->drv_ops.ack_int();
-    OS_MUTEX_UNLOCK(&drvMutex);
+    OS_MUTEX_UNLOCK(drvMutex);
 #endif
     return ret;
 }
@@ -322,8 +322,8 @@ void ssv6xxx_drv_module_release(void)
     }
 
     s_drv_cur = NULL;
-    OS_MutexDelete(&drvMutex);
-    OS_MutexDelete(&txsrcMutex);
+    OS_MutexDelete(drvMutex);
+    OS_MutexDelete(txsrcMutex);
     SDRV_TRACE("%s() =>\r\n", __FUNCTION__);
 }
 
@@ -414,9 +414,9 @@ bool ssv6xxx_drv_open(void)
 #else
     assert(s_drv_cur->open != NULL);
 
-    OS_MUTEX_LOCK(&drvMutex);
+    OS_MUTEX_LOCK(drvMutex);
     ret = s_drv_cur->open();
-    OS_MUTEX_UNLOCK(&drvMutex);
+    OS_MUTEX_UNLOCK(drvMutex);
 #endif
     return ret;
 }
@@ -433,9 +433,9 @@ bool ssv6xxx_drv_close(void)
 
     assert(s_drv_cur->close != NULL);
 
-    OS_MUTEX_LOCK(&drvMutex);
+    OS_MUTEX_LOCK(drvMutex);
     ret=s_drv_cur->close();
-    OS_MUTEX_UNLOCK(&drvMutex);
+    OS_MUTEX_UNLOCK(drvMutex);
 #endif
     return ret;
 }
@@ -471,11 +471,11 @@ s32 ssv6xxx_drv_recv(u8 *dat, size_t len)
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
         return -1;
     }
-    OS_MUTEX_LOCK(&drvMutex);
-    retVal=s_drv_cur->recv(dat, len);
+    OS_MUTEX_LOCK(drvMutex);
+    retVal = s_drv_cur->recv(dat, len);
     if (retVal>0)
         drv_trx_time = os_tick2ms(OS_GetSysTick());
-    OS_MUTEX_UNLOCK(&drvMutex);
+    OS_MUTEX_UNLOCK(drvMutex);
 #endif
     return retVal;
 }
@@ -507,9 +507,9 @@ bool ssv6xxx_drv_ioctl(u32 ctl_code,
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
         return FALSE;
     }
-    OS_MUTEX_LOCK(&drvMutex);
+    OS_MUTEX_LOCK(drvMutex);
     ret=s_drv_cur->ioctl(ctl_code, in_buf, in_size, out_buf, out_size, bytes_ret);
-    OS_MUTEX_UNLOCK(&drvMutex);
+    OS_MUTEX_UNLOCK(drvMutex);
 #endif
     return ret;
 }
@@ -543,11 +543,11 @@ s32 ssv6xxx_drv_send(void *dat, size_t len)
         _packetdump("ssv6xxx_drv_send", dat, len);
 #endif
 
-    OS_MUTEX_LOCK(&drvMutex);
+    OS_MUTEX_LOCK(drvMutex);
     retVal=s_drv_cur->send(dat, len);
     if(retVal>0)
         drv_trx_time = os_tick2ms(OS_GetSysTick());
-    OS_MUTEX_UNLOCK(&drvMutex);
+    OS_MUTEX_UNLOCK(drvMutex);
 #endif
     return retVal;
 }
@@ -571,7 +571,7 @@ u32 ssv6xxx_drv_read_reg(u32 addr)
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
         return -1;
     }	
-    OS_MUTEX_LOCK(&drvMutex);
+    OS_MUTEX_LOCK(drvMutex);
 
 #ifdef __linux__
 	s_drv_cur->drv_ops.readreg(usb_glue, addr, &regval);
@@ -580,7 +580,7 @@ u32 ssv6xxx_drv_read_reg(u32 addr)
     retVal = s_drv_cur->read_reg(addr)
 #endif
 
-    OS_MUTEX_UNLOCK(&drvMutex);
+    OS_MUTEX_UNLOCK(drvMutex);
 
     return retVal;
 }
@@ -600,13 +600,13 @@ bool ssv6xxx_drv_write_reg(u32 addr, u32 data)
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
         return FALSE;
     }
-    OS_MUTEX_LOCK(&drvMutex);
+    OS_MUTEX_LOCK(drvMutex);
 #ifdef __linux__
     ret=s_drv_cur->drv_ops.writereg(usb_glue, addr, data);
 #else
     ret=s_drv_cur->write_reg(addr, data);
 #endif
-	OS_MUTEX_UNLOCK(&drvMutex);
+	OS_MUTEX_UNLOCK(drvMutex);
     return ret;
 }
 
@@ -635,9 +635,9 @@ bool ssv6xxx_drv_write_byte(u32 addr, u32 data)
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
         return FALSE;
     }
-    OS_MUTEX_LOCK(&drvMutex);
+    OS_MUTEX_LOCK(drvMutex);
     ret=s_drv_cur->write_byte(1, addr, data);
-    OS_MUTEX_UNLOCK(&drvMutex);
+    OS_MUTEX_UNLOCK(drvMutex);
 #endif
     return ret;
 }
@@ -655,9 +655,9 @@ bool ssv6xxx_drv_read_byte(u32 addr)
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
         return FALSE;
     }
-    OS_MUTEX_LOCK(&drvMutex);
+    OS_MUTEX_LOCK(drvMutex);
     ret=s_drv_cur->read_byte(1,addr);
-    OS_MUTEX_UNLOCK(&drvMutex);
+    OS_MUTEX_UNLOCK(drvMutex);
 #endif
     return ret;
 }
@@ -675,9 +675,9 @@ bool ssv6xxx_drv_write_sram(u32 addr, u8 *data, u32 size)
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
         return FALSE;
     }
-    OS_MUTEX_LOCK(&drvMutex);
+    OS_MUTEX_LOCK(drvMutex);
     ret=s_drv_cur->write_sram(addr, data, size);
-    OS_MUTEX_UNLOCK(&drvMutex);
+    OS_MUTEX_UNLOCK(drvMutex);
 #endif
     return ret;
 }
@@ -695,9 +695,9 @@ bool ssv6xxx_drv_read_sram (u32 addr, u8 *data, u32 size)
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
         return FALSE;
     }
-    OS_MUTEX_LOCK(&drvMutex);
+    OS_MUTEX_LOCK(drvMutex);
     ret=s_drv_cur->read_sram(addr, data, size);
-    OS_MUTEX_UNLOCK(&drvMutex);
+    OS_MUTEX_UNLOCK(drvMutex);
 #endif
 	return ret;
 }
@@ -761,10 +761,11 @@ bool ssv6xxx_drv_irq_enable(bool is_isr)
 {
     if (s_drv_cur == NULL)
         SDRV_FAIL_RET(FALSE, "%s s_drv_cur = 0\r\n",__FUNCTION__);
+
+	if (!is_isr)
+        OS_MUTEX_LOCK(drvMutex);
 #ifdef __linux__
 #else
-    if (!is_isr)
-        OS_MUTEX_LOCK(drvMutex);
     if (s_drv_cur->ssv_irq_enable == NULL)
     {        
         if(!is_isr)
@@ -773,11 +774,13 @@ bool ssv6xxx_drv_irq_enable(bool is_isr)
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
         return FALSE;
     }
+	
     s_drv_cur->ssv_irq_enable();
+#endif
     _ssv6xxx_irq_st = true;
     if (!is_isr)
         OS_MUTEX_UNLOCK(drvMutex);
-#endif
+
     return TRUE;
 }
 
@@ -829,7 +832,7 @@ bool ssv6xxx_drv_wakeup_wifi(bool sw)
 
 #ifdef __linux__
 #else
-    if (s_drv_cur->wakeup_wifi== NULL)
+    if (s_drv_cur->wakeup_wifi == NULL)
     {
         SDRV_WARN("%s() : NO wakeup_wifi() in ssv_drv = (0x%08x, %s)\r\n", 
 			__FUNCTION__, s_drv_cur, s_drv_cur->name);

@@ -53,7 +53,7 @@ typedef void *OsTimer;
 typedef void (*OsTimerHandler)(OsTimer xTimer);
 
 //typedef OS_EVENT *OsMutex;
-typedef struct mutex OsMutex;
+typedef struct mutex *OsMutex;
 
 typedef struct {
     OS_EVENT *Sema;
@@ -62,7 +62,7 @@ typedef struct {
 
 //typedef OsSemaphore_impl *OsSemaphore;
 
-typedef struct semaphore OsSemaphore;
+typedef struct semaphore *OsSemaphore;
 
 typedef OsMessgQ *OsMsgQ;
 

@@ -72,10 +72,9 @@ static u32 sg_host_cmd_seq_no;
 #define INI_CNT 20
 
 
-OsMutex	g_host_api_mutex;
-
-OsSemaphore ap_sta_on_off_sphr;
-OsSemaphore scanning_sphr;
+OsMutex	g_host_api_mutex = NULL;
+OsSemaphore ap_sta_on_off_sphr = NULL;
+OsSemaphore scanning_sphr = NULL;
 
 
 #if (AP_MODE_ENABLE == 1)  
@@ -228,7 +227,7 @@ s32 _ssv6xxx_wifi_ioctl(u32 cmd_id, void *data, u32 len, const bool mutexLock)
 
     //Detect host API status
     if (mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do {
 
@@ -241,12 +240,12 @@ s32 _ssv6xxx_wifi_ioctl(u32 cmd_id, void *data, u32 len, const bool mutexLock)
         if(active_host_api == HOST_API_PWR_SAVING)
         {
             if(mutexLock)
-                OS_MutexUnLock(&g_host_api_mutex);
+                OS_MutexUnLock(g_host_api_mutex);
 
             ret = _ssv6xxx_wakeup_wifi();
 
             if(mutexLock)
-                OS_MutexLock(&g_host_api_mutex);
+                OS_MutexLock(g_host_api_mutex);
 
             if((ssv6xxx_result)FALSE == ret)
                 break;
@@ -256,7 +255,7 @@ s32 _ssv6xxx_wifi_ioctl(u32 cmd_id, void *data, u32 len, const bool mutexLock)
 
     }while(0);
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
 	return ret;
 }
@@ -284,7 +283,7 @@ s32 _ssv6xxx_wifi_sconfig(struct cfg_sconfig_request *csreq,const bool mutexLock
 	s32 size,ret=SSV6XXX_SUCCESS;
     //Detect host API status
     if(mutexLock)
-        OS_MutexLock(&&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do {
         if(active_host_api == HOST_API_DEACTIVE)
@@ -301,12 +300,12 @@ s32 _ssv6xxx_wifi_sconfig(struct cfg_sconfig_request *csreq,const bool mutexLock
         if(active_host_api == HOST_API_PWR_SAVING)
         {
             if(mutexLock)
-                OS_MutexUnLock(&g_host_api_mutex);
+                OS_MutexUnLock(g_host_api_mutex);
 
             ret = _ssv6xxx_wakeup_wifi();
 
             if(mutexLock)
-                OS_MutexLock(&g_host_api_mutex);
+                OS_MutexLock(g_host_api_mutex);
 
             if(FALSE == ret)
                 break;
@@ -317,7 +316,7 @@ s32 _ssv6xxx_wifi_sconfig(struct cfg_sconfig_request *csreq,const bool mutexLock
 
     }while(0);
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
     return ret;
 
@@ -377,7 +376,7 @@ s32 _ssv6xxx_wifi_pwr_saving(struct cfg_ps_request* wowreq,const bool mutexLock)
     s32 size,ret=SSV6XXX_SUCCESS;
     //Detect host API status
     if(mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do
     {
@@ -403,7 +402,7 @@ s32 _ssv6xxx_wifi_pwr_saving(struct cfg_ps_request* wowreq,const bool mutexLock)
         }
     }while(0);
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
     return ret;
 
@@ -416,13 +415,13 @@ extern void recovery_pause_resume(bool resume);
 H_APIs s32 ssv6xxx_wifi_pwr_saving(struct cfg_ps_request* wowreq, bool on)
 {
     u32 ret=SSV6XXX_SUCCESS;
-    OS_MutexLock(&g_host_api_mutex);
+    OS_MutexLock(g_host_api_mutex);
     if(on == TRUE)
     {
         if(active_host_api == HOST_API_PWR_SAVING)
         {
             LOG_PRINTF("%s fail\r\n",__func__);
-            OS_MutexUnLock(&g_host_api_mutex);
+            OS_MutexUnLock(g_host_api_mutex);
             return SSV6XXX_FAILED;
         }
         
@@ -467,7 +466,7 @@ H_APIs s32 ssv6xxx_wifi_pwr_saving(struct cfg_ps_request* wowreq, bool on)
 #endif //#if(RECOVER_MECHANISM == 1)
 #endif //#if(RECOVER_ENABLE  == 1)
     }
-    OS_MutexUnLock(&g_host_api_mutex);
+    OS_MutexUnLock(g_host_api_mutex);
 
     return ret;
 }
@@ -487,7 +486,7 @@ s32 _ssv6xxx_wifi_scan(struct cfg_scan_request *csreq,const bool mutexLock)
 	s32 size,ret=SSV6XXX_SUCCESS;
     //Detect host API status
     if(mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do {
         if(active_host_api == HOST_API_DEACTIVE)
@@ -504,12 +503,12 @@ s32 _ssv6xxx_wifi_scan(struct cfg_scan_request *csreq,const bool mutexLock)
         if(active_host_api == HOST_API_PWR_SAVING)
         {
             if(mutexLock)
-                OS_MutexUnLock(&g_host_api_mutex);
+                OS_MutexUnLock(g_host_api_mutex);
 
             ret = _ssv6xxx_wakeup_wifi();
 
             if(mutexLock)
-                OS_MutexLock(&g_host_api_mutex);
+                OS_MutexLock(g_host_api_mutex);
 
             if(FALSE == ret)
                 break;
@@ -531,7 +530,7 @@ s32 _ssv6xxx_wifi_scan(struct cfg_scan_request *csreq,const bool mutexLock)
 
     }while(0);
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
     return ret;
 
@@ -695,7 +694,7 @@ s32 _ssv6xxx_wifi_join(struct cfg_join_request *cjreq, const bool mutexLock)
 
     //Detect host API status
     if(mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do {
         if(active_host_api == HOST_API_DEACTIVE)
@@ -712,12 +711,12 @@ s32 _ssv6xxx_wifi_join(struct cfg_join_request *cjreq, const bool mutexLock)
         if(active_host_api == HOST_API_PWR_SAVING)
         {
             if(mutexLock)
-                OS_MutexUnLock(&g_host_api_mutex);
+                OS_MutexUnLock(g_host_api_mutex);
 
             ret = _ssv6xxx_wakeup_wifi();
 
             if(mutexLock)
-                OS_MutexLock(&g_host_api_mutex);
+                OS_MutexLock(g_host_api_mutex);
 
             if(FALSE == ret)
                 break;
@@ -734,7 +733,7 @@ s32 _ssv6xxx_wifi_join(struct cfg_join_request *cjreq, const bool mutexLock)
 
     }while(0);
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
     return ret;
 
@@ -769,7 +768,7 @@ s32 _ssv6xxx_wifi_leave(struct cfg_leave_request *clreq,const bool mutexLock)
 
     //Detect host API status
     if(mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do {
         if(active_host_api == HOST_API_DEACTIVE)
@@ -780,12 +779,12 @@ s32 _ssv6xxx_wifi_leave(struct cfg_leave_request *clreq,const bool mutexLock)
         if(active_host_api == HOST_API_PWR_SAVING)
         {
             if(mutexLock)
-                OS_MutexUnLock(&g_host_api_mutex);
+                OS_MutexUnLock(g_host_api_mutex);
 
             ret = _ssv6xxx_wakeup_wifi();
 
             if(mutexLock)
-                OS_MutexLock(&g_host_api_mutex);
+                OS_MutexLock(g_host_api_mutex);
 
             if(FALSE == ret)
                 break;
@@ -799,7 +798,7 @@ s32 _ssv6xxx_wifi_leave(struct cfg_leave_request *clreq,const bool mutexLock)
     }while(0);
 
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
     return ret;
 
@@ -829,7 +828,7 @@ static inline s32 _ssv6xxx_wifi_send_ethernet(u8 vif_idx, void *frame, s32 len,
 	ssv6xxx_result ret = SSV6XXX_SUCCESS;
 	//Detect host API status
 	if (mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do {
         if (active_host_api == HOST_API_DEACTIVE)
@@ -842,12 +841,12 @@ static inline s32 _ssv6xxx_wifi_send_ethernet(u8 vif_idx, void *frame, s32 len,
         if (active_host_api == HOST_API_PWR_SAVING)
         {
             if (mutexLock)
-                OS_MutexUnLock(&g_host_api_mutex);
+                OS_MutexUnLock(g_host_api_mutex);
 
             ret = _ssv6xxx_wakeup_wifi();
 
             if (mutexLock)
-                OS_MutexLock(&g_host_api_mutex);
+                OS_MutexLock(g_host_api_mutex);
 
             if ((ssv6xxx_result)FALSE == ret)
                 break;
@@ -865,7 +864,7 @@ static inline s32 _ssv6xxx_wifi_send_ethernet(u8 vif_idx, void *frame, s32 len,
     }while(0);
 
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
 
 
@@ -884,7 +883,7 @@ static inline s32 _ssv6xxx_wifi_send_80211(void *frame, s32 len, u8 tx_dscrp_fla
 
     //Detect host API status
     if(mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do {
         if(active_host_api == HOST_API_DEACTIVE)
@@ -904,7 +903,7 @@ static inline s32 _ssv6xxx_wifi_send_80211(void *frame, s32 len, u8 tx_dscrp_fla
     }while(0);
 
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
 	return ret;
 
@@ -989,7 +988,7 @@ ssv6xxx_result _ssv6xxx_wifi_reg_rx_cb(data_handler handler,const bool mutexLock
     ssv6xxx_result ret = SSV6XXX_SUCCESS;
     //Detect host API status
     if(mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do {
         if(active_host_api == HOST_API_DEACTIVE)
@@ -1002,7 +1001,7 @@ ssv6xxx_result _ssv6xxx_wifi_reg_rx_cb(data_handler handler,const bool mutexLock
 
     }while(0);
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
 	return ret;
 }
@@ -1019,7 +1018,7 @@ ssv6xxx_result _ssv6xxx_wifi_reg_evt_cb(evt_handler evtcb, const bool mutexLock)
     ssv6xxx_result ret = SSV6XXX_SUCCESS;
     //Detect host API status
     if(mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do {
         if(active_host_api == HOST_API_DEACTIVE)
@@ -1033,7 +1032,7 @@ ssv6xxx_result _ssv6xxx_wifi_reg_evt_cb(evt_handler evtcb, const bool mutexLock)
     } while(0);
 
     if (mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
 	return ret;
 }
@@ -1049,7 +1048,7 @@ ssv6xxx_result _ssv6xxx_wifi_unreg_rx_cb(data_handler handler,const bool mutexLo
     ssv6xxx_result ret = SSV6XXX_SUCCESS;
     //Detect host API status
     if(mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do {
         if(active_host_api == HOST_API_DEACTIVE )
@@ -1063,7 +1062,7 @@ ssv6xxx_result _ssv6xxx_wifi_unreg_rx_cb(data_handler handler,const bool mutexLo
     }while(0);
 
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
 
 	return ret;
@@ -1080,7 +1079,7 @@ ssv6xxx_result _ssv6xxx_wifi_unreg_evt_cb(evt_handler evtcb,const bool mutexLock
     ssv6xxx_result ret = SSV6XXX_SUCCESS;
     //Detect host API status
     if(mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do {
         if(active_host_api == HOST_API_DEACTIVE)
@@ -1093,7 +1092,7 @@ ssv6xxx_result _ssv6xxx_wifi_unreg_evt_cb(evt_handler evtcb,const bool mutexLock
 
     }while(0);
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
 
 	return ret;
@@ -1108,10 +1107,10 @@ H_APIs ssv6xxx_result ssv6xxx_wifi_unreg_evt_cb(evt_handler evtcb)
 
 extern int ssv6xxx_get_cust_mac(u8 *mac);
 extern struct rx_ba_session_desc g_ba_rx_session_desc[RX_AGG_RX_BA_MAX_STATION][RX_AGG_RX_BA_MAX_SESSIONS];
+extern ssv6xxx_result CmdEng_Init(void);
 
 H_APIs ssv6xxx_result ssv6xxx_wifi_init(void)
 {
-    extern ssv6xxx_result CmdEng_Init(void);
     ssv6xxx_result res;
     u32 i,j;
 
@@ -1253,7 +1252,7 @@ s32 _ssv6xxx_wifi_ioctl_Ext(u32 cmd_id, void *data, u32 len, bool blocking,const
 	ssv6xxx_result ret = SSV6XXX_SUCCESS;
     //Detect host API status
     if(mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do {
         if(active_host_api == HOST_API_DEACTIVE)
@@ -1264,12 +1263,12 @@ s32 _ssv6xxx_wifi_ioctl_Ext(u32 cmd_id, void *data, u32 len, bool blocking,const
         if(active_host_api == HOST_API_PWR_SAVING)
         {
             if(mutexLock)
-                OS_MutexUnLock(&g_host_api_mutex);
+                OS_MutexUnLock(g_host_api_mutex);
 
             ret = _ssv6xxx_wakeup_wifi();
 
             if(mutexLock)
-                OS_MutexLock(&g_host_api_mutex);
+                OS_MutexLock(g_host_api_mutex);
 
             if((ssv6xxx_result)FALSE == ret)
                 break;
@@ -1294,7 +1293,7 @@ s32 _ssv6xxx_wifi_ioctl_Ext(u32 cmd_id, void *data, u32 len, bool blocking,const
 
     }while(0);
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
     return ret;
 
@@ -1705,19 +1704,19 @@ ssv6xxx_result _ssv6xxx_wifi_ap(Ap_setting *ap_setting,s32 step,const bool mutex
 
     //Detect host API status
     if(mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do {
 
         if(active_host_api == HOST_API_PWR_SAVING)
         {
             if(mutexLock)
-                OS_MutexUnLock(&g_host_api_mutex);
+                OS_MutexUnLock(g_host_api_mutex);
 
             ret = _ssv6xxx_wakeup_wifi();
 
             if(mutexLock)
-                OS_MutexLock(&g_host_api_mutex);
+                OS_MutexLock(g_host_api_mutex);
 
             if(FALSE == ret)
                 break;
@@ -1762,7 +1761,7 @@ ssv6xxx_result _ssv6xxx_wifi_ap(Ap_setting *ap_setting,s32 step,const bool mutex
 
     }while(0);
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
     return ret;
 #else
@@ -1877,7 +1876,7 @@ ssv6xxx_result sta_mode_on(ssv6xxx_hw_mode hw_mode, u8 vif_idx)
     //Set Host API on
     active_host_api = HOST_API_ACTIVE;
 
-    OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+    OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
     //Set global variable
     vif->hw_mode = hw_mode;
 
@@ -1888,11 +1887,11 @@ ssv6xxx_result sta_mode_on(ssv6xxx_hw_mode hw_mode, u8 vif_idx)
         {
             LOG_PRINTF("ssv6xxx_start fail!!\r\n");
 
-            OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+            OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
             return SSV6XXX_FAILED;
         }
     }
-    OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+    OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
 
 
     if(gDeviceInfo->used_vif==0)
@@ -2016,19 +2015,19 @@ ssv6xxx_result _ssv6xxx_wifi_station(u8 hw_mode,Sta_setting *sta_station,const b
     }
 
     if(mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do {
 
         if(active_host_api == HOST_API_PWR_SAVING)
         {
             if(mutexLock)
-                OS_MutexUnLock(&g_host_api_mutex);
+                OS_MutexUnLock(g_host_api_mutex);
 
             ret = _ssv6xxx_wakeup_wifi();
 
             if(mutexLock)
-                OS_MutexLock(&g_host_api_mutex);
+                OS_MutexLock(g_host_api_mutex);
 
             if((ssv6xxx_result)FALSE == ret)
                 break;
@@ -2079,7 +2078,7 @@ ssv6xxx_result _ssv6xxx_wifi_station(u8 hw_mode,Sta_setting *sta_station,const b
     }while(0);
 
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
     return ret;
 
@@ -2224,12 +2223,12 @@ ssv6xxx_result _ssv6xxx_wifi_status(Ap_sta_status *status_info,const bool mutexL
     ssv6xxx_result ret = SSV6XXX_SUCCESS;
     //Detect host API status
     if(mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do {
         int i;
         status_info->status= active_host_api;
-        OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+        OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
         for(i=0;i<MAX_VIF_NUM;i++)
         {
             status_info->vif_operate[i] = gDeviceInfo->vif[i].hw_mode;
@@ -2245,11 +2244,11 @@ ssv6xxx_result _ssv6xxx_wifi_status(Ap_sta_status *status_info,const bool mutexL
                 sta_mode_status((struct ap_sta_status_station*)(&status_info->vif_u[i]),i);
             }
         }
-        OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+        OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
     }while(0);
 
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
     return ret;
 
@@ -2270,7 +2269,7 @@ H_APIs struct ssv6xxx_ieee80211_bss *ssv6xxx_wifi_find_ap_ssid(struct cfg_80211_
     int i = 0;
     DeviceInfo_st *gdeviceInfo = gDeviceInfo ;
 
-	OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+	OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
 
 	for (i = 0; i < g_max_num_of_ap_list; i++)
     {
@@ -2285,7 +2284,7 @@ H_APIs struct ssv6xxx_ieee80211_bss *ssv6xxx_wifi_find_ap_ssid(struct cfg_80211_
 		}
 	}
 
-	OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+	OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
 
     if (i == g_max_num_of_ap_list)
     {
@@ -2422,7 +2421,7 @@ H_APIs void ssv6xxx_aplist_get_str(char *wifi_list_str, int page)
         return;
     }
 
-	OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+	OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
     wifi_list_str[0]=0;
 
     for (i=0; i<g_max_num_of_ap_list; i++)
@@ -2470,7 +2469,7 @@ H_APIs void ssv6xxx_aplist_get_str(char *wifi_list_str, int page)
         }
     }
 
-	OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+	OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
 }
 
 s32 _ssv6xxx_set_ampdu_param(u8 opt, u8 value, u8 vif_idx, bool FromAPI)
@@ -2513,7 +2512,7 @@ static inline struct ssv6xxx_ieee80211_bss * sta_mode_find_ap_by_mac(ETHER_ADDR 
     int i = 0;
     DeviceInfo_st *gdeviceInfo = gDeviceInfo ;
 
-	OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+	OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
 
 	for (i = 0; i < g_max_num_of_ap_list; i++)
     {
@@ -2527,7 +2526,7 @@ static inline struct ssv6xxx_ieee80211_bss * sta_mode_find_ap_by_mac(ETHER_ADDR 
 		}
 	}
 
-	OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+	OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
 
     if (i == g_max_num_of_ap_list)
     {
@@ -2632,12 +2631,6 @@ H_APIs u32 ssv6xxx_get_aplist_info(void **ap_list)
 
 static inline int _ssv6xxx_start_scan(void)
 {
-#ifdef __linux__
-    if (OS_SUCCESS == OS_SemInit(&scanning_sphr, 1, 0))
-        return 0;
-    else
-        return -1;
-#else
     if (NULL == scanning_sphr)
     {
         if (OS_SUCCESS == OS_SemInit(&scanning_sphr, 1, 0))
@@ -2649,14 +2642,13 @@ static inline int _ssv6xxx_start_scan(void)
     {
         return 0;
     }
-#endif
 }
 
 
 static inline bool _ssv6xxx_wait_scan_done(u32 timeOut)
 {
     bool ret = FALSE;
-    if (OS_SemWait(&scanning_sphr, timeOut) == true)
+    if (OS_SemWait(scanning_sphr, timeOut) == true)
 	{
         ret = TRUE;
     } 
@@ -2664,14 +2656,12 @@ static inline bool _ssv6xxx_wait_scan_done(u32 timeOut)
 	{
         ret = FALSE;
     }
-
-    OS_SemDelete(&scanning_sphr);
-#ifndef __linux__
-	scanning_sphr=0;
-#endif
+    OS_SemDelete(scanning_sphr);
+	scanning_sphr = NULL;
     return ret;
 
 }
+
 #if (AP_MODE_ENABLE == 1)    
 extern u16 g_acs_channel_scanning_interval;
 extern u8  g_acs_channel_scanning_loop;
@@ -2972,7 +2962,7 @@ ssv6xxx_result _ssv6xxx_wifi_reg_promiscuous_rx_cb(promiscuous_data_handler prom
     ssv6xxx_result ret = SSV6XXX_SUCCESS;
     //Detect host API status
     if (mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do {
         if(active_host_api == HOST_API_DEACTIVE)
@@ -2986,7 +2976,7 @@ ssv6xxx_result _ssv6xxx_wifi_reg_promiscuous_rx_cb(promiscuous_data_handler prom
     } while(0);
 
     if (mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
 	return ret;
 }
@@ -3002,7 +2992,7 @@ ssv6xxx_result _ssv6xxx_wifi_unreg_promiscuous_rx_cb(promiscuous_data_handler pr
     ssv6xxx_result ret = SSV6XXX_SUCCESS;
     //Detect host API status
     if(mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do {
         if(active_host_api == HOST_API_DEACTIVE )
@@ -3016,7 +3006,7 @@ ssv6xxx_result _ssv6xxx_wifi_unreg_promiscuous_rx_cb(promiscuous_data_handler pr
     }while(0);
 
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
 
 	return ret;
@@ -3035,7 +3025,7 @@ ssv6xxx_result _ssv6xxx_wifi_ap_pause(bool pause,const bool mutexLock)
 //    ssv6xxx_result ret = SSV6XXX_SUCCESS;
     //Detect host API status
     if(mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     if(pause)// pause wifi
     {
@@ -3078,7 +3068,7 @@ ssv6xxx_result _ssv6xxx_wifi_ap_pause(bool pause,const bool mutexLock)
     }
 
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 #else
 	return SSV6XXX_SUCCESS;
 #endif
@@ -3102,7 +3092,7 @@ ssv6xxx_result _ssv6xxx_wifi_reg_recovery_cb(recovery_handler recovery_cb, const
     ssv6xxx_result ret = SSV6XXX_SUCCESS;
     //Detect host API status
     if(mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do {
         if(active_host_api == HOST_API_DEACTIVE)
@@ -3115,7 +3105,7 @@ ssv6xxx_result _ssv6xxx_wifi_reg_recovery_cb(recovery_handler recovery_cb, const
     }while(0);
 
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
 	return ret;
 }
@@ -3130,7 +3120,7 @@ ssv6xxx_result _ssv6xxx_wifi_unreg_recovery_cb(recovery_handler recovery_cb, con
     ssv6xxx_result ret = SSV6XXX_SUCCESS;
     //Detect host API status
     if(mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     do {
         if(active_host_api == HOST_API_DEACTIVE)
@@ -3143,7 +3133,7 @@ ssv6xxx_result _ssv6xxx_wifi_unreg_recovery_cb(recovery_handler recovery_cb, con
     }while(0);
 
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
 	return ret;
 }
@@ -3156,12 +3146,12 @@ HOST_API_STATE _ssv6xxx_wifi_host_api_state(const bool mutexLock)
 {
     HOST_API_STATE host_api = HOST_API_ACTIVE;
     if(mutexLock)
-        OS_MutexLock(&g_host_api_mutex);
+        OS_MutexLock(g_host_api_mutex);
 
     host_api=active_host_api;
 
     if(mutexLock)
-        OS_MutexUnLock(&g_host_api_mutex);
+        OS_MutexUnLock(g_host_api_mutex);
 
     return host_api;
 

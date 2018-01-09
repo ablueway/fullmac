@@ -194,7 +194,7 @@ OS_APIs void OS_StartScheduler( void );
 OS_APIs void OS_Terminate( void );
 
 
-#ifdef __linux__
+#if 0 //def __linux__
 /* Mutex: */
 OS_APIs s32  OS_MutexInit(OsMutex *mutex);
 OS_APIs void OS_MutexLock(OsMutex *mutex);

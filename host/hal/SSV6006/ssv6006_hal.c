@@ -574,9 +574,9 @@ static int _ssv6006_hal_init_mac(u8 *self_mac, bool fullInit)
 //#ifndef __SSV_UNIX_SIM__
 #if (__SSV_UNIX_SIM__ == 0)
     //update_tx_resource
-    OS_MUTEX_LOCK(&txsrcMutex);
+    OS_MUTEX_LOCK(txsrcMutex);
     ssv6006_hal_get_tx_resources(&tx_rcs.free_page,&tx_rcs.free_id,&tx_rcs.free_space);
-    OS_MUTEX_UNLOCK(&txsrcMutex);
+    OS_MUTEX_UNLOCK(txsrcMutex);
 #endif
     //Move vif macaddr setting to add interface
     //LOG_PRINTF("mac:%02x:%02x:%02x:%02x:%02x:%02x:\r\n",self_mac[0],self_mac[1],self_mac[2],self_mac[3],self_mac[4],self_mac[5]);
@@ -1748,7 +1748,7 @@ int ssv6006_hal_tx_loopback_done(u8 *dat)
 {
     OS_MemCPY(&tx_loopback_info,dat,sizeof(struct cfg_tx_loopback_info));
 
-    OS_SemSignal(&tx_loopback);
+    OS_SemSignal(tx_loopback);
 
     if(!tx_loopback_info.result)
         LOG_PRINTF("\33[35mTX loopback fail\33[0m\r\n");
