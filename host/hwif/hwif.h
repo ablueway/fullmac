@@ -21,7 +21,8 @@
 
 
 #include <linux/mmc/host.h>
-#include <ssv6xxx_common.h> 
+//#include <ssv6xxx_common.h> 
+#include <linux/skbuff.h>
 
 // general adress for chip id
 #define SYS_REG_BASE           0xc0000000
@@ -121,7 +122,9 @@ struct ssv6xxx_platform_data {
     u8                          short_chip_id[33];
     unsigned short              vendor;		/* vendor id */
     unsigned short              device;		/* device id */
-    struct ssv6xxx_hwif_ops    *ops;
+//    struct ssv6xxx_hwif_ops    *ops;
+	struct unified_drv_ops		*unify; 			
+	
 	bool						dbg_control;
 
     // Application defined socket buffer allocation/free functions.

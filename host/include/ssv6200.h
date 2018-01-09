@@ -99,4 +99,3 @@ struct txResourceControl {
 
 
 #endif /* _SSV6200_H_ */
-
