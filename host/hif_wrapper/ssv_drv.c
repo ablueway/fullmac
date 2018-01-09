@@ -21,7 +21,7 @@
 
 
 #define MAX_SSV6XXX_DRV     1
-static s16                  s_drv_cnt;
+static s16 s_drv_cnt;
 
 
 //static struct ssv6xxx_drv_ops *s_drv_array[MAX_SSV6XXX_DRV];
@@ -37,7 +37,7 @@ bool ssv6xxx_drv_unregister(u16 i);
 
 static bool _ssv6xxx_drv_started = false;
 static OsSemaphore ssvdrv_rx_sphr;
-u32 drv_trx_time=0; //ms
+u32 drv_trx_time = 0; //ms
 
 OsMutex drvMutex;
 
@@ -330,7 +330,6 @@ void ssv6xxx_drv_module_release(void)
 bool ssv6xxx_drv_select(char name[32], union ssv_drv_info drv_info)
 {
     u16 i;
-    //bool bRet;
 //    struct ssv6xxx_drv_ops *drv_target;
 	struct unified_drv_ops *drv_target = NULL;
 
@@ -339,8 +338,9 @@ bool ssv6xxx_drv_select(char name[32], union ssv_drv_info drv_info)
 
 	/* s_drv_cnt = 2 */
     if (s_drv_cnt == 0)
+	{	
 		SDRV_FAIL("%s s_drv_cnt = 0\r\n",__FUNCTION__);
-
+	}
     // find the matching ssv_drv
     for (i = 0; i < s_drv_cnt; i++)
     {
@@ -400,7 +400,6 @@ bool ssv6xxx_drv_select(char name[32], union ssv_drv_info drv_info)
     s_drv_cur = drv_target;
     LOG_PRINTF("select drv -> %-10s : 0x%08x\r\n", 
 		s_drv_cur->name, (unsigned int)s_drv_cur);
-    // ssv6xxx_drv_list();
     return TRUE;
 }
 
@@ -474,7 +473,7 @@ s32 ssv6xxx_drv_recv(u8 *dat, size_t len)
     }
     OS_MUTEX_LOCK(&drvMutex);
     retVal=s_drv_cur->recv(dat, len);
-    if(retVal>0)
+    if (retVal>0)
         drv_trx_time = os_tick2ms(OS_GetSysTick());
     OS_MUTEX_UNLOCK(&drvMutex);
 #endif
@@ -495,7 +494,7 @@ bool ssv6xxx_drv_ioctl(u32 ctl_code,
                             void *out_buf, size_t out_size,
                             size_t *bytes_ret)
 {
-    bool ret=TRUE;
+    bool ret = TRUE;
     if (s_drv_cur == 0)
         SDRV_FAIL("%s s_drv_cur = 0\r\n",__FUNCTION__);
 

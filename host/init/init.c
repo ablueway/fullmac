@@ -550,8 +550,7 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
     host_global_init();
     ssv6xxx_init_task_para();
 
-    LOG_init(true, true, LOG_LEVEL_ON, LOG_MODULE_MASK(LOG_MODULE_EMPTY),
-             false);
+    LOG_init(true, true, LOG_LEVEL_ON, LOG_MODULE_MASK(LOG_MODULE_EMPTY),false);
 
     /* Total = 112 g_host_cfg.pool_size = POOL_SIZE(72),
        g_host_cfg.pool_sec_size = POOL_SEC_SIZE(16) SSV_TMR_MAX(24) */

@@ -21,8 +21,8 @@ EXTRA_CFLAGS += -I$(KBUILD_TOP)/app/netmgr/SmartConfig/iComm/core
 
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/core
 
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/drv
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/drv/drv/usb_linux
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/drv
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/drv/drv/usb_linux
 
 #EXTRA_CFLAGS += -I$(KBUILD_TOP)/drv/sdio_linux
 #EXTRA_CFLAGS += -I$(KBUILD_TOP)/drv/spi
@@ -35,10 +35,13 @@ EXTRA_CFLAGS += -I$(KBUILD_TOP)/hal/SSV6006/firmware/SSV6006C
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/hal/SSV6006/regs
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/hal/SSV6006/regs/SSV6006C
 
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/hwif
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/hwif/sdio
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/hwif/spi
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/hwif/usb
+EXTRA_CFLAGS += -I$(KBUILD_TOP)/hif_wrapper
+EXTRA_CFLAGS += -I$(KBUILD_TOP)/hif_wrapper/linux/usb
+
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/hwif
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/hwif/sdio
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/hwif/spi
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/hwif/usb
 
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/init
 
@@ -47,9 +50,9 @@ EXTRA_CFLAGS += -I$(KBUILD_TOP)/init
 #EXTRA_CFLAGS += -I$(KBUILD_TOP)/netstack_wrapper/icomm_lwIP
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/netstack_wrapper/linux
 
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/os_wrapper/Linux
+EXTRA_CFLAGS += -I$(KBUILD_TOP)/os_wrapper/linux
 
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/platform/Linux
+EXTRA_CFLAGS += -I$(KBUILD_TOP)/platform/linux
 
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/tcpip/lwip-1.4.0/ports/icomm
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/tcpip/lwip-1.4.0/ports/icomm/include/arch
