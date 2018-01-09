@@ -122,8 +122,7 @@ struct ssv6xxx_platform_data {
     u8                          short_chip_id[33];
     unsigned short              vendor;		/* vendor id */
     unsigned short              device;		/* device id */
-//    struct ssv6xxx_hwif_ops    *ops;
-	struct unified_drv_ops		*unify; 			
+	struct ssv_unify_drv		*unify_drv; 			
 	
 	bool						dbg_control;
 

@@ -78,7 +78,7 @@ Note :
 	if Fail!, this func will do nothing.
 --------------------------------------------------------------- */
 //bool	ssv6xxx_drv_select(u32 drv_info);
-bool	ssv6xxx_drv_select(char name[32], union ssv_drv_info drv_info);
+bool	ssv6xxx_drv_select(char name[32], union unify_drv_info drv_info);
 void	ssv6xxx_drv_list(void);
 
 

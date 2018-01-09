@@ -730,7 +730,7 @@ static struct ssv6xxx_hwif_ops usb_ops =
 };
 #endif
 
-struct unified_drv_ops usb_ops = 
+struct ssv_unify_drv usb_ops = 
 {
 	.name = "SSV6XXX_USB",
 	.drv_info.flags = UNIFY_LINUX_USB_DRV_INFO_FLAGS,
@@ -854,7 +854,6 @@ static int ssv_usb_probe(struct usb_interface *interface,
 
 	/* ==>ssv_usb_probe() */
     printk(KERN_INFO "==>%s()\n", __func__);
-
 	printk(KERN_INFO "=======================================\n");
 	printk(KERN_INFO "==          TURISMO - USB            ==\n");
 	printk(KERN_INFO "=======================================\n");
@@ -899,7 +898,7 @@ static int ssv_usb_probe(struct usb_interface *interface,
 	pwlan_data->device = id->idProduct;
 	
 	/* Set hwif operation */
-	pwlan_data->unify = &usb_ops;
+	pwlan_data->unify_drv = &usb_ops;
 	
 	/* setup the endpoint information */
 	iface_desc = interface->cur_altsetting;

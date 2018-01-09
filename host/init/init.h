@@ -52,7 +52,7 @@ extern int udhcpd_init(void);
 
 extern void host_global_init(void);
 extern bool ssv6xxx_drv_module_init(void);
-extern bool ssv6xxx_drv_select(char name[32], union ssv_drv_info drv_info);
+extern bool ssv6xxx_drv_select(char name[UNIFY_DRV_NAME_MAX_LEN], union unify_drv_info drv_info);
 extern void os_timer_init(void);
 extern int ssv6xxx_wifi_init_regdom(void);
 extern int netmgr_wifi_switch_async(wifi_mode mode, wifi_ap_cfg *ap_cfg, wifi_sta_join_cfg *join_cfg);
