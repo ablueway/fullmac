@@ -32,7 +32,6 @@
 #include <ssv6200.h>
 //ToDo Liam this is temp for build.
 // it should re-consider for multiple chip use.
-#include <hwif/hwif.h>
 #include "usb.h"
 
 #include <hif_wrapper.h>

@@ -9,7 +9,7 @@
 #if NETAPP_SUPPORT
 #include <netapp/net_app.h>
 #endif
-#include <drv/ssv_drv.h>
+#include <ssv_drv.h>
 #include <netmgr/net_mgr.h>
 
 #include <log.h>

@@ -22,7 +22,7 @@
 #include <pbuf.h>
 #include <msgevt.h>
 #include <cmd_def.h>
-#include <drv/ssv_drv.h>		// for ssv6xxx_drv_send()
+#include <ssv_drv.h>		// for ssv6xxx_drv_send()
 #include <txrx_hdl.h>
 #include <log.h>
 

@@ -8,7 +8,7 @@
 
 #include <ssv_types.h>
 #include <msgevt.h>
-#include <drv/ssv_drv.h>
+#include <ssv_drv.h>
 #include <log.h>
 #include <ssv_lib.h>
 #include <host_apis.h>

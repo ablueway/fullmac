@@ -12,7 +12,7 @@
 #include "txrx_task.h"
 #include <ssv_hal.h>
 #include <ssv_timer.h>
-#include <drv/ssv_drv.h>
+#include <ssv_drv.h>
 #include <ssv_dev.h>
 
 #include <os_wrapper.h>
