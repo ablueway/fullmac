@@ -463,7 +463,7 @@ int TXRXTask_RxTask(void *args)
 						&& (s_drv_cur->drv_info.fields.hw_type == DRV_INFO_FLAG_HW_TYPE_USB))
 			{
 				/* TODO(aaron): use timeout sem to avoid rx work queue polling mechanism */
-				OS_SemWait(rx_frm_sphr, 3000);
+				OS_SemWait(rx_frm_sphr, 10000);
 			}
 			else
 			{

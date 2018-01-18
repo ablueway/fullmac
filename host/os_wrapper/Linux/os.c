@@ -137,6 +137,19 @@ OS_APIs void OS_StopScheduler(void)
 	}
 }
 
+OS_APIs void OS_StopScheduler(void)
+{
+	u8 task_idx = 0;
+	for (task_idx = 0; task_idx < MAX_OS_TASK_NUM; task_idx++)
+	{
+		if (g_os_task_tbl[task_idx] != NULL)
+		{
+			kthread_stop(g_os_task_tbl[task_idx]);
+			g_os_task_tbl[task_idx] = NULL;
+		}
+	}
+}
+
 /* TODO(aaron): maybe the return value use unsigned long is best */
 OS_APIs u32 OS_GetSysTick(void)
 {
