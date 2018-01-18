@@ -95,8 +95,8 @@ OS_APIs s32 OS_TaskCreate(OsTask task, const char *name, u32 stackSize,
 		printk("kernel thread create fail ! task_num(%d)\n", g_total_task_cnt);
 		return OS_FAILED;
 	}
-#if 0
-	wake_up_process(new_task);
+#if 1
+	wake_up_process(g_os_task_tbl[g_total_task_cnt]);
 #endif
 	g_total_task_cnt++;
 	return OS_SUCCESS;
@@ -116,6 +116,19 @@ OS_APIs void OS_StartScheduler(void)
 		if (g_os_task_tbl[task_idx] != NULL)
 		{
 			wake_up_process(g_os_task_tbl[task_idx]);
+		}
+	}
+}
+
+OS_APIs void OS_StopScheduler(void)
+{
+	u8 task_idx = 0;
+	for (task_idx = 0; task_idx < MAX_OS_TASK_NUM; task_idx++)
+	{
+		if (g_os_task_tbl[task_idx] != NULL)
+		{
+			kthread_stop(g_os_task_tbl[task_idx]);
+			g_os_task_tbl[task_idx] = NULL;
 		}
 	}
 }
@@ -255,7 +268,34 @@ OS_APIs s32 OS_MsgQEnqueueTry(OsMsgQ MsgQ, OsMsgQEntry *MsgItem, bool fromISR)
 
 OS_APIs s32 OS_MsgQDequeue(OsMsgQ MsgQ, OsMsgQEntry *MsgItem, u32 timeOut, bool fromISR)
 {
-    s32 actul_len = kfifo_out(MsgQ, MsgItem, sizeof(OsMsgQEntry));
+    s32 actul_len = 0;
+    u32 timeout_cnt = timeOut;
+	if (timeOut == 0)
+	{
+		while (1)
+		{
+			actul_len = kfifo_out(MsgQ, MsgItem, sizeof(OsMsgQEntry));
+			if (actul_len == sizeof(OsMsgQEntry))
+			{
+				break;
+			}
+			msleep(200);			
+		}	
+	}
+	else
+	{		
+		while (timeout_cnt > 0)
+		{
+			actul_len = kfifo_out(MsgQ, MsgItem, sizeof(OsMsgQEntry));
+			if (actul_len == sizeof(OsMsgQEntry))
+			{
+				break;
+			}
+			timeout_cnt--;
+			msleep(1);
+		}	
+
+	}
 	return (actul_len == sizeof(OsMsgQEntry)) ? OS_SUCCESS : OS_FAILED;
 }
 
@@ -268,7 +308,7 @@ OS_APIs s32 OS_MsgQWaitingSize(OsMsgQ MsgQ)
 OS_APIs s32 OS_MsgQDelete(OsMsgQ MsgQ)
 {
     kfifo_free(MsgQ);
-	kree(MsgQ);
+	kfree(MsgQ);
 	MsgQ = NULL;
     return OS_SUCCESS;
 }

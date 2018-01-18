@@ -950,6 +950,7 @@ static int __init ssv6xxx_usb_init(void)
 	return usb_register(&ssv_usb_driver);
 }
 
+#if 0
 static int ssv_usb_do_device_exit(struct device *d, void *arg)
 {
 	struct usb_interface *intf = to_usb_interface(d);
@@ -962,14 +963,20 @@ static int ssv_usb_do_device_exit(struct device *d, void *arg)
 	msleep(50);
 	return 0;
 }
+#endif
 
+extern void OS_StopScheduler(void);
 
 static void __exit ssv6xxx_usb_exit(void) 
 {
+#if 0
 	if (driver_for_each_device(&ssv_usb_driver.drvwrap.driver, NULL,
 		NULL, ssv_usb_do_device_exit));
-
+#endif
     printk(KERN_INFO "ssv6xxx_usb_exit\n");
+    printk(KERN_INFO "stop all kernel tasks\n");	
+	OS_StopScheduler();
+    printk(KERN_INFO "deregister usb driver\n");
 	usb_deregister(&ssv_usb_driver);
 }
  

@@ -143,21 +143,21 @@ s32 msg_evt_fetch(OsMsgQ msgevq, MsgEvent **msgev)
 
     if (res == OS_SUCCESS)
         msg_ret = (MsgEvent *)MsgEntry.MsgData;
-	#ifdef CHECK_MSG_EVT_RANGE
-    if (((u32)msg_ret < min_msg_evt_addr) || ((u32)msg_ret > max_msg_evt_addr))
-    {
-        if (!is_sta_timer((u32)msg_ret))
-        {
-            LOG_PRINTF("T MSG: 0x%08X - 0x%08X ~ 0x%08X\n", (u32)msg_ret,
-                        min_msg_evt_addr, max_msg_evt_addr);
-            ASSERT_RET((((u32)msg_ret >= min_msg_evt_addr) && ((u32)msg_ret <= max_msg_evt_addr)), 
-                       OS_FAILED);
-        }
-    }
-	#endif // CHECK_MSG_EVT_RANGE
-	#if (MSG_EVT_DEBUG)
+#ifdef CHECK_MSG_EVT_RANGE
+	if (((u32)msg_ret < min_msg_evt_addr) || ((u32)msg_ret > max_msg_evt_addr))
+	{
+		if (!is_sta_timer((u32)msg_ret))
+		{
+			LOG_PRINTF("T MSG: 0x%08X - 0x%08X ~ 0x%08X\n", 
+				(u32)msg_ret, min_msg_evt_addr, max_msg_evt_addr);
+			ASSERT_RET((((u32)msg_ret >= min_msg_evt_addr) 
+				&& ((u32)msg_ret <= max_msg_evt_addr)), OS_FAILED);
+		}
+	}
+#endif
+#if (MSG_EVT_DEBUG)
 	log_printf("msg_evt_fetch(%12s): 0x%08x\n\r", MSGQ_STR(msgevq), msg_ret);	
-	#endif
+#endif
 
 	*msgev = msg_ret;
 	return res;

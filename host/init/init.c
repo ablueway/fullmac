@@ -556,6 +556,10 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
        g_host_cfg.pool_sec_size = POOL_SEC_SIZE(16) SSV_TMR_MAX(24) */
     msg_evt_init(MAC_EVENT_COUNT);
 
+#if (CONFIG_USE_LWIP_PBUF==0)    
+	ASSERT( PBUF_Init(POOL_SIZE) == OS_SUCCESS );
+#endif//#if CONFIG_USE_LWIP_PBUF
+
     netstack_init(NULL);
      /**
 	 * Initialize Host simulation platform. The Host initialization sequence
