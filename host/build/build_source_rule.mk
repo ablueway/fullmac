@@ -1,7 +1,7 @@
 KERN_SRCS := 
 
 ################################################################################
-# 01. Define Include AP Source File Rule						   	   		   #	
+# Define Include AP Source File Rule						   	   		       #	
 ################################################################################
 #KERN_SRCS += ./ap/ap.c
 #KERN_SRCS += ./ap/ap_config.c
@@ -23,12 +23,12 @@ KERN_SRCS :=
 #KERN_SRCS += ./ap/wmm.c
 
 ################################################################################
-# 02. Define Include APP Source File Rule						   	   		   #	
+# Define Include APP Source File Rule						   	   		       #	
 ################################################################################
 KERN_SRCS += ./app/netmgr/net_mgr.c
 
 ################################################################################
-# 03. Define Include CORE Source File Rule						   	   		   #	
+# Define Include CORE Source File Rule						   	   		       #	
 ################################################################################
 KERN_SRCS += ./core/host_apis.c
 KERN_SRCS += ./core/mlme.c
@@ -43,13 +43,7 @@ KERN_SRCS += ./core/host_cmd_engine_rx.c
 KERN_SRCS += ./core/host_cmd_engine_tx.c
 
 ################################################################################
-# 04. Define Include DRV Source File Rule						   	   		   #	
-################################################################################
-#KERN_SRCS += ./drv/ssv_drv.c
-#KERN_SRCS += ./drv/usb_linux/usb_if_impl.c
-
-################################################################################
-# 05. Define Include HAL Source File Rule						   	   		   #	
+# Define Include HAL Source File Rule						   	   		       #	
 ################################################################################
 KERN_SRCS += ./hal/ssv_hal.c
 KERN_SRCS += ./hal/SSV6006/ssv6006_hal.c
@@ -61,20 +55,13 @@ KERN_SRCS += ./hal/SSV6006/turismo_common.c
 KERN_SRCS += ./hal/SSV6006/ssv6006_efuse.c
 
 ################################################################################
-# 06. Define Include HIF Wrapper Source File Rule						   	   #	
+# Define Include HIF Wrapper Source File Rule						   	       #	
 ################################################################################
 KERN_SRCS += ./hif_wrapper/ssv_drv.c
 KERN_SRCS += ./hif_wrapper/linux/usb/usb.c
-#KERN_SRCS += ./hif_wrapper/linux/usb_linux/usb_if_impl.c
-
 
 ################################################################################
-# 07. Define Include HWIF Source File Rule						   	   		   #	
-################################################################################
-#KERN_SRCS += ./hwif/usb/usb.c
-
-################################################################################
-# 08. Define Include INIT Source File Rule						   		   	   #	
+# Define Include INIT Source File Rule						   		   	       #	
 ################################################################################
 KERN_SRCS += ./init/init.c
 KERN_SRCS += ./init/country_cfg.c
@@ -82,10 +69,9 @@ KERN_SRCS += ./init/ssv_frame.c
 KERN_SRCS += ./init/version.c
 KERN_SRCS += ./init/custom_cfg.c
 KERN_SRCS += ./init/macaddr.c
-KERN_SRCS += ./init/test.c
 
 ################################################################################
-# 09. Define Include LIB Source File Rule						   	   		   #	
+# Define Include LIB Source File Rule						   	   		       #	
 ################################################################################
 KERN_SRCS += ./lib/apps/host_global.c
 KERN_SRCS += ./lib/apps/host_log.c
@@ -98,20 +84,16 @@ KERN_SRCS += ./lib/efuse.c
 KERN_SRCS += ./lib/ssv_msg.c
 
 ################################################################################
-# 10. Define Include NET STACK WRAPPER Source File Rule						   #	
+# Define Include NET WRAPPER Source File Rule						   	       #	
 ################################################################################
-KERN_SRCS += ./netstack_wrapper/linux/netstack.c
+KERN_SRCS += ./net_wrapper/linux/netstack.c
 
 ################################################################################
-# 11. Define Include OS WRAPPER Source File Rule						   	   #	
+# Define Include OS WRAPPER Source File Rule						   	       #	
 ################################################################################
 KERN_SRCS += ./os_wrapper/linux/os.c
 
 ################################################################################
-# 12. Define Include Platform Source File Rule						   		   #	
+# Define Include Platform Source File Rule						   		       #	
 ################################################################################
 KERN_SRCS += ./platform/linux/porting.c
-
-################################################################################
-# 13. Define Include TCPIP Source File Rule						   		   	   #	
-################################################################################

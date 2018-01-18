@@ -14,20 +14,11 @@ EXTRA_CFLAGS += -I$(KBUILD_TOP)/ap/crypto
 
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/app/cli
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/app/cli/cmds
-#EXTRA_CFLAGS += -I$(KBUILD_TOP)/app/netapp
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/app/netmgr
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/app/netmgr/SmartConfig
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/app/netmgr/SmartConfig/iComm/core
 
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/core
-
-#EXTRA_CFLAGS += -I$(KBUILD_TOP)/drv
-#EXTRA_CFLAGS += -I$(KBUILD_TOP)/drv/drv/usb_linux
-
-#EXTRA_CFLAGS += -I$(KBUILD_TOP)/drv/sdio_linux
-#EXTRA_CFLAGS += -I$(KBUILD_TOP)/drv/spi
-#EXTRA_CFLAGS += -I$(KBUILD_TOP)/drv/spi/spi1p0
-#EXTRA_CFLAGS += -I$(KBUILD_TOP)/drv/spi/spi2p0
 
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/hal
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/hal/SSV6006
@@ -45,20 +36,17 @@ EXTRA_CFLAGS += -I$(KBUILD_TOP)/hif_wrapper/linux/usb
 
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/init
 
-#EXTRA_CFLAGS += -I$(KBUILD_TOP)/mac
-
-#EXTRA_CFLAGS += -I$(KBUILD_TOP)/netstack_wrapper/icomm_lwIP
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/netstack_wrapper/linux
+EXTRA_CFLAGS += -I$(KBUILD_TOP)/net_wrapper/linux
 
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/os_wrapper/linux
 
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/platform/linux
 
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/tcpip/lwip-1.4.0/ports/icomm
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/tcpip/lwip-1.4.0/ports/icomm/include/arch
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/tcpip/lwip-1.4.0/ports/icomm
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/tcpip/lwip-1.4.0/ports/icomm/include/arch
 
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/tcpip/lwip-1.4.0/src/include/ipv4/lwip
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/tcpip/lwip-1.4.0/src/include/ipv6/lwip
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/tcpip/lwip-1.4.0/src/include/lwip
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/tcpip/lwip-1.4.0/src/include/netif
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/tcpip/lwip-1.4.0/src/include/ipv4/lwip
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/tcpip/lwip-1.4.0/src/include/ipv6/lwip
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/tcpip/lwip-1.4.0/src/include/lwip
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/tcpip/lwip-1.4.0/src/include/netif
 
