@@ -374,13 +374,13 @@ void  CmdEng_TxHdlCmd(void *frame)
         {
         //u32 timeout = (hCmd->h_cmd == SSV6XXX_HOST_CMD_SCAN)? SCAN_CMD_TIMEOUT:PENDING_CMD_TIMEOUT;
 
-            OS_MutexLock(gHCmdEngInfo->CmdEng_mtx);
+            OS_MutexLock(&gHCmdEngInfo->CmdEng_mtx);
             gHCmdEngInfo->pending_cmd_seqno = hCmd->cmd_seq_no;
             gHCmdEngInfo->blockcmd_in_q = true;
             LOG_DEBUGF(LOG_CMDENG, ("[CmdEng]: Got Block cmd %d, start to pending cmd\r\n", gHCmdEngInfo->pending_cmd_seqno));
             //if (hCmd->h_cmd == SSV6XXX_HOST_CMD_SCAN)
             //os_create_timer(SCAN_CMD_TIMEOUT, pendingcmd_expired_handler, gHCmdEngInfo, NULL, MBOX_CMD_ENGINE);
-            OS_MutexUnLock(gHCmdEngInfo->CmdEng_mtx);
+            OS_MutexUnLock(&gHCmdEngInfo->CmdEng_mtx);
         }
         //==============================================================
         {
@@ -401,7 +401,7 @@ void  CmdEng_TxHdlCmd(void *frame)
             struct stamode_setting * sta_mod = NULL;
             sta_mod = (struct stamode_setting *)hCmd->un.dat8;
             ssv6xxx_wifi_station(sta_mod->mode,sta_mod->sta_cfg);
-            OS_SemSignal(ap_sta_on_off_sphr);
+            OS_SemSignal(&ap_sta_on_off_sphr);
             os_frame_free(frame);
             return;
         }
@@ -410,7 +410,7 @@ void  CmdEng_TxHdlCmd(void *frame)
             struct apmode_setting * ap_mod = NULL;
             ap_mod = (struct apmode_setting *)hCmd->un.dat8;
             ssv6xxx_wifi_ap((Ap_setting *)ap_mod->ap_cfg,ap_mod->step);
-            OS_SemSignal(ap_sta_on_off_sphr);
+            OS_SemSignal(&ap_sta_on_off_sphr);
             os_frame_free(frame);
             return;
 

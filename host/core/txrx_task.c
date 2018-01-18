@@ -85,9 +85,9 @@ struct task_info_st g_txrx_task_info[] =
 void TXRXTask_TxLock (bool lock)
 {
     if(lock)
-        OS_MutexLock(tx_mtx);
+        OS_MutexLock(&tx_mtx);
     else
-        OS_MutexUnLock(tx_mtx);
+        OS_MutexUnLock(&tx_mtx);
 }
 
 void _dq_status_handler (void *data)
@@ -325,7 +325,7 @@ void TXRXTask_TxTask(void *args)
             acc_wait = 0;
         }
         start_ticks = OS_GetSysTick();*/
-        OS_SemWait(tx_frm_sphr, sleep_tick);
+        OS_SemWait(&tx_frm_sphr, sleep_tick);
         /*wakeup_ticks = OS_GetSysTick();
         wait_ticks = (wakeup_ticks-start_ticks);
         acc_wait += wait_ticks;*/
@@ -347,12 +347,12 @@ void TXRXTask_TxTask(void *args)
 					};
 #endif
                     //LOG_PRINTF("%s:  Send tx frame %08x with FrmQ %08X!!\r\n", __FUNCTION__, tFrame, outFrm);
-                    OS_MutexLock(tx_mtx);
+                    OS_MutexLock(&tx_mtx);
                     flush_frm = (tx_flush_data_frm_num == 0)?false:true;
                     tx_data_frm_num --;
                     if(flush_frm == true)
                         tx_flush_data_frm_num--;
-                    OS_MutexUnLock(tx_mtx);
+                    OS_MutexUnLock(&tx_mtx);
 
                     if (flush_frm == false)
                     {
@@ -422,7 +422,7 @@ TX_RESEND:
 
                     if(prc_count > 1)
                     {
-                        OS_SemWait(tx_frm_sphr, sleep_tick); //More frames are sent and resource should be pulled out.
+                        OS_SemWait(&tx_frm_sphr, sleep_tick); //More frames are sent and resource should be pulled out.
                         //LOG_PRINTF("******************%s: push back due to multi-send:%d !!\r\n", __FUNCTION__, tx_count);
                     }
 
@@ -476,7 +476,7 @@ void TXRXTask_RxTask(void *args)
     size_t next_pkt_len = 0;
     while(curr_mode != MT_EXIT)
     {
-        OS_SemWait(rx_frm_sphr, 0);
+        OS_SemWait(&rx_frm_sphr, 0);
 
         for(retry=0;retry<32;retry++)
         {
@@ -646,11 +646,11 @@ s32 TXRXTask_Init(void)
 
 s32 TXRXTask_DeInit(void)
 {
-    OS_MutexDelete(task_mtx);
-    OS_MutexDelete(tx_mtx);
+    OS_MutexDelete(&task_mtx);
+    OS_MutexDelete(&tx_mtx);
 
-    OS_SemDelete(tx_frm_sphr);
-    OS_SemDelete(rx_frm_sphr);
+    OS_SemDelete(&tx_frm_sphr);
+    OS_SemDelete(&rx_frm_sphr);
 
     OS_MemFree((void*)hcirxAggtempbuf);
     hcirxAggtempbuf=NULL;
@@ -674,13 +674,13 @@ s32 TXRXTask_FrameEnqueue(void *frame, u32 priority)
         return false;
     }
 
-    OS_MutexLock(tx_mtx);
+    OS_MutexLock(&tx_mtx);
     dataFrm = (FrmL *)llist_pop(&free_frmQ);
     if (dataFrm == NULL)
     {
         LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_SERIOUS, 
 			("[TxRx_task]:can not get empty llist for dataFrm\r\n"));
-        OS_MutexUnLock(tx_mtx);
+        OS_MutexUnLock(&tx_mtx);
         return false;
     }
 
@@ -694,9 +694,9 @@ s32 TXRXTask_FrameEnqueue(void *frame, u32 priority)
 
     llist_push(&tx_hwq[priority], &dataFrm->_list);
     //LOG_DEBUG("****************[TxRx_task]: size of tx_hwq[priority] = %d\r\n", tx_hwq[priority].qlen);
-    OS_MutexUnLock(tx_mtx);
+    OS_MutexUnLock(&tx_mtx);
 
-    while(OS_SemSignal(tx_frm_sphr) != 0)
+    while(OS_SemSignal(&tx_frm_sphr) != 0)
         OS_TickDelay(1);
 
     return true;
@@ -710,7 +710,7 @@ ssv6xxx_result TXRXTask_SetOpMode(ModeType mode)
     if(mode > MT_EXIT)
         return SSV6XXX_INVA_PARAM;
 
-    OS_MutexLock(tx_mtx);
+    OS_MutexLock(&tx_mtx);
 
     switch (curr_mode)
     {
@@ -744,7 +744,7 @@ ssv6xxx_result TXRXTask_SetOpMode(ModeType mode)
     if(ret == SSV6XXX_SUCCESS)
         curr_mode = mode;
 
-    OS_MutexUnLock(tx_mtx);
+    OS_MutexUnLock(&tx_mtx);
     LOG_DEBUGF(LOG_TXRX, ("[TxRx_task]: curr_mode = %d\r\n", curr_mode));
 
     if(curr_mode == MT_EXIT)
@@ -771,19 +771,19 @@ void TXRXTask_Isr(u32 signo,bool isfromIsr)
         ssv6xxx_drv_irq_disable(isfromIsr);
         if(isfromIsr == TRUE)
         {
-            if(OS_SemSignal_FromISR(rx_frm_sphr) !=0)
+            if(OS_SemSignal_FromISR(&rx_frm_sphr) !=0)
             {
                 //LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_SERIOUS, ("OS_SemSignal_FromISR fail\r\n"));
-                LOG_PRINTF("1 RX sem cnt=%d\r\n",OS_SemCntQuery(rx_frm_sphr));
+                LOG_PRINTF("1 RX sem cnt=%d\r\n",OS_SemCntQuery(&rx_frm_sphr));
                 //ssv6xxx_drv_irq_enable(true);
             }
         }    
         else
         {
-            if(OS_SemSignal(rx_frm_sphr) !=0)
+            if(OS_SemSignal(&rx_frm_sphr) !=0)
             {
                 //LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_SERIOUS, ("OS_SemSignal fail\r\n"));
-                LOG_PRINTF("2 RX sem cnt=%d\r\n",OS_SemCntQuery(rx_frm_sphr));
+                LOG_PRINTF("2 RX sem cnt=%d\r\n",OS_SemCntQuery(&rx_frm_sphr));
                 //ssv6xxx_drv_irq_enable(false);
             }
         }
