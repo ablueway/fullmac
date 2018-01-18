@@ -87,6 +87,7 @@ struct ssv6xxx_usb_glue {
 	struct usb_device               *udev;			/* the usb device for this device */
 	struct usb_interface            *interface;		/* the usb interface device for this device */
 	struct ssv6xxx_platform_data     wlan_data;
+	struct ssv6xxx_platform_data     wlan_data;
 	struct ssv6xxx_cmd_endpoint      cmd_endpoint;	/* command endpoint */
 	struct ssv6xxx_cmd_endpoint      rsp_endpoint;	/* response endpoint */
 	struct ssv6xxx_tx_endpoint       tx_endpoint;	/* tx endpoint */

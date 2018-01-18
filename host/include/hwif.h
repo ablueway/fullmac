@@ -124,6 +124,7 @@ struct ssv6xxx_platform_data {
     unsigned short              device;		/* device id */
 	struct ssv_unify_drv		*unify_drv; 			
 	
+	
 	bool						dbg_control;
 
     // Application defined socket buffer allocation/free functions.
