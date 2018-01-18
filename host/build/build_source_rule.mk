@@ -69,6 +69,7 @@ KERN_SRCS += ./init/ssv_frame.c
 KERN_SRCS += ./init/version.c
 KERN_SRCS += ./init/custom_cfg.c
 KERN_SRCS += ./init/macaddr.c
+KERN_SRCS += ./init/test.c
 
 ################################################################################
 # Define Include LIB Source File Rule						   	   		       #	
