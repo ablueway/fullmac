@@ -463,7 +463,7 @@ int TXRXTask_RxTask(void *args)
 						&& (s_drv_cur->drv_info.fields.hw_type == DRV_INFO_FLAG_HW_TYPE_USB))
 			{
 				/* TODO(aaron): use timeout sem to avoid rx work queue polling mechanism */
-				OS_SemWait(rx_frm_sphr, 10000);
+				OS_SemWait(rx_frm_sphr, 3000);
 			}
 			else
 			{
@@ -584,8 +584,107 @@ int TXRXTask_RxTask(void *args)
 	return 0;
 }
 #else
-void TXRXTask_TxTask(void *args)
+						while ((rFrame = (u8 *)os_frame_alloc(g_host_cfg.recv_buf_size, TRUE)) == NULL)
 #endif
+	                    {
+	                        OS_TickDelay(1);
+	                       	LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_WARNING, 
+								("[RxTask]: wakeup from sleep!\r\n"));
+	                        //continue;
+	                    }
+	                    os_frame_push(rFrame, g_host_cfg.trx_hdr_len);
+	                    msg_data = OS_FRAME_GET_DATA(rFrame);
+	                }
+	                recv_len = ssv6xxx_drv_recv(msg_data, OS_FRAME_GET_DATA_LEN(rFrame));
+	            }
+
+	            if (recv_len > 0)
+	            {
+	                if (g_host_cfg.hci_rx_aggr)
+	                {
+	                    next_pkt_len = ssv_hal_process_hci_rx_aggr(msg_data,recv_len,(RxPktHdr)TXRXTask_RxFrameProc);
+	                }
+	                else
+	                {
+	                    OS_FRAME_SET_DATA_LEN(rFrame, recv_len);
+	                    TXRXTask_RxFrameProc(rFrame);
+	                }
+	                rFrame = NULL;
+	                msg_data = NULL;
+	            }
+	            else if (recv_len == 0)
+	            {
+	                LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_SERIOUS, 
+						("[TxRxTask]: recv_len == 0 at frame %p, first 8 bytes content is dumpped as below:\r\n", rFrame));
+	                hex_dump(msg_data, 8);
+	            }
+	            else
+	            {
+	                //LOG_DEBUG("[TxRxTask]: Rx semaphore comes in, but not frame receive\r\n");
+#if(RECOVER_ENABLE == 1)
+#if(RECOVER_MECHANISM == 0)
+	                u32 i;
+	                if (retry == 0) // when interrupt always high
+	                {
+	                    if (TRUE == ssv_hal_get_diagnosis()) // watchdog wack up & reset
+	                    {
+	                        u32 fw_status = 0;
+	                        ssv_hal_get_fw_status(&fw_status);
+
+	                        //LOG_PRINTF("***********************************************g_hw_enable:%d fw_status:%08x\r\n", g_hw_enable, fw_status);
+	                        if (fw_status == 0x5A5AA5A5 ||g_hw_enable == false)
+							{
+	                            break;
+	                        }
+
+	                        ssv_hal_reset_soc_irq();//  system reset interrupt for host
+
+	                        for (i = 0; i < MAX_VIF_NUM; i++)
+	                        {
+	                            if (gDeviceInfo->vif[i].hw_mode == SSV6XXX_HWM_AP)
+								{
+	                                ssv6xxx_wifi_ap_recover(i);
+	                            }
+	                            else if(gDeviceInfo->vif[i].hw_mode == SSV6XXX_HWM_STA)
+	                            {
+	                                ssv6xxx_wifi_sta_recover(i);
+	                            }
+	                        }
+	                    }
+	                }
+#elif(RECOVER_MECHANISM == 1)
+	                if (retry == 0)
+	                {
+	                    // handle ipc interrupt for check fw ceash
+	                    //LOG_PRINTF("is heartbeat\r\n");
+	                    if (1 == ssv_hal_is_heartbeat())
+	                    {
+	                        //LOG_PRINTF("%08x: host_isr\r\n",isr_status);
+	                        gDeviceInfo->fw_timer_interrupt ++;
+	                        chip_interrupt = os_tick2ms(OS_GetSysTick());
+	                        ssv_hal_reset_heartbeat();
+	                    }
+	                }
+#endif //#if(RECOVER_MECHANISM == 1)
+#endif //#if(RECOVER_ENABLE == 1)
+	                break;
+	            }
+	        }
+	        //RxTaskRetryCount[retry]++;
+	        ssv6xxx_drv_irq_enable(false);
+	    }
+	    RxTask_Done = true;
+
+	    if (rFrame != NULL)
+	    {
+	        os_frame_free(rFrame);
+	        rFrame = NULL;
+	    }
+	}
+	return 0;
+}
+#else
+void TXRXTask_TxTask(void *args)
 {
     void *tFrame = NULL;
     FrmL *outFrm = NULL;
@@ -738,18 +837,9 @@ TX_RESEND:
         }
     }
     TxTask_Done = true;
-
-#ifdef __linux__
-	return 0;
-#endif	
 }
 
-
-#ifdef __linux__
-int TXRXTask_RxTask(void *args)
-#else
 void TXRXTask_RxTask(void *args)
-#endif
 {
     void * rFrame = NULL;
     u8  *msg_data = NULL;
@@ -866,10 +956,6 @@ void TXRXTask_RxTask(void *args)
         os_frame_free(rFrame);
         rFrame = NULL;
     }	
-	
-#ifdef __linux__
-	return 0;
-#endif
 }
 #endif
 #endif

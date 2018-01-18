@@ -296,7 +296,6 @@ int CmdEng_Task(void *data)
 }
 #else
 void CmdEng_Task(void *args)
-#endif
 {
 	MsgEvent *MsgEv;
 	s32 res;
@@ -402,9 +401,6 @@ void CmdEng_Task(void *args)
             };
         }
 	}
-#ifdef __linux__
-	return 0;
-#endif
 }
 #endif
 

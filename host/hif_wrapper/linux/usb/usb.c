@@ -292,6 +292,11 @@ exit:
 }
 
 
+
+
+
+
+
 /* TODO(aaron): change the usb rx mechanism for redbull host linux drv archecture */
 static int __must_check ssv6xxx_usb_read(void *dev, void *rx_data_buf, size_t expec_rx_len)
 {
@@ -305,18 +310,20 @@ static int __must_check ssv6xxx_usb_read(void *dev, void *rx_data_buf, size_t ex
 				rx_data_buf,
 				expec_rx_len,
 				&rx_actul_len,
-				TRANSACTION_TIMEOUT);
-	if (!retval)
+				1000);
+	if (!retval) 
 	{
 		printk("recv rx data len=%d\n", rx_actul_len);
 		return rx_actul_len;
 	}
 	else
 	{
-		printk("usb rx fail, error code(%d)\n", retval);
+		printk("Fail to rx urb, error=%d\n", retval);
 		return 0;
 	}	
 }
+
+
 
 /* TODO(aaron): change the usb tx mechanism for redbull host linux drv archecture */
 static int __must_check ssv6xxx_usb_write(void *dev, void *buf, size_t len)
@@ -609,6 +616,7 @@ static void ssv6xxx_usb_irq_disable(void *dev, bool iswaitirq)
 
 struct ssv_unify_drv usb_ops = 
 {
+
 	.name = "SSV6XXX_USB",
 	.drv_info.flags = UNIFY_LINUX_USB_DRV_INFO_FLAGS,
 	.drv_ops = 
@@ -632,33 +640,6 @@ struct ssv_unify_drv usb_ops =
 		.sysplf_reset    		= ssv6xxx_usb_sysplf_reset,
 		.irq_enable				= ssv6xxx_usb_irq_enable,
 		.irq_disable			= ssv6xxx_usb_irq_disable,		
-	}
-};
-#endif
-
-struct unified_drv_ops usb_ops = 
-{
-	.name = "SSV6XXX_USB",
-	.drv_info.flags = UNIFY_LINUX_USB_DRV_INFO_FLAGS,
-	.drv_ops = 
-	{
-	    .read            		= ssv6xxx_usb_read,
-	    .write           		= ssv6xxx_usb_write,
-	    .readreg	     		= ssv6xxx_usb_read_reg,
-	    .writereg        		= ssv6xxx_usb_write_reg,
-	    .safe_readreg    		= ssv6xxx_usb_read_reg,
-	    .safe_writereg   		= ssv6xxx_usb_write_reg,
-	    .burst_readreg   		= ssv6xxx_usb_burst_read_reg,
-	    .burst_writereg  		= ssv6xxx_usb_burst_write_reg,    
-	    .burst_safe_readreg   	= ssv6xxx_usb_burst_read_reg,
-	    .burst_safe_writereg  	= ssv6xxx_usb_burst_write_reg,    
-	    .load_fw         		= ssv6xxx_usb_load_firmware,
-	    .property        		= ssv6xxx_usb_property,
-	    .hwif_rx_task    		= ssv6xxx_usb_rx_task,
-	    .start_usb_acc   		= ssv6xxx_usb_start_acc,
-	    .stop_usb_acc    		= ssv6xxx_usb_stop_acc,
-	    .jump_to_rom     		= ssv6xxx_usb_jump_to_rom,
-		.sysplf_reset    		= ssv6xxx_usb_sysplf_reset, 
 	}
 };
 

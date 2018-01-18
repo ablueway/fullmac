@@ -7,7 +7,6 @@
 #include <linux/random.h>
 #include <linux/spinlock.h>
 #include <linux/semaphore.h>
-//#include <semaphore.h>
 #include <linux/mutex.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
@@ -19,13 +18,16 @@
 
 #include <linux/kthread.h>
 #include <linux/timer.h>
-
 #include "os.h"
 /*TODO: aaron */
 //#include "os_cfg.h"
 //#include <log.h>
 
 
+/*TODO(aaron): need to know how many task does the redbull host needed ? */
+u8 g_total_task_cnt = 0;
+#define MAX_OS_TASK_NUM 	(10)
+static struct task_struct *g_os_task_tbl[MAX_OS_TASK_NUM] = {NULL};
 
 /*TODO(aaron): need to know how many task does the redbull host needed ? */
 u8 g_total_task_cnt = 0;
@@ -124,7 +126,6 @@ OS_APIs void OS_StartScheduler(void)
 		}
 	}
 }
-
 OS_APIs void OS_StopScheduler(void)
 {
 	u8 task_idx = 0;

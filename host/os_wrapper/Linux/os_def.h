@@ -19,7 +19,6 @@
 
 
 
-
 #define OS_EVENT_TBL_SIZE (8)   	/* Size of event table */
 #define OS_RDY_TBL_SIZE   (8)   	/* Size of ready table */
 #define OS_EVENT_NAME_SIZE (32)    	/* Determine the size of the name of a Sem, Mutex, Mbox or Q    */
