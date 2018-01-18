@@ -5,6 +5,7 @@
 */
 #ifdef __linux__
 #include <linux/kernel.h>
+#include <linux/kthread.h>
 #endif
 
 #define __SFILE__ "host_cmd_engine.c"
@@ -180,12 +181,110 @@ ssv6xxx_result CmdEng_GetStatus(void *stp)
 //---------------------------------------------------------------------------------------------
 extern s32 AP_Start(void);
 extern s32 AP_Stop( void );
-
 #ifdef __linux__
-int CmdEng_Task(void *args)
+int CmdEng_Task(void *data)
+{
+	MsgEvent *MsgEv;
+	s32 res;
+	extern u32 g_RunTaskCount;
+    CFG_HOST_RXPKT *rxpkt= NULL;
+    u32 msgData = 0;
+	LOG_TRACE("%s() Task started.\r\n", __FUNCTION__);
+	g_RunTaskCount++;
+
+	while(!kthread_should_stop())
+	{
+        if ((gHCmdEngInfo->blockcmd_in_q == false) 
+			&& (list_q_len_safe(&gHCmdEngInfo->pending_cmds, &(gHCmdEngInfo->CmdEng_mtx)) > 0))
+        {
+            //Proceeding pending cmds
+            FrmQ *pcmd = NULL;
+            struct cfg_host_cmd *hCmd = NULL;
+
+            pcmd = (FrmQ *)list_q_deq_safe(&gHCmdEngInfo->pending_cmds, &gHCmdEngInfo->CmdEng_mtx);
+            hCmd = (struct cfg_host_cmd *)OS_FRAME_GET_DATA(pcmd->frame);
+            LOG_DEBUGF(LOG_CMDENG, ("[CmdEng]: Pop pending cmd %d to execute\r\n", hCmd->cmd_seq_no));
+            CmdEng_TxHdlCmd(pcmd->frame);
+
+			OS_MutexLock(gHCmdEngInfo->CmdEng_mtx);
+            if (list_q_len(&gHCmdEngInfo->free_FrmQ) < FREE_FRM_NUM)
+            {    
+            	list_q_qtail(&gHCmdEngInfo->free_FrmQ, (struct ssv_list_q *)pcmd);
+            }
+			else 
+			{
+	            FREE(pcmd);
+			}
+			OS_MutexUnLock(gHCmdEngInfo->CmdEng_mtx);
+        }
+        else
+        {
+            /* Wait Message: */
+            res = msg_evt_fetch(MBOX_CMD_ENGINE, &MsgEv);
+            ASSERT(res == OS_SUCCESS);
+
+    		//LOG_TRACE("AP needs to handle msg:%d.\n", MsgEv->MsgType);
+            switch (MsgEv->MsgType)
+            {
+            case MEVT_PKT_BUF:
+                rxpkt=(CFG_HOST_RXPKT *)MsgEv->MsgData;
+                os_msg_free(MsgEv);
+                CmdEng_HandleQueue(rxpkt);
+                break;
+
+            /**
+            *  Message from software timer timeout event.
+            */
+            case MEVT_HOST_TIMER:
+                os_timer_expired((void *)MsgEv);
+                os_msg_free(MsgEv);
+                break;
+
+
+            case MEVT_HOST_CMD:
+                msgData=MsgEv->MsgData;
+                msg_evt_free(MsgEv);
+                switch(msgData)
+                {
+#if (AP_MODE_ENABLE == 1)
+                case AP_CMD_AP_MODE_ON:
+                    AP_Start();
+                    break;
+
+                case AP_CMD_AP_MODE_OFF:
+                    AP_Stop();
+                    break;
+#endif                    
+#ifdef __TEST_DATA__
+                case AP_CMD_ADD_STA:
+                    TestCase_AddAPSta();
+                    break;
+
+                case AP_CMD_PS_POLL_DATA:
+                    TestCase_SendPSPoll();
+                    break;
+
+                case AP_CMD_PS_TRIGGER_FRAME:
+                    TestCase_SendTriggerFrame();
+                    break;
+#endif//__TEST_DATA__
+                default:
+                    break;
+                }
+
+                break;
+            default:
+                //SoftMac_DropPkt(MsgEv);
+                LOG_DEBUGF(LOG_CMDENG, ("%s(): unknown message type(%02x) !!\r\n",
+                    __FUNCTION__, MsgEv->MsgType));
+                break;
+            };
+        }
+	}
+	return 0;
+}
 #else
 void CmdEng_Task(void *args)
-#endif
 {
 	MsgEvent *MsgEv;
 	s32 res;
@@ -203,7 +302,7 @@ void CmdEng_Task(void *args)
 	//SSVHostCmdEng_Start();
 	//	SM_ENTER(HCMDE, IDLE, NULL);
 
-	while(1)
+	while (1)
 	{
         if ((gHCmdEngInfo->blockcmd_in_q == false) && (list_q_len_safe(&gHCmdEngInfo->pending_cmds, &(gHCmdEngInfo->CmdEng_mtx)) > 0))
         {
@@ -215,12 +314,17 @@ void CmdEng_Task(void *args)
             hCmd = (struct cfg_host_cmd *)OS_FRAME_GET_DATA(pcmd->frame);
             LOG_DEBUGF(LOG_CMDENG, ("[CmdEng]: Pop pending cmd %d to execute\r\n", hCmd->cmd_seq_no));
             CmdEng_TxHdlCmd(pcmd->frame);
-            OS_MutexLock(&gHCmdEngInfo->CmdEng_mtx);
+
+			OS_MutexLock(gHCmdEngInfo->CmdEng_mtx);
             if (list_q_len(&gHCmdEngInfo->free_FrmQ) < FREE_FRM_NUM)
-                list_q_qtail(&gHCmdEngInfo->free_FrmQ, (struct ssv_list_q *)pcmd);
-            else
-                FREE(pcmd);
-            OS_MutexUnLock(&gHCmdEngInfo->CmdEng_mtx);
+            {    
+            	list_q_qtail(&gHCmdEngInfo->free_FrmQ, (struct ssv_list_q *)pcmd);
+            }
+			else 
+			{
+	            FREE(pcmd);
+			}
+			OS_MutexUnLock(gHCmdEngInfo->CmdEng_mtx);
         }
         else
         {
@@ -229,7 +333,7 @@ void CmdEng_Task(void *args)
             ASSERT(res == OS_SUCCESS);
 
     		//LOG_TRACE("AP needs to handle msg:%d.\n", MsgEv->MsgType);
-            switch(MsgEv->MsgType)
+            switch (MsgEv->MsgType)
             {
             case MEVT_PKT_BUF:
                 rxpkt=(CFG_HOST_RXPKT *)MsgEv->MsgData;
@@ -278,7 +382,6 @@ void CmdEng_Task(void *args)
                 }
 
                 break;
-
             default:
                 //SoftMac_DropPkt(MsgEv);
                 LOG_DEBUGF(LOG_CMDENG, ("%s(): unknown message type(%02x) !!\r\n",
@@ -286,12 +389,9 @@ void CmdEng_Task(void *args)
                 break;
             };
         }
-
 	}
-#ifdef __linux__
-	return 0;
-#endif
 }
+#endif
 
 #if (_WIN32 == 1 && CONFIG_RX_POLL == 0)
 #define INITGUID
@@ -374,7 +474,7 @@ void SSV6XXX_drv_msg_only(void *args)
 
 struct task_info_st g_host_task_info[] =
 {
-	{ "host_cmd",   (OsMsgQ)0, 16, 	OS_CMD_ENG_PRIO, CMD_ENG_STACK_SIZE, NULL, CmdEng_Task },
+	{ "host_cmd",   (OsMsgQ)0, 16, 	OS_CMD_ENG_PRIO, CMD_ENG_STACK_SIZE, NULL, CmdEng_Task},
 
 };
 

@@ -5,6 +5,7 @@
 */
 #ifdef __linux__
 #include <linux/kernel.h>
+#include <linux/kthread.h>
 #endif
 
 #include <os.h>
@@ -64,6 +65,7 @@ void os_timer_init(void)
         list_q_qtail(&free_tmr_hd,(struct ssv_list_q *)pOSTimer);
     }
 }
+
 void _create_timer(struct os_timer *pOSTimer, u32 xElapsed)
 {
     struct ssv_list_q *qhd = &tmr_hd;
@@ -271,9 +273,9 @@ void _cancel_timer(timer_handler handler, u32 data1, u32 data2)
     //LOG_PRINTF("%s %d,%d,%d\r\n",__func__,tmr_hd.qlen,expired_tmr_hd.qlen,free_tmr_hd.qlen);
 }
 
-void _free_timer(struct os_timer* free_tmr)
+void _free_timer(struct os_timer *free_tmr)
 {
-    struct ssv_list_q* qhd = &expired_tmr_hd;
+    struct ssv_list_q *qhd = &expired_tmr_hd;
     OS_MutexLock(&g_tmr_mutex);
     if(qhd->qlen > 0)
     {
@@ -299,10 +301,83 @@ void _free_timer(struct os_timer* free_tmr)
 }
 
 #ifdef __linux__
-int SSV_Timer_Task( void *args )
+int SSV_Timer_Task(void *args)
+{
+    u32 xStartTime, xEndTime, xElapsed;
+    MsgEvent *MsgEv = NULL;
+    struct os_timer *cur_tmr = NULL;
+
+    //LOG_PRINTF("SSV_Timer_Task Start,hd=%x\r\n",(u32)&tmr_hd);
+	while (!kthread_should_stop())
+	{
+        xElapsed = 0;
+        xStartTime = OS_GetSysTick();
+        cur_tmr = (struct os_timer *)tmr_hd.next;
+        if(cur_tmr != (struct os_timer*)&tmr_hd)
+        {
+            //LOG_PRINTF("cur_tmr=%x,%d,%d,xStartTime=%d\r\n",(u32)cur_tmr,cur_tmr->msTimeout,cur_tmr->msRemian,xStartTime);
+            if( OS_SUCCESS == msg_evt_fetch_timeout( MBOX_TMR_TASK, &MsgEv,cur_tmr->msRemian))
+            {
+                xEndTime = OS_GetSysTick();
+                xElapsed = ( xEndTime - xStartTime ) * OS_TICK_RATE_MS;
+                //LOG_PRINTF("Not timeout wakup,cur_tmr=%x,%d,xElapsed=%d,xEndTime=%d,msgtype=%d\r\n",(u32)cur_tmr,cur_tmr->msRemian,xElapsed,xEndTime,MsgEv->MsgType);
+            }
+            else //Time out; expire timer
+            {
+                xElapsed = cur_tmr->msRemian;//( xEndTime - xStartTime ) * OS_TICK_RATE_MS;
+            }
+        }
+        else
+        {
+            //LOG_PRINTF("\r\nNO TMR\r\n");
+            msg_evt_fetch(MBOX_TMR_TASK, &MsgEv); //There's no TMR.Block till get msg.
+        }
+
+        xStartTime = OS_GetSysTick();
+        //if(xElapsed>0)
+        {
+            _update_all_timer(xElapsed);
+        }
+
+        if(MsgEv)
+        {
+            //LOG_PRINTF("MsgEv->MsgType=%d\r\n",MsgEv->MsgType);
+            switch((enum msgtype_tmr)MsgEv->MsgType)
+            {
+                case TMR_EVT_CREATE:
+                {
+                    struct os_timer *pOSTimer = (struct os_timer *)MsgEv->MsgData;
+                    _create_timer(pOSTimer,xElapsed);
+                }
+                break;
+                case TMR_EVT_CANCEL:
+                {
+                    _cancel_timer((timer_handler)MsgEv->MsgData, MsgEv->MsgData1, MsgEv->MsgData2);
+                }
+                break;
+                case TMR_EVT_FREE:
+                {
+                    _free_timer((struct os_timer*) MsgEv->MsgData);
+                }
+                break;
+                default:
+                break;
+            }
+            os_msg_free(MsgEv);
+            MsgEv = NULL;
+        }
+        xEndTime = OS_GetSysTick();
+        xElapsed = ( xEndTime - xStartTime ) * OS_TICK_RATE_MS;
+		
+        //if(xElapsed>0)
+        {
+            _update_all_timer(xElapsed);
+        }
+    }
+	return 0;
+}
 #else
-void SSV_Timer_Task( void *args )
-#endif
+void SSV_Timer_Task(void *args)
 {
     u32 xStartTime, xEndTime, xElapsed;
     MsgEvent *MsgEv = NULL;
@@ -375,10 +450,8 @@ void SSV_Timer_Task( void *args )
             _update_all_timer(xElapsed);
         }
     }
-#ifdef __linux__
-	return 0;
-#endif	
 }
+#endif
 
 s32 os_create_timer(u32 ms, timer_handler handler, void *data1, void *data2, void* mbx)
 {

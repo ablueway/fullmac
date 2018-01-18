@@ -71,7 +71,7 @@ struct unify_drv_ops {
 	/***************************************************************************/
 	/*							Linux Driver								   */
 	/***************************************************************************/	
-	int __must_check (*read)(void *dev, void *buf,size_t *size, int mode);
+	int __must_check (*read)(void *dev, void *rx_data_buf, size_t expec_rx_len);
 	int __must_check (*write)(void *dev, void *buf, size_t len,u8 queue_num);
     int __must_check (*readreg)(void *dev, u32 addr, u32 *buf);
     int __must_check (*writereg)(void *dev, u32 addr, u32 buf);
@@ -107,8 +107,7 @@ struct unify_drv_ops {
     int (*jump_to_rom)(void *dev);
     int (*property)(void *dev);
     void (*sysplf_reset)(void *dev, u32 addr, u32 value);
-    void (*hwif_rx_task)(void *dev, int (*rx_cb)(struct sk_buff *rx_skb, void *args), void *args, u32 *pkt); 
-
+   	void (*hwif_rx_task)(void *dev, int (*rx_cb)(void *rx_skb, void *args), void *args); 
 	/***************************************************************************/
 	/*								RTOS Driver								   */
 	/***************************************************************************/

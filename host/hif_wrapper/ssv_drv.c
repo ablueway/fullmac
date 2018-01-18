@@ -28,7 +28,7 @@ static s16 s_drv_cnt;
 ///static struct ssv6xxx_drv_ops   *s_drv_cur;
 
 static struct unified_drv_ops *s_drv_array[MAX_SSV6XXX_DRV];
-static struct unified_drv_ops *s_drv_cur;
+struct ssv_unify_drv *s_drv_cur;
 
 
 bool ssv6xxx_drv_register(struct unified_drv_ops *ssv_drv);
@@ -45,6 +45,15 @@ OsMutex drvMutex;
 extern struct unified_drv_ops usb_ops;
 
 extern struct ssv6xxx_usb_glue *usb_glue;
+
+void CmdEng_RxHdlData(void *frame);
+
+#if CONFIG_STATUS_CHECK
+extern u32 g_dump_tx;
+extern void _packetdump(const char *title, const u8 *buf, size_t len);
+#endif
+
+static bool _ssv6xxx_irq_st = false;
 
 //#ifndef __SSV_UNIX_SIM__
 #if (__SSV_UNIX_SIM__ == 0)
@@ -132,64 +141,76 @@ bool ssv6xxx_drv_wait_tx_resource(u32 frame_len)
 
 #endif//#ifndef __SSV_UNIX_SIM__
 
-#if 0 //( CONFIG_CMD_BUS_TEST==1)
-extern OsMsgQ spi_qevt;
-#endif
-void CmdEng_RxHdlData(void *frame);
 u32 ssv6xxx_drv_get_handle(void)
 {
-    u32 retVal = 0;
+	u32 retVal = -1;
+	
     if (s_drv_cur == NULL)
-        SDRV_FAIL_RET(-1, "%s s_drv_cur = NULL\r\n",__FUNCTION__);
-#ifdef __linux__
-
-#else
-    if (s_drv_cur->drv_ops.handle == NULL)
-    {
-        SDRV_WARN("%s() : NO handle() in ssv_drv = (0x%08x, %s)\r\n", 
-				__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
-        return -1;
-    }
-    OS_MUTEX_LOCK(&drvMutex);
-    retVal = s_drv_cur->drv_ops.handle();
-    OS_MUTEX_UNLOCK(&drvMutex);
-#endif
+	{        
+		SDRV_WARN("%s s_drv_cur = 0\r\n",__FUNCTION__);
+		return retVal;
+	}
+    OS_MUTEX_LOCK(drvMutex);
+	if (s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX)
+	{
+		retVal = 0;
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+										&& (s_drv_cur->drv_ops.handle != NULL))
+	{
+    	retVal = s_drv_cur->drv_ops.handle();	
+	}
+    OS_MUTEX_UNLOCK(drvMutex);
+	if (retVal == -1)
+	{
+		SDRV_WARN("%s() : NO handle() in ssv_drv = (0x%08x, %s)\r\n", 
+			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
+	}
 	return retVal;
 }
 
 bool ssv6xxx_drv_ack_int(void)
 {
-    bool ret = TRUE;
-    if (s_drv_cur == 0)
-        SDRV_FAIL_RET(FALSE, "%s s_drv_cur = 0\r\n",__FUNCTION__);
-#ifdef __linux__
-
-#else
-    if (s_drv_cur->drv_ops.ack_int == NULL)
-    {
+    bool ret = FALSE;
+    if (s_drv_cur == NULL)
+	{        
+		SDRV_WARN("%s s_drv_cur = 0\r\n",__FUNCTION__);
+		return ret;
+	}
+	
+    OS_MUTEX_LOCK(drvMutex);
+	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX))
+	{
+		ret = TRUE;
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+										&& (s_drv_cur->drv_ops.ack_int != NULL))
+	{
+    	ret = s_drv_cur->drv_ops.ack_int();	
+	}
+    OS_MUTEX_UNLOCK(drvMutex);
+	if (ret != TRUE)
+	{
         SDRV_WARN("%s() : NO ack_int() in ssv_drv = (0x%08x, %s)\r\n", 
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->drv_ops.name);
-        return FALSE;
-    }
-    OS_MUTEX_LOCK(&drvMutex);
-    ret = s_drv_cur->drv_ops.ack_int();
-    OS_MUTEX_UNLOCK(&drvMutex);
-#endif
+
+	}
     return ret;
 }
 
-bool ssv6xxx_drv_register(struct unified_drv_ops *ssv_drv)
+bool ssv6xxx_drv_register(struct ssv_unify_drv *ssv_drv)
 {
     u16 i;
     bool ret = false;
-
     if (s_drv_cnt == MAX_SSV6XXX_DRV)
-    {
-        SDRV_ERROR("%s s_drv_cnt = MAX_SSV6XXX_DRV!\r\n",__FUNCTION__);
-//        return false;
-		ret = false;
-    }
-    SDRV_TRACE("%s() <= : 0x%08x, %s\r\n", __FUNCTION__, ssv_drv, ssv_drv->name);
+	{        
+		SDRV_WARN("%s s_drv_cnt = MAX_SSV6XXX_DRV!\r\n",__FUNCTION__);
+		return ret;
+	}
+
+    SDRV_TRACE("%s() <= : 0x%08x, %s\r\n", 
+		__FUNCTION__, ssv_drv, ssv_drv->name);
+
     // find empty slot in array
     for (i = 0; i < MAX_SSV6XXX_DRV; i++)
     {
@@ -199,19 +220,15 @@ bool ssv6xxx_drv_register(struct unified_drv_ops *ssv_drv)
             s_drv_cnt++;
             SDRV_TRACE("%s() => : ok! s_drv_cnt = %d, i = %d, ssv_drv = (0x%08x, %s)\r\n", 
 				__FUNCTION__, s_drv_cnt, i, ssv_drv, ssv_drv->name);
-            //return TRUE;
+
 			ret = true;
         }
     }
-    /* never reach here! */
-//    SDRV_FATAL("%s should never reach here!\r\n",__FUNCTION__);
-//    return FALSE;
-	return ((ret == true) ? true : false);
+	return ret;
 }
 
 bool ssv6xxx_drv_unregister(u16 i)
 {
-
     if (s_drv_cnt == 0)
     {
         SDRV_WARN("%s() : s_drv_cnt = 0, return true!\r\n", __FUNCTION__);
@@ -253,7 +270,7 @@ bool ssv6xxx_drv_module_init(void)
     SDRV_TRACE("%s() <=\r\n", __FUNCTION__);
 
     s_drv_cnt = 0;
-    MEMSET(s_drv_array, 0x00, MAX_SSV6XXX_DRV * sizeof(struct unified_drv_ops *));
+    MEMSET(s_drv_array, 0x00, MAX_SSV6XXX_DRV * sizeof(struct ssv_unify_drv *));
     s_drv_cur = 0;
 
     // register each driver
@@ -282,13 +299,16 @@ bool ssv6xxx_drv_module_init(void)
     ssv6xxx_drv_register((struct ssv6xxx_drv_ops *)&g_drv_spi);
 #endif
 
-
     OS_SemInit(&ssvdrv_rx_sphr, 256, 0);
-    if (OS_SUCCESS != OS_MutexInit(&drvMutex))
-        return FALSE;
-    if (OS_SUCCESS != OS_MutexInit(&txsrcMutex))
-        return FALSE;
 
+    if (OS_SUCCESS != OS_MutexInit(&drvMutex))
+	{
+		return FALSE;
+    }
+	if (OS_SUCCESS != OS_MutexInit(&txsrcMutex))
+	{        
+		return FALSE;
+	}
     return TRUE;
 }
 
@@ -298,40 +318,41 @@ void ssv6xxx_drv_module_release(void)
     s16 i, tmp;
 
     SDRV_TRACE("%s() <= : s_drv_cnt = %d\r\n", __FUNCTION__, s_drv_cnt);
+
     // close each driver & unregister
     tmp = s_drv_cnt;
     for (i = 0; i < tmp; i++)
     {
-        SDRV_TRACE("s_drv_array[%d] = 0x%08x\r\n", 
-				i, (unsigned int)s_drv_array[i]);
-        if (s_drv_array[i] != NULL)
-        {
-#ifdef __linux__
-	
-#else
-			if (s_drv_array[i]->drv_ops.close != NULL)
-			{                
-				s_drv_array[i]->drv_ops.close();
+        SDRV_TRACE("s_drv_array[%d] = 0x%08x\r\n", i, (unsigned int)s_drv_array[i]);
+
+		if (s_drv_array[i] != NULL)
+		{
+			if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX))
+			{
+				SDRV_WARN("linux drv nonsuppoot close callback, drv_idx(%d)\n", i);
 			}
-#endif			
-            if (!ssv6xxx_drv_unregister((u16)i))
+			else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+										&& (s_drv_array[i]->drv_ops.close != NULL))
+			{
+				s_drv_array[i]->drv_ops.close();		
+			}
+
+	        if (!ssv6xxx_drv_unregister((u16)i))
 			{
 				SDRV_WARN("ssv6xxx_drv_unregister(%d) fail!\r\n", i);
 			}			
-        }
+		}
     }
-
     s_drv_cur = NULL;
-    OS_MutexDelete(&drvMutex);
-    OS_MutexDelete(&txsrcMutex);
+    OS_MutexDelete(drvMutex);
+    OS_MutexDelete(txsrcMutex);
     SDRV_TRACE("%s() =>\r\n", __FUNCTION__);
 }
 
-bool ssv6xxx_drv_select(char name[32], union ssv_drv_info drv_info)
+bool ssv6xxx_drv_select(char name[UNIFY_DRV_NAME_MAX_LEN], union unify_drv_info drv_info)
 {
     u16 i;
-//    struct ssv6xxx_drv_ops *drv_target;
-	struct unified_drv_ops *drv_target = NULL;
+	struct ssv_unify_drv *drv_target = NULL;
 
     SDRV_TRACE("%s() <= : name = %s, s_drv_cnt = %d, s_drv_cur = (0x%08x)\r\n",
 		__FUNCTION__, name, s_drv_cnt, (unsigned int)s_drv_cur);
@@ -340,18 +361,19 @@ bool ssv6xxx_drv_select(char name[32], union ssv_drv_info drv_info)
     if (s_drv_cnt == 0)
 	{	
 		SDRV_FAIL("%s s_drv_cnt = 0\r\n",__FUNCTION__);
+		return FALSE;
 	}
     // find the matching ssv_drv
     for (i = 0; i < s_drv_cnt; i++)
     {
-#ifdef __linux__
 		if ((drv_info.fields.os_type == s_drv_array[i]->drv_info.fields.os_type) 				||
 			(drv_info.fields.register_type == s_drv_array[i]->drv_info.fields.register_type) 	||
 			(drv_info.fields.hw_type == s_drv_array[i]->drv_info.fields.hw_type))
 		{
             drv_target = s_drv_array[i];
+            break;
 		}
-#else	
+#if 0	
     	/* name = "spi" */
         if (STRCMP(name, s_drv_array[i]->name) == 0)
         {
@@ -364,38 +386,45 @@ bool ssv6xxx_drv_select(char name[32], union ssv_drv_info drv_info)
     if (drv_target == NULL)
     {
 	    LOG_PRINTF("ssv driver '%s' is NOT available now!\r\n", name);
-        // ssv6xxx_drv_list();
         return FALSE;
     }
-    // if the target drv = current drv, just return
     if (drv_target == s_drv_cur)
     {
 	    LOG_PRINTF("ssv drv '%s' is already in selection.\r\n", drv_target->name);
-        // ssv6xxx_drv_list();
-        return TRUE;
+		return TRUE;
     }
-#ifdef __linux__
 
-#else
-    if (drv_target->open != NULL)
-    {
-        if (drv_target->open() == false)
-    	{
+	if ((drv_target->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX))
+	{
+		SDRV_WARN("linux drv nonsuppoot open callback\n");
+//		ret = TRUE;
+	}
+	else if ((drv_target->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+								&& (drv_target->drv_ops.open != NULL))
+	{
+		if (drv_target->drv_ops.open() == false)	
+		{
 			SDRV_FAIL("open() fail! in s_drv_cur (0x%08x, %s)\r\n", 
 					(unsigned int)drv_target, drv_target->name);
-	        return FALSE;
+			return FALSE;
 		}
 	}
-    if (drv_target->init != NULL)
-    {
-        if (drv_target->init() == false)
+
+	if ((drv_target->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX))
+	{
+		SDRV_WARN("linux drv nonsuppoot init callback\n");
+//		ret = TRUE;
+	}
+	else if ((drv_target->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+								&& (drv_target->drv_ops.init != NULL))
+	{
+		if (drv_target->drv_ops.init() == false)
     	{
-			SDRV_FAIL("open() fail! in s_drv_cur (0x%08x, %s)\r\n", 
+			SDRV_FAIL("init() fail! in s_drv_cur (0x%08x, %s)\r\n", 
 						(unsigned int)drv_target, drv_target->name);
 	        return FALSE;
 		}
 	}
-#endif
 
     s_drv_cur = drv_target;
     LOG_PRINTF("select drv -> %-10s : 0x%08x\r\n", 
@@ -405,217 +434,258 @@ bool ssv6xxx_drv_select(char name[32], union ssv_drv_info drv_info)
 
 bool ssv6xxx_drv_open(void)
 {
-    bool ret=TRUE;
+    bool ret = FALSE;
     if (s_drv_cur == NULL)
-        SDRV_FAIL("%s s_drv_cur = 0\r\n",__FUNCTION__);
+	{
+	    SDRV_FAIL("%s s_drv_cur = 0\r\n",__FUNCTION__);
+		return ret;
+	}
 
-#ifdef __linux__
+    OS_MUTEX_LOCK(drvMutex);
+	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX))
+	{
+		SDRV_WARN("linux drv nonsuppoot open callback\n");
+		ret = TRUE;
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+								&& (s_drv_cur->drv_ops.open != NULL))
+	{
+		ret = s_drv_cur->drv_ops.open();
+	}
+    OS_MUTEX_UNLOCK(drvMutex);
 
-#else
-    assert(s_drv_cur->open != NULL);
-
-    OS_MUTEX_LOCK(&drvMutex);
-    ret = s_drv_cur->open();
-    OS_MUTEX_UNLOCK(&drvMutex);
-#endif
     return ret;
 }
 
 bool ssv6xxx_drv_close(void)
 {
-    bool ret = TRUE;
-    if (s_drv_cur == 0)
-        SDRV_FAIL("%s s_drv_cur = 0\r\n",__FUNCTION__);
+    bool ret = FALSE;
+    if (s_drv_cur == NULL)
+	{
+	    SDRV_FAIL("%s s_drv_cur = 0\r\n",__FUNCTION__);
+		return ret;
+	}
 
-#ifdef __linux__
+    OS_MUTEX_LOCK(drvMutex);
+	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX))
+	{
+		SDRV_WARN("linux drv nonsuppoot close callback\n");
+		ret = TRUE;
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+								&& (s_drv_cur->drv_ops.close != NULL))
+	{
+		ret = s_drv_cur->drv_ops.close();
+	}
+    OS_MUTEX_UNLOCK(drvMutex);
 
-#else
-
-    assert(s_drv_cur->close != NULL);
-
-    OS_MUTEX_LOCK(&drvMutex);
-    ret=s_drv_cur->close();
-    OS_MUTEX_UNLOCK(&drvMutex);
-#endif
     return ret;
 }
 
+
 bool ssv6xxx_drv_init(void)
 {
-    bool ret = TRUE;
-    if (s_drv_cur == 0)
-        SDRV_FAIL("%s s_drv_cur = 0\r\n",__FUNCTION__);
+    bool ret = FALSE;
+    if (s_drv_cur == NULL)
+	{
+	    SDRV_FAIL("%s s_drv_cur = 0\r\n",__FUNCTION__);
+		return ret;
+	}
 
-#ifdef __linux__
+	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX))
+	{
+		/*TODO(aaron): need offer callback to notify rx task handle rx data */		
+//		s_drv_cur->drv_ops.hwif_rx_task(usb_glue, NULL, NULL);		
+		SDRV_WARN("linux drv nonsuppoot init callback\n");
+		ret = TRUE;
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+								&& (s_drv_cur->drv_ops.init != NULL))
+	{
+		ret = s_drv_cur->drv_ops.init();
+	}
 
-#else
-    assert(s_drv_cur->init != NULL);
-
-    return (s_drv_cur->init());
-#endif
     return ret;
 }
 
 s32 ssv6xxx_drv_recv(u8 *dat, size_t len)
 {
-    s32 retVal = 0;
-    if (s_drv_cur == 0)
-        SDRV_FAIL_RET(-1, "%s s_drv_cur = 0\r\n",__FUNCTION__);
+    s32 retVal = -1;
+    if (s_drv_cur == NULL)
+	{
+	    SDRV_FAIL("%s s_drv_cur = 0\r\n",__FUNCTION__);
+		return retVal;
+	}
 
-#ifdef __linux__
+    OS_MUTEX_LOCK(drvMutex);
+	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX)
+									&& (s_drv_cur->drv_ops.read != NULL))
+	{
+		/* TODO(aaron): fix the rx data path */
+		retVal = s_drv_cur->drv_ops.read(usb_glue, dat, len);
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+									&& (s_drv_cur->drv_ops.recv != NULL))
+	{
+		retVal = s_drv_cur->drv_ops.recv(dat, len);
+	}
 
-#else
-    if (s_drv_cur->drv_ops.recv == NULL)
-    {
-        SDRV_WARN("%s() : NO recv() in ssv_drv = (0x%08x, %s)\r\n", 
-			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
-        return -1;
-    }
-    OS_MUTEX_LOCK(&drvMutex);
-    retVal=s_drv_cur->recv(dat, len);
-    if (retVal>0)
-        drv_trx_time = os_tick2ms(OS_GetSysTick());
-    OS_MUTEX_UNLOCK(&drvMutex);
-#endif
+    if (retVal > 0)
+	{
+	    drv_trx_time = os_tick2ms(OS_GetSysTick());
+	}
+    OS_MUTEX_UNLOCK(drvMutex);
+	
     return retVal;
 }
 
 bool ssv6xxx_drv_get_name(char name[32])
 {
-    if (s_drv_cur == 0)
-        SDRV_FAIL("%s s_drv_cur = 0\r\n",__FUNCTION__);
+    if (s_drv_cur == NULL)
+	{
+	    SDRV_FAIL("%s s_drv_cur = 0\r\n",__FUNCTION__);
+		return FALSE;
+	}
 
 	STRCPY(name, s_drv_cur->name);
     return TRUE;
 }
 
-bool ssv6xxx_drv_ioctl(u32 ctl_code,
-                            void *in_buf, size_t in_size,
-                            void *out_buf, size_t out_size,
-                            size_t *bytes_ret)
+bool ssv6xxx_drv_ioctl(u32 ctl_code, void *in_buf, size_t in_size,
+				void *out_buf, size_t out_size, size_t *bytes_ret)
 {
-    bool ret = TRUE;
-    if (s_drv_cur == 0)
-        SDRV_FAIL("%s s_drv_cur = 0\r\n",__FUNCTION__);
+    bool ret = FALSE;
+	
+    if (s_drv_cur == NULL)
+	{        
+		SDRV_WARN("%s s_drv_cur = 0\r\n",__FUNCTION__);
+		return ret;
+	}
+	
+    OS_MUTEX_LOCK(drvMutex);
+	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX))
+	{
+		SDRV_WARN("%s linux non-support ioctol callback \n");
+		ret = TRUE;
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+										&& (s_drv_cur->drv_ops.ioctl != NULL))
+	{
+    	ret = s_drv_cur->drv_ops.ioctl(ctl_code, in_buf, in_size, out_buf, out_size, bytes_ret);	
+	}
+    OS_MUTEX_UNLOCK(drvMutex);
 
-#ifdef __linux__
+	if (ret != TRUE)
+	{
+        SDRV_WARN("%s() in ssv_drv = (0x%08x, %s)\r\n", 
+			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->drv_ops.name);
 
-#else
-    if (s_drv_cur->ioctl == NULL)
-    {
-        SDRV_WARN("%s() : NO ioctl() in ssv_drv = (0x%08x, %s)\r\n", 
-			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
-        return FALSE;
-    }
-    OS_MUTEX_LOCK(&drvMutex);
-    ret=s_drv_cur->ioctl(ctl_code, in_buf, in_size, out_buf, out_size, bytes_ret);
-    OS_MUTEX_UNLOCK(&drvMutex);
-#endif
+	}
     return ret;
 }
 
-#if CONFIG_STATUS_CHECK
-extern u32 g_dump_tx;
-extern void _packetdump(const char *title, const u8 *buf,
-                             size_t len);
-
-#endif
 
 s32 ssv6xxx_drv_send(void *dat, size_t len)
 {
-    s32 retVal=0;
+    s32 retVal = -1;
     if (s_drv_cur == NULL)
-        SDRV_FAIL_RET(-1, "%s s_drv_cur = 0\r\n",__FUNCTION__);
+	{
+	    SDRV_FAIL("%s s_drv_cur = 0\r\n",__FUNCTION__);
+		return retVal;
+	}
 
-#ifdef __linux__
+    OS_MUTEX_LOCK(drvMutex);
+	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX)
+									&& (s_drv_cur->drv_ops.write != NULL))
+	{
+		/* TODO(aaron): fix the tx data path */
+		retVal = s_drv_cur->drv_ops.write(usb_glue, dat, len, 0x0);	
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+									&& (s_drv_cur->drv_ops.send != NULL))
+	{
+		retVal = s_drv_cur->drv_ops.send(dat, len);
+	}
 
-#else
-    if (s_drv_cur->send == NULL)
-    {
-        SDRV_WARN("%s() : NO send() in ssv_drv = (0x%08x, %s)\r\n", 
-			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
-        return -1;
-    }
-
-
-#if CONFIG_STATUS_CHECK
-    if(g_dump_tx)
-        _packetdump("ssv6xxx_drv_send", dat, len);
-#endif
-
-    OS_MUTEX_LOCK(&drvMutex);
-    retVal=s_drv_cur->send(dat, len);
-    if(retVal>0)
-        drv_trx_time = os_tick2ms(OS_GetSysTick());
-    OS_MUTEX_UNLOCK(&drvMutex);
-#endif
+    if (retVal > 0)
+	{
+	    drv_trx_time = os_tick2ms(OS_GetSysTick());
+	}
+    OS_MUTEX_UNLOCK(drvMutex);
+	
     return retVal;
 }
 
 u32 ssv6xxx_drv_read_reg(u32 addr)
 {
-#ifdef __linux__
-	u32 regval = 0;
-#endif
-	u32 retVal = 0;
+    s32 retVal = -1;
     if (s_drv_cur == NULL)
-        SDRV_FAIL_RET(-1, "%s s_drv_cur = 0\r\n",__FUNCTION__);
+	{
+	    SDRV_FAIL("%s s_drv_cur = 0\r\n",__FUNCTION__);
+		return retVal;
+	}
 
-#ifdef __linux__
-	if (s_drv_cur->drv_ops.readreg == NULL)
-#else
-    if (s_drv_cur->read_reg == NULL)
-#endif
-    {
-        SDRV_WARN("%s() : NO read_reg() in ssv_drv = (0x%08x, %s)\r\n", 
+    OS_MUTEX_LOCK(drvMutex);
+	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX)
+									&& (s_drv_cur->drv_ops.readreg != NULL))
+	{
+		s_drv_cur->drv_ops.readreg(usb_glue, addr, &retVal);	
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+									&& (s_drv_cur->drv_ops.read_reg != NULL))
+	{
+    	retVal = s_drv_cur->drv_ops.read_reg(addr);
+	}
+    OS_MUTEX_UNLOCK(drvMutex);
+
+
+	if (retVal == -1)
+	{
+		SDRV_WARN("%s() : NO read_reg() in ssv_drv = (0x%08x, %s)\r\n", 
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
-        return -1;
-    }	
-    OS_MUTEX_LOCK(&drvMutex);
-
-#ifdef __linux__
-	s_drv_cur->drv_ops.readreg(usb_glue, addr, &regval);
-	retVal  = regval;
-#else
-    retVal = s_drv_cur->read_reg(addr)
-#endif
-
-    OS_MUTEX_UNLOCK(&drvMutex);
-
+	}
+	
     return retVal;
 }
 
 bool ssv6xxx_drv_write_reg(u32 addr, u32 data)
 {
-    bool ret = TRUE;
+    bool ret = FALSE;
     if (s_drv_cur == NULL)
-        SDRV_FAIL_RET(FALSE, "%s s_drv_cur = 0\r\n",__FUNCTION__);
-#ifdef __linux__
-    if (s_drv_cur->drv_ops.writereg == NULL)
-#else
-    if (s_drv_cur->drv_ops.write_reg == NULL)
-#endif
-    {
+	{
+	    SDRV_FAIL("%s s_drv_cur = 0\r\n",__FUNCTION__);
+		return ret;
+	}
+
+    OS_MUTEX_LOCK(drvMutex);
+	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX)
+									&& (s_drv_cur->drv_ops.writereg != NULL))
+	{
+    	ret = s_drv_cur->drv_ops.writereg(usb_glue, addr, data);	
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+									&& (s_drv_cur->drv_ops.write_reg != NULL))
+	{
+		ret = s_drv_cur->drv_ops.write_reg(addr, data);
+	}
+    OS_MUTEX_UNLOCK(drvMutex);
+
+	if (ret == FALSE)
+	{
         SDRV_WARN("%s() : NO write_reg() in ssv_drv = (0x%08x, %s)\r\n", 
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
-        return FALSE;
-    }
-    OS_MUTEX_LOCK(&drvMutex);
-#ifdef __linux__
-    ret=s_drv_cur->drv_ops.writereg(usb_glue, addr, data);
-#else
-    ret=s_drv_cur->write_reg(addr, data);
-#endif
-	OS_MUTEX_UNLOCK(&drvMutex);
+	}	
     return ret;
 }
 
 bool ssv6xxx_drv_set_reg(u32 _REG_,u32 _VAL_,u32 _SHIFT_, u32 _MASK_)
 {
-    u32 regVal;
+    u32 regVal = 0;
     if (s_drv_cur == NULL)
+	{
         SDRV_FAIL_RET(FALSE, "%s s_drv_cur = 0\r\n",__FUNCTION__);
-
+		return FALSE;
+	}
 
     regVal = ssv6xxx_drv_read_reg(_REG_);
     regVal =((((_VAL_) << _SHIFT_) & ~_MASK_) | (regVal & _MASK_));
@@ -624,186 +694,325 @@ bool ssv6xxx_drv_set_reg(u32 _REG_,u32 _VAL_,u32 _SHIFT_, u32 _MASK_)
 }
 bool ssv6xxx_drv_write_byte(u32 addr, u32 data)
 {
-    bool ret = TRUE;
+    bool ret = FALSE;
     if (s_drv_cur == NULL)
+	{
         SDRV_FAIL_RET(FALSE, "%s s_drv_cur = 0\r\n",__FUNCTION__);
-#ifdef __linux__
-#else
-    if (s_drv_cur->write_byte == NULL)
-    {
+		return ret;
+	}
+
+    OS_MUTEX_LOCK(drvMutex);
+	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX))
+	{
+	    SDRV_FAIL("%s linux drv non-support write-byte call back\n",__FUNCTION__);
+    	ret = TRUE;	
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+									&& (s_drv_cur->drv_ops.write_byte != NULL))
+	{
+		ret = s_drv_cur->drv_ops.write_byte(1, addr, data);
+	}
+    OS_MUTEX_UNLOCK(drvMutex);
+
+	if (ret == FALSE)
+	{
         SDRV_WARN("%s() : NO write_reg() in ssv_drv = (0x%08x, %s)\r\n", 
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
-        return FALSE;
-    }
-    OS_MUTEX_LOCK(&drvMutex);
-    ret=s_drv_cur->write_byte(1, addr, data);
-    OS_MUTEX_UNLOCK(&drvMutex);
-#endif
+	}
     return ret;
 }
 
 bool ssv6xxx_drv_read_byte(u32 addr)
 {
-    bool ret=TRUE;
+    bool ret = FALSE;
     if (s_drv_cur == NULL)
+	{
         SDRV_FAIL_RET(FALSE, "%s s_drv_cur = 0\r\n",__FUNCTION__);
-#ifdef __linux__
-#else
-    if (s_drv_cur->read_byte == NULL)
-    {
-        SDRV_WARN("%s() : NO read_byte() in ssv_drv = (0x%08x, %s)\r\n", 
+		return ret;
+	}
+
+    OS_MUTEX_LOCK(drvMutex);
+	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX))
+	{
+	    SDRV_FAIL("%s linux drv non-support read-byte call back\n",__FUNCTION__);
+    	ret = TRUE;	
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+									&& (s_drv_cur->drv_ops.read_byte != NULL))
+	{
+	    ret = s_drv_cur->drv_ops.read_byte(1, addr);
+	}
+    OS_MUTEX_UNLOCK(drvMutex);
+
+	if (ret == FALSE)
+	{
+        SDRV_WARN("%s() : NO write_reg() in ssv_drv = (0x%08x, %s)\r\n", 
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
-        return FALSE;
-    }
-    OS_MUTEX_LOCK(&drvMutex);
-    ret=s_drv_cur->read_byte(1,addr);
-    OS_MUTEX_UNLOCK(&drvMutex);
-#endif
+	}
     return ret;
 }
 
 bool ssv6xxx_drv_write_sram(u32 addr, u8 *data, u32 size)
 {
-    bool ret=TRUE;
+	bool ret = FALSE;
     if (s_drv_cur == NULL)
+	{
         SDRV_FAIL_RET(FALSE, "%s s_drv_cur = 0\r\n",__FUNCTION__);
-#ifdef __linux__
-#else
-    if (s_drv_cur->write_sram == NULL)
-    {
-        SDRV_WARN("%s() : NO write_sram() in ssv_drv = (0x%08x, %s)\r\n", 
+		return ret;
+	}
+
+    OS_MUTEX_LOCK(drvMutex);
+	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX))
+	{
+	    SDRV_FAIL("%s linux drv non-support write_sram call back\n",__FUNCTION__);
+    	ret = TRUE;	
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+									&& (s_drv_cur->drv_ops.write_sram != NULL))
+	{
+    	ret = s_drv_cur->drv_ops.write_sram(addr, data, size);
+	}
+    OS_MUTEX_UNLOCK(drvMutex);
+
+	if (ret == FALSE)
+	{
+        SDRV_WARN("%s() : NO write_reg() in ssv_drv = (0x%08x, %s)\r\n", 
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
-        return FALSE;
-    }
-    OS_MUTEX_LOCK(&drvMutex);
-    ret=s_drv_cur->write_sram(addr, data, size);
-    OS_MUTEX_UNLOCK(&drvMutex);
-#endif
+	}
     return ret;
 }
 
-bool ssv6xxx_drv_read_sram (u32 addr, u8 *data, u32 size)
+bool ssv6xxx_drv_read_sram(u32 addr, u8 *data, u32 size)
 {
-    bool ret=TRUE;
+	bool ret = FALSE;
     if (s_drv_cur == NULL)
+	{
         SDRV_FAIL_RET(FALSE, "%s s_drv_cur = 0\r\n",__FUNCTION__);
-#ifdef __linux__
-#else
-    if (s_drv_cur->read_sram == NULL)
-    {
+		return ret;
+	}
+
+    OS_MUTEX_LOCK(drvMutex);
+	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX))
+	{
+	    SDRV_FAIL("%s linux drv non-support write_sram call back\n",__FUNCTION__);
+    	ret = TRUE;	
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+									&& (s_drv_cur->drv_ops.read_sram != NULL))
+	{
+    	ret = s_drv_cur->drv_ops.read_sram(addr, data, size);
+	}
+    OS_MUTEX_UNLOCK(drvMutex);
+
+	if (ret == FALSE)
+	{
         SDRV_WARN("%s() : NO read_sram() in ssv_drv = (0x%08x, %s)\r\n", 
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
-        return FALSE;
-    }
-    OS_MUTEX_LOCK(&drvMutex);
-    ret=s_drv_cur->read_sram(addr, data, size);
-    OS_MUTEX_UNLOCK(&drvMutex);
-#endif
-	return ret;
+	}
+    return ret;
 }
 
 u32 ssv6xxx_drv_write_fw_to_sram(u8 *fw_bin, u32 fw_bin_len, u32 block_size)
 {
     u32 checkSum = 0;
     if (s_drv_cur == NULL)
+	{
         SDRV_FAIL_RET(FALSE, "%s s_drv_cur = 0\r\n",__FUNCTION__);
-#ifdef __linux__
-#else
-    if (s_drv_cur->write_fw_to_sram== NULL)
-    {
+		return 0;
+	}
+
+    OS_MUTEX_LOCK(drvMutex);
+	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX))
+	{
+	    SDRV_FAIL("%s linux drv non-support write_sram call back\n",__FUNCTION__);
+    	checkSum = 0;	
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+							&& (s_drv_cur->drv_ops.write_fw_to_sram != NULL))
+	{
+    	checkSum = s_drv_cur->drv_ops.write_fw_to_sram(fw_bin, fw_bin_len, block_size);
+	}
+    OS_MUTEX_UNLOCK(drvMutex);
+
+	if (checkSum == 0)
+	{
         SDRV_WARN("%s() : NO read_sram() in ssv_drv = (0x%08x, %s)\r\n", 
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
-        return 0;
-    }
-    OS_MUTEX_LOCK(drvMutex);
-    checkSum=s_drv_cur->write_fw_to_sram(fw_bin, fw_bin_len,block_size);
-    OS_MUTEX_UNLOCK(drvMutex);
-#endif
+	}
     return checkSum;
 }
 
 bool ssv6xxx_drv_start(void)
 {
+	bool ret = FALSE;
+    if (s_drv_cur == NULL)
+	{
+        SDRV_FAIL_RET(FALSE, "%s s_drv_cur = 0\r\n",__FUNCTION__);
+		return ret;
+	}
 
-#ifdef __linux__
-#else
-
-#if (SDRV_INCLUDE_SDIO)
-    if ((_ssv6xxx_drv_started != TRUE) && (s_drv_cur->start != NULL))
-    {
+    OS_MUTEX_LOCK(drvMutex);
+	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX))
+	{
+	    SDRV_FAIL("%s linux drv non-support write_sram call back\n",__FUNCTION__);
+    	ret = TRUE;	
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+										&& (_ssv6xxx_drv_started != TRUE) 
+										&& (s_drv_cur->drv_ops.start != NULL))
+	{
         // if sdio, use ioctl to start the HCI
-        s_drv_cur->start();
-    }
-#endif
-#endif
-    _ssv6xxx_drv_started = TRUE;
-    return TRUE;
+        s_drv_cur->drv_ops.start();
+		ret = TRUE;	
+	}
+    OS_MUTEX_UNLOCK(drvMutex);
+
+	if (ret == TRUE)
+	{
+		_ssv6xxx_drv_started = TRUE;
+	}
+	else
+	{
+        SDRV_WARN("%s() : in ssv_drv = (0x%08x, %s)\r\n", 
+			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
+	}
+
+    return ret;
 }
 
-bool ssv6xxx_drv_stop (void)
+bool ssv6xxx_drv_stop(void)
 {
-#ifdef __linux__
-#else
-#if (SDRV_INCLUDE_SDIO)
-    if ((_ssv6xxx_drv_started != FALSE) && (s_drv_cur->stop != NULL))
-    {
-        s_drv_cur->stop();
-    }
-#endif
-#endif
-    _ssv6xxx_drv_started = FALSE;
-    return TRUE;
+	bool ret = FALSE;
+    if (s_drv_cur == NULL)
+	{
+        SDRV_FAIL_RET(FALSE, "%s s_drv_cur = 0\r\n",__FUNCTION__);
+		return ret;
+	}
+
+    OS_MUTEX_LOCK(drvMutex);
+	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX))
+	{
+	    SDRV_FAIL("%s linux drv non-support write_sram call back\n",__FUNCTION__);
+    	ret = TRUE;	
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+										&& (_ssv6xxx_drv_started != FALSE) 
+										&& (s_drv_cur->drv_ops.stop != NULL))
+	{
+        // if sdio, use ioctl to start the HCI
+        s_drv_cur->drv_ops.stop();
+		ret = TRUE;	
+	}
+    OS_MUTEX_UNLOCK(drvMutex);
+	
+	if (ret == TRUE)
+	{
+	    _ssv6xxx_drv_started = FALSE;
+	}
+	else
+	{
+		SDRV_WARN("%s() : in ssv_drv = (0x%08x, %s)\r\n", 
+			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
+	}
+
+    return ret;
 }
 
-static bool _ssv6xxx_irq_st = false;
 
 bool ssv6xxx_drv_irq_enable(bool is_isr)
 {
+	bool ret = FALSE;
+
     if (s_drv_cur == NULL)
-        SDRV_FAIL_RET(FALSE, "%s s_drv_cur = 0\r\n",__FUNCTION__);
-#ifdef __linux__
-#else
-    if (!is_isr)
-        OS_MUTEX_LOCK(drvMutex);
-    if (s_drv_cur->ssv_irq_enable == NULL)
-    {        
-        if(!is_isr)
-            OS_MUTEX_UNLOCK(drvMutex);
-        SDRV_WARN("%s() : NO read_sram() in ssv_drv = (0x%08x, %s)\r\n", 
+	{        
+		SDRV_FAIL_RET(FALSE, "%s s_drv_cur = 0\r\n",__FUNCTION__);
+		return FALSE;
+	}
+	
+	if (!is_isr) 
+	{
+		OS_MUTEX_LOCK(drvMutex);
+	}
+
+	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX)
+								&& (s_drv_cur->drv_ops.irq_enable != NULL))
+	{
+		/* TODO(aaron): fix the enable irq */
+		s_drv_cur->drv_ops.irq_enable(usb_glue);
+		ret = TRUE;
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+								&& (s_drv_cur->drv_ops.ssv_irq_enable != NULL))
+	{
+    	s_drv_cur->drv_ops.ssv_irq_enable();	
+		ret = TRUE;
+	}
+	
+	if (ret == TRUE)
+	{
+	    _ssv6xxx_irq_st = true;
+	}
+	else
+	{
+        SDRV_WARN("%s() : in ssv_drv = (0x%08x, %s)\r\n", 
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
-        return FALSE;
-    }
-    s_drv_cur->ssv_irq_enable();
-    _ssv6xxx_irq_st = true;
-    if (!is_isr)
-        OS_MUTEX_UNLOCK(drvMutex);
-#endif
-    return TRUE;
+	}
+	
+	if (!is_isr) 
+	{
+        OS_MUTEX_UNLOCK(drvMutex);	
+	}
+
+	return ret;
 }
 
 bool ssv6xxx_drv_irq_disable(bool is_isr)
 {
+	bool ret = FALSE;
+
     if (s_drv_cur == NULL)
-        SDRV_FAIL_RET(FALSE, "%s s_drv_cur = 0\r\n",__FUNCTION__);
-#ifdef __linux__
-#else
-    if(!is_isr)
-        OS_MUTEX_LOCK(drvMutex);
-    if (s_drv_cur->ssv_irq_disable== NULL)
-    {
-        if(!is_isr)
-            OS_MUTEX_UNLOCK(drvMutex);
-        SDRV_WARN("%s() : NO read_sram() in ssv_drv = (0x%08x, %s)\r\n", 
+	{        
+		SDRV_FAIL_RET(FALSE, "%s s_drv_cur = 0\r\n",__FUNCTION__);
+	}
+	
+	if (!is_isr) 
+	{
+		OS_MUTEX_LOCK(drvMutex);
+	}
+
+	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX)
+								&& (s_drv_cur->drv_ops.irq_disable != NULL))
+	{
+		bool is_wait_irq = false;
+		/* TODO(aaron): fix the enable irq */
+    	s_drv_cur->drv_ops.irq_disable(usb_glue, is_wait_irq);
+		ret = TRUE;
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+								&& (s_drv_cur->drv_ops.ssv_irq_disable != NULL))
+	{
+    	s_drv_cur->drv_ops.ssv_irq_disable();	
+		ret = TRUE;
+	}
+	
+	if (ret == TRUE)
+	{
+	    _ssv6xxx_irq_st = false;
+	}
+	else
+	{
+        SDRV_WARN("%s() :  in ssv_drv = (0x%08x, %s)\r\n", 
 			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
-        return FALSE;
-    }
-    s_drv_cur->ssv_irq_disable();
-    _ssv6xxx_irq_st = false;
-    if (!is_isr)
-        OS_MUTEX_UNLOCK(drvMutex);
-#endif
-    return TRUE;
+	}
+	
+	if (!is_isr) 
+	{
+        OS_MUTEX_UNLOCK(drvMutex);	
+	}
+
+	return ret;
 }
+
 
 bool ssv6xxx_drv_irq_status(void)
 {
@@ -812,62 +1021,70 @@ bool ssv6xxx_drv_irq_status(void)
 
 u32 ssv6xxx_drv_get_TRX_time_stamp(void)
 {
-    u32 last_trx_time = 0;
-    
-//    OS_MUTEX_LOCK(drvMutex);
+    u32 last_trx_time = 0;    
     last_trx_time = drv_trx_time;
-//    OS_MUTEX_UNLOCK(drvMutex);
     return last_trx_time;
 }
 
 bool ssv6xxx_drv_wakeup_wifi(bool sw)
 {
-    bool ret = TRUE;
+	bool ret = FALSE;
 
     if (s_drv_cur == NULL)
-        SDRV_FAIL("%s s_drv_cur = 0\r\n",__FUNCTION__);
+	{        
+		SDRV_FAIL_RET(FALSE, "%s s_drv_cur = 0\r\n",__FUNCTION__);
+	}
 
-#ifdef __linux__
-#else
-    if (s_drv_cur->wakeup_wifi== NULL)
-    {
+	if (s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+	{
+		/* TODO: aaron: linux drv not support wake on WLAN */
+		ret = TRUE;
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+									&& (s_drv_cur->drv_ops.wakeup_wifi != NULL))
+	{
+    	s_drv_cur->drv_ops.wakeup_wifi(sw);	
+		ret = TRUE;
+	}
+	
+	if (ret == FALSE)
+	{
         SDRV_WARN("%s() : NO wakeup_wifi() in ssv_drv = (0x%08x, %s)\r\n", 
-			__FUNCTION__, s_drv_cur, s_drv_cur->name);
-        return FALSE;
-    }
-    
-    //ssv6xxx_drv_irq_disable(false);
-    {
-        //u32 val;
-        OS_MUTEX_LOCK(drvMutex);
-        //val = OS_EnterCritical();
-        //LOG_PRINTF("%s,sw=%d\r\n",__func__,sw);
-        ret = s_drv_cur->wakeup_wifi(sw);
-        //OS_ExitCritical(val);
-        OS_MUTEX_UNLOCK(drvMutex);
-    }
-    //ssv6xxx_drv_irq_enable(false);
-#endif
+							__FUNCTION__, s_drv_cur, s_drv_cur->name);
+	}
 	return ret;
 }
+
 bool ssv6xxx_drv_detect_card(void)
 {
-    bool ret = TRUE;
-    
+	bool ret = FALSE;
     if (s_drv_cur == NULL)
-        SDRV_FAIL("%s s_drv_cur = 0\r\n",__FUNCTION__);
+	{
+        SDRV_FAIL_RET(FALSE, "%s s_drv_cur = 0\r\n",__FUNCTION__);
+		return ret;
+	}
 
-#ifdef __linux__
-#else
-    if (s_drv_cur->detect_card != NULL)
-    {
-        OS_MUTEX_LOCK(drvMutex);
-        ret = s_drv_cur->detect_card();
-        ret=s_drv_cur->open();
-        //ret=s_drv_cur->init();
-        OS_MUTEX_UNLOCK(drvMutex);
-    }
-#endif
+    OS_MUTEX_LOCK(drvMutex);
+	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX))
+	{
+	    SDRV_FAIL("%s linux drv non-support detect_card call back\n",__FUNCTION__);
+    	ret = TRUE;	
+	}
+	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
+									&& (s_drv_cur->drv_ops.detect_card != NULL)
+									&& (s_drv_cur->drv_ops.open != NULL))
+	{
+        ret = s_drv_cur->drv_ops.detect_card();
+        ret = s_drv_cur->drv_ops.open();
+	}
+    OS_MUTEX_UNLOCK(drvMutex);
+
+	if (ret == FALSE)
+	{
+        SDRV_WARN("%s() : in ssv_drv = (0x%08x, %s)\r\n", 
+			__FUNCTION__, (unsigned int)s_drv_cur, s_drv_cur->name);
+	}
+
     return ret;
 }
 

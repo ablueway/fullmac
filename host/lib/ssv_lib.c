@@ -114,7 +114,7 @@ void list_q_init(struct ssv_list_q *qhd)
 void list_q_qtail(struct ssv_list_q *qhd, struct ssv_list_q *newq)
 {
     struct ssv_list_q *next = qhd;
-    struct ssv_list_q* prev = qhd->prev;
+    struct ssv_list_q *prev = qhd->prev;
 
     newq->next = next;
     newq->prev = prev;

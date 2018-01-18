@@ -387,7 +387,9 @@ s32 mlme_init(void)
 	return OS_SUCCESS;
 }
 
-void mlme_task( void *args )
+
+
+void mlme_task(void *args)
 {
     s32 res,hw_mode;
     MsgEvent *pMsgEv = NULL;

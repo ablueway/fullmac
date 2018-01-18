@@ -8,6 +8,7 @@
 #ifdef __linux__
 #include <linux/kernel.h>
 #include <linux/llist.h>
+#include <linux/kthread.h>
 #endif
 
 #include <log.h>
@@ -39,6 +40,8 @@ typedef struct frameList
 //extern OsMutex  g_dev_info_mutex;
 extern s32 ap_handle_ps(void *pPktInfo);
 extern struct Host_cfg g_host_cfg;
+
+extern struct ssv_unify_drv *s_drv_cur;
 
 static OsMutex task_mtx;
 static OsMutex tx_mtx;
@@ -293,11 +296,295 @@ void TXRXTask_Task(void *args)
     Task_Done = true;
 }
 #else
+
+extern u32 g_hw_enable;
+//u32 RxTaskRetryCount[32]={0};
+u32 chip_interrupt;
+extern HOST_API_STATE active_host_api;
+static u8 *hcirxAggtempbuf;
+
 #ifdef __linux__
 int TXRXTask_TxTask(void *args)
+{
+    void *tFrame = NULL;
+    FrmL *outFrm = NULL;
+    s8 i = 0, prc_count = 0;
+    bool flush_frm = false;
+    u32 aggr_n=0,aggr_len=0;
+    void* aggr_buf=NULL;
+    u32 sleep_tick=0;
+
+	while (!kthread_should_stop())
+	{
+		while (curr_mode != MT_EXIT)
+	    {
+	        prc_count = 0;
+	        OS_SemWait(tx_frm_sphr, sleep_tick);
+	        for (i = 1; i <= PRI_Q_NUM; i++)
+	        {
+	            while ((outFrm = (FrmL *)llist_pop_safe(&tx_hwq[(PRI_Q_NUM-i)], &tx_mtx)) != NULL)
+	            {
+	                tFrame = outFrm->frame;
+	                if (tFrame)
+					{
+#if (__SSV_UNIX_SIM__ == 0)
+	                    while (ssv6xxx_drv_tx_resource_enough(OS_FRAME_GET_DATA_LEN(tFrame)) != TRUE)
+						{
+	                        if (g_host_cfg.tx_sleep)
+	                        {
+	                            //LOG_PRINTF("+\r\n");
+	                            OS_TickDelay(g_host_cfg.tx_sleep_tick);
+	                        }
+						};
+#endif
+	                    //LOG_PRINTF("%s:  Send tx frame %08x with FrmQ %08X!!\r\n", __FUNCTION__, tFrame, outFrm);
+	                    OS_MutexLock(tx_mtx);
+	                    flush_frm = (tx_flush_data_frm_num == 0)?false:true;
+	                    tx_data_frm_num --;
+	                    if (flush_frm == true)
+	                    {    
+	                    	tx_flush_data_frm_num--;
+	                    }
+						
+						OS_MutexUnLock(tx_mtx);
+	                    if (flush_frm == false)
+	                    {
+TX_RESEND:
+	                        if (g_host_cfg.hci_aggr_tx ==1)
+	                        {
+	                            if (!aggr_buf)
+	                            {
+	                                aggr_buf = OS_MemAlloc(MAX_HCI_AGGR_SIZE);
+	                                if (!aggr_buf)
+	                                {
+	                                    LOG_PRINTF("Allocate hci tx buf fail. Disable HCI TX Aggregation\r\n");
+	                                    g_host_cfg.hci_aggr_tx=0;
+	                                    goto TX_RESEND;
+	                                }
+	                                OS_MemSET(aggr_buf,0,MAX_HCI_AGGR_SIZE);
+	                                //LOG_PRINTF("Alloc aggr tx buffer=%x\r\n",(u32)aggr_buf);
+	                            }
+	                            if ((aggr_len+OS_FRAME_GET_DATA_LEN(tFrame))<MAX_HCI_AGGR_SIZE)
+	                            {
+	                                aggr_n = ssv_hal_process_hci_aggr_tx(tFrame,aggr_buf,&aggr_len);
+	                            }
+
+	                            if (aggr_n > 4)
+	                            {
+	                                if(ssv6xxx_drv_send(aggr_buf, aggr_len) <0)
+	                                {
+	                                    LOG_PRINTF("%s: ssv6xxx_drv_send() AGGR data failed !!\r\n", __FUNCTION__);
+	                                }
+	                                //LOG_PRINTF("AGGR T aggr_n=%d, len=%d\r\n",aggr_n,aggr_len);
+	                                aggr_n = 0;
+									aggr_len = 0;
+	                                OS_MemSET(aggr_buf,0,MAX_HCI_AGGR_SIZE);
+	                            }
+	                            else
+	                            {
+	                                sleep_tick = 1;
+	                            }
+	                        }
+	                        else
+	                        {
+	                            u16 len1=OS_FRAME_GET_DATA_LEN(tFrame);
+	                            u16 len2=*((u16 *)OS_FRAME_GET_DATA(tFrame));
+	                            if (len1 != len2)
+								{
+	                                LOG_PRINTF("\33[31m Wrong TX len (len1=%d,len2=%d) \33[0m\r\n",len1,len2);
+	                            }
+	                            tx_frame_len[tx_frame_len_count] = len2;
+	                            tx_frame_len_count++;
+	                            tx_frame_len_count = tx_frame_len_count % TX_FRAME_ARRAY_SIZE;
+  
+	                            if (ssv6xxx_drv_send(OS_FRAME_GET_DATA(tFrame), OS_FRAME_GET_DATA_LEN(tFrame)) <0)
+	                            {
+	                                LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_SERIOUS, ("%s: ssv6xxx_drv_send() data failed !!\r\n", __FUNCTION__));
+	                            }
+	    						//LOG_PRINTF("T\r\n");
+	                        }
+	                    }
+
+	                    os_frame_free(tFrame);
+	                    outFrm->frame = NULL;
+	                    //periodic_pktnum++;
+	                    prc_count++;
+	                    llist_push_safe(&free_frmQ,(struct ssv_llist *)outFrm, &tx_mtx);
+
+	                    tFrame = NULL;
+	                    outFrm = NULL;
+
+	                    if (prc_count > 1)
+	                    {
+	                        OS_SemWait(tx_frm_sphr, sleep_tick); //More frames are sent and resource should be pulled out.
+	                        //LOG_PRINTF("******************%s: push back due to multi-send:%d !!\r\n", __FUNCTION__, tx_count);
+	                    }
+
+	                }
+	                else
+	                {
+	                    LOG_ERROR("outFrm without pbuf?? \r\n");
+	                }
+	            }
+	        }
+	        if (!prc_count)
+	        {
+	            if (aggr_n)
+	            {
+	                if (ssv6xxx_drv_send(aggr_buf, aggr_len) <0)
+	                {
+	                    LOG_PRINTF("%s: ssv6xxx_drv_send() AGGRT data failed !!\r\n", __FUNCTION__);
+	                }
+	                OS_MemSET(aggr_buf,0,MAX_HCI_AGGR_SIZE);
+	                //LOG_PRINTF("AGGT timeout,aggr_n=%d, len=%d\r\n",aggr_n,aggr_len);
+	                aggr_n=aggr_len=0;
+	                sleep_tick=0;
+	            }
+	        }
+	    }
+	    TxTask_Done = true;
+	}
+	return 0;
+}
+
+int TXRXTask_RxTask(void *args)
+{
+    void *rFrame = NULL;
+    u8  *msg_data = NULL;
+    s32 recv_len = 0;
+    s32 retry = 0;
+    size_t next_pkt_len = 0;
+
+	while (!kthread_should_stop())
+	{
+	    while (curr_mode != MT_EXIT)
+	    {
+			if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX)
+						&& (s_drv_cur->drv_info.fields.hw_type == DRV_INFO_FLAG_HW_TYPE_USB))
+			{
+				/* TODO(aaron): use timeout sem to avoid rx work queue polling mechanism */
+				OS_SemWait(rx_frm_sphr, 3000);
+			}
+			else
+			{
+				OS_SemWait(rx_frm_sphr, 0);			
+			}
+
+	        for (retry = 0; retry < 32; retry++)
+	        {
+	            if (g_host_cfg.hci_rx_aggr)
+	            {
+	                msg_data = hcirxAggtempbuf;
+	                recv_len = ssv6xxx_drv_recv(msg_data, next_pkt_len);
+	            }
+	            else
+	            {
+	                if (rFrame == NULL)
+	                {
+#if (SW_8023TO80211 == 1)
+						while ((rFrame = (u8 *)os_frame_alloc((g_host_cfg.recv_buf_size-g_host_cfg.trx_hdr_len),TRUE)) == NULL)
+#else
+						while ((rFrame = (u8 *)os_frame_alloc(g_host_cfg.recv_buf_size, TRUE)) == NULL)
+#endif
+	                    {
+	                        OS_TickDelay(1);
+	                       	LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_WARNING, 
+								("[RxTask]: wakeup from sleep!\r\n"));
+	                        //continue;
+	                    }
+	                    os_frame_push(rFrame, g_host_cfg.trx_hdr_len);
+	                    msg_data = OS_FRAME_GET_DATA(rFrame);
+	                }
+	                recv_len = ssv6xxx_drv_recv(msg_data, OS_FRAME_GET_DATA_LEN(rFrame));
+	            }
+
+	            if (recv_len > 0)
+	            {
+	                if (g_host_cfg.hci_rx_aggr)
+	                {
+	                    next_pkt_len = ssv_hal_process_hci_rx_aggr(msg_data,recv_len,(RxPktHdr)TXRXTask_RxFrameProc);
+	                }
+	                else
+	                {
+	                    OS_FRAME_SET_DATA_LEN(rFrame, recv_len);
+	                    TXRXTask_RxFrameProc(rFrame);
+	                }
+	                rFrame = NULL;
+	                msg_data = NULL;
+	            }
+	            else if (recv_len == 0)
+	            {
+	                LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_SERIOUS, 
+						("[TxRxTask]: recv_len == 0 at frame %p, first 8 bytes content is dumpped as below:\r\n", rFrame));
+	                hex_dump(msg_data, 8);
+	            }
+	            else
+	            {
+	                //LOG_DEBUG("[TxRxTask]: Rx semaphore comes in, but not frame receive\r\n");
+#if(RECOVER_ENABLE == 1)
+#if(RECOVER_MECHANISM == 0)
+	                u32 i;
+	                if (retry == 0) // when interrupt always high
+	                {
+	                    if (TRUE == ssv_hal_get_diagnosis()) // watchdog wack up & reset
+	                    {
+	                        u32 fw_status = 0;
+	                        ssv_hal_get_fw_status(&fw_status);
+
+	                        //LOG_PRINTF("***********************************************g_hw_enable:%d fw_status:%08x\r\n", g_hw_enable, fw_status);
+	                        if (fw_status == 0x5A5AA5A5 ||g_hw_enable == false)
+							{
+	                            break;
+	                        }
+
+	                        ssv_hal_reset_soc_irq();//  system reset interrupt for host
+
+	                        for (i = 0; i < MAX_VIF_NUM; i++)
+	                        {
+	                            if (gDeviceInfo->vif[i].hw_mode == SSV6XXX_HWM_AP)
+								{
+	                                ssv6xxx_wifi_ap_recover(i);
+	                            }
+	                            else if(gDeviceInfo->vif[i].hw_mode == SSV6XXX_HWM_STA)
+	                            {
+	                                ssv6xxx_wifi_sta_recover(i);
+	                            }
+	                        }
+	                    }
+	                }
+#elif(RECOVER_MECHANISM == 1)
+	                if (retry == 0)
+	                {
+	                    // handle ipc interrupt for check fw ceash
+	                    //LOG_PRINTF("is heartbeat\r\n");
+	                    if (1 == ssv_hal_is_heartbeat())
+	                    {
+	                        //LOG_PRINTF("%08x: host_isr\r\n",isr_status);
+	                        gDeviceInfo->fw_timer_interrupt ++;
+	                        chip_interrupt = os_tick2ms(OS_GetSysTick());
+	                        ssv_hal_reset_heartbeat();
+	                    }
+	                }
+#endif //#if(RECOVER_MECHANISM == 1)
+#endif //#if(RECOVER_ENABLE == 1)
+	                break;
+	            }
+	        }
+	        //RxTaskRetryCount[retry]++;
+	        ssv6xxx_drv_irq_enable(false);
+	    }
+	    RxTask_Done = true;
+
+	    if (rFrame != NULL)
+	    {
+	        os_frame_free(rFrame);
+	        rFrame = NULL;
+	    }
+	}
+	return 0;
+}
 #else
 void TXRXTask_TxTask(void *args)
-#endif
 {
     void *tFrame = NULL;
     FrmL *outFrm = NULL;
@@ -450,24 +737,9 @@ TX_RESEND:
         }
     }
     TxTask_Done = true;
-
-#ifdef __linux__
-	return 0;
-#endif	
 }
 
-
-extern u32 g_hw_enable;
-//u32 RxTaskRetryCount[32]={0};
-u32 chip_interrupt;
-extern HOST_API_STATE active_host_api;
-static u8 *hcirxAggtempbuf;
-
-#ifdef __linux__
-int TXRXTask_RxTask(void *args)
-#else
 void TXRXTask_RxTask(void *args)
-#endif
 {
     void * rFrame = NULL;
     u8  *msg_data = NULL;
@@ -583,14 +855,10 @@ void TXRXTask_RxTask(void *args)
     {
         os_frame_free(rFrame);
         rFrame = NULL;
-    }
-	
-#ifdef __linux__
-	return 0;
-#endif
+    }	
 }
 #endif
-
+#endif
 
 //TXRX_Init Initialize
 s32 TXRXTask_Init(void)
@@ -616,9 +884,9 @@ s32 TXRXTask_Init(void)
     OS_MutexInit(&tx_mtx);
 
 	/* not in, g_host_cfg.hci_rx_aggr = HCI_RX_AGGR(0) */
-    if(g_host_cfg.hci_rx_aggr)
+    if (g_host_cfg.hci_rx_aggr)
     {        
-        hcirxAggtempbuf = (u8*)OS_MemAlloc(MAX_HCI_AGGR_SIZE);
+        hcirxAggtempbuf = (u8 *)OS_MemAlloc(MAX_HCI_AGGR_SIZE);
         assert(hcirxAggtempbuf != NULL);
     }
     LOG_PRINTF("init TX sem_max=%d, RX sem_max=%d\r\n",g_TXSEMA_MAX_NUM, RXSEMA_MAX_NUM);
@@ -762,28 +1030,28 @@ ssv6xxx_result TXRXTask_SetOpMode(ModeType mode)
     return SSV6XXX_SUCCESS;
 }
 
-void TXRXTask_Isr(u32 signo,bool isfromIsr)
+void TXRXTask_Isr(u32 signo, bool isfromIsr)
 {
     //LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_WARNING, ("TXRXTask_Isr\r\n"));
     //LOG_PRINTF("isr\r\n");
-    if(signo &INT_RX)
+    if (signo & INT_RX)
     {
         ssv6xxx_drv_irq_disable(isfromIsr);
-        if(isfromIsr == TRUE)
+        if (isfromIsr == TRUE)
         {
-            if(OS_SemSignal_FromISR(&rx_frm_sphr) !=0)
+            if (OS_SemSignal_FromISR(rx_frm_sphr) != 0)
             {
                 //LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_SERIOUS, ("OS_SemSignal_FromISR fail\r\n"));
-                LOG_PRINTF("1 RX sem cnt=%d\r\n",OS_SemCntQuery(&rx_frm_sphr));
+                LOG_PRINTF("1 RX sem cnt=%d\r\n", OS_SemCntQuery(rx_frm_sphr));
                 //ssv6xxx_drv_irq_enable(true);
             }
         }    
         else
         {
-            if(OS_SemSignal(&rx_frm_sphr) !=0)
+            if (OS_SemSignal(rx_frm_sphr) != 0)
             {
                 //LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_SERIOUS, ("OS_SemSignal fail\r\n"));
-                LOG_PRINTF("2 RX sem cnt=%d\r\n",OS_SemCntQuery(&rx_frm_sphr));
+                LOG_PRINTF("2 RX sem cnt=%d\r\n", OS_SemCntQuery(rx_frm_sphr));
                 //ssv6xxx_drv_irq_enable(false);
             }
         }

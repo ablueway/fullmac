@@ -3279,13 +3279,13 @@ void txduty_t_handler(void* data1, void* data2)
 {    
     s32 res;
 
-    if(tx_duty_en==TRUE)
+    if (tx_duty_en==TRUE)
     {
         ssv_hal_halt_txq((u32)data1,1); //halt q 1 g_qktime
         OS_MsDelay(g_host_cfg.txduty.qktime);
         ssv_hal_halt_txq((u32)data1,0);//enable q 1
         LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_WARNING, ("txduty tick=%d,qidx=%d\r\n",OS_GetSysTick(),(u32)data1));
-        res = os_create_timer(g_host_cfg.txduty.txtime,txduty_t_handler,(void*)data1,NULL, (void*)TIMEOUT_TASK);
+        res = os_create_timer(g_host_cfg.txduty.txtime,txduty_t_handler,(void*)data1,NULL, (void *)TIMEOUT_TASK);
         while(res != OS_SUCCESS)
         {
             LOG_PRINTF("g_txtime faile\r\n");

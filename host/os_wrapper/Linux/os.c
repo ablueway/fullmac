@@ -7,27 +7,31 @@
 #include <linux/random.h>
 #include <linux/spinlock.h>
 #include <linux/semaphore.h>
-//#include <semaphore.h>
 #include <linux/mutex.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/kthread.h>
 #include <linux/timer.h>
-
+#include <linux/time.h>
 #include <linux/kthread.h>
 #include <linux/timer.h>
 
 #include "os.h"
-/*TOSO: aaron */
+/*TODO: aaron */
 //#include "os_cfg.h"
 //#include <log.h>
 
 
+/*TODO(aaron): need to know how many task does the redbull host needed ? */
+u8 g_total_task_cnt = 0;
+#define MAX_OS_TASK_NUM 	(10)
+static struct task_struct *g_os_task_tbl[MAX_OS_TASK_NUM] = {NULL};
 
 volatile u8 gOsFromISR;
 //static u8 os_init_flag = 0;
 
-#define STATIC_STK
+/* TODO(aaron): need check stack needed or not ? */
+//#define STATIC_STK
 #ifdef STATIC_STK
 //(TOTAL_STACK_SIZE<<4) --> transfer unit to bytes
 //((TOTAL_STACK_SIZE<<4)>>2) --> transfer unit to word
@@ -43,9 +47,10 @@ unsigned long g_os_cpu_flags;
 
 wait_queue_head_t g_os_task_wait_q;
 
-OS_APIs s32 OS_Init( void )
+OS_APIs s32 OS_Init(void)
 {
 	spin_lock_init(&g_os_cs_lock);
+	/* TODO(aaron): does we need this ?? */
 	init_waitqueue_head(&g_os_task_wait_q);
     return OS_SUCCESS;
 }
@@ -84,14 +89,16 @@ OS_APIs s32 OS_TaskCreate(OsTask task, const char *name, u32 stackSize,
      * 2. for workaround step 1, the task will block too long to make kernel 
      *    report this as issue. temply mark the api content.				
 	 */
-#if 0
-	struct task_struct *new_task = kthread_create(task, param, name);
-	if (IS_ERR(new_task))
+	g_os_task_tbl[g_total_task_cnt] = kthread_create(task, param, name);
+	if (IS_ERR(g_os_task_tbl[g_total_task_cnt]))
 	{
+		printk("kernel thread create fail ! task_num(%d)\n", g_total_task_cnt);
 		return OS_FAILED;
 	}
+#if 0
 	wake_up_process(new_task);
 #endif
+	g_total_task_cnt++;
 	return OS_SUCCESS;
 }
 
@@ -101,23 +108,40 @@ OS_APIs void OS_TaskDelete(OsTaskHandle taskHandle)
 	kthread_stop((struct task_struct *)(taskHandle));
 }
 
-
 OS_APIs void OS_StartScheduler(void)
 {
-
+	u8 task_idx = 0;
+	for (task_idx = 0; task_idx < MAX_OS_TASK_NUM; task_idx++)
+	{
+		if (g_os_task_tbl[task_idx] != NULL)
+		{
+			wake_up_process(g_os_task_tbl[task_idx]);
+		}
+	}
 }
 
+/* TODO(aaron): maybe the return value use unsigned long is best */
 OS_APIs u32 OS_GetSysTick(void)
 {
-    return OS_SUCCESS;
+#if 0
+    struct timespec ts = {0}; 
+	/* calculate the total tick from system start */
+    clock_gettime(CLOCK_MONOTONIC, &ts); 
+    return (ts.tv_sec * 1000 + ts.tv_nsec / 1000000); 
+#endif
+	return jiffies;
 }
-
 
 /* Mutex APIs: */
 OS_APIs s32 OS_MutexInit(OsMutex *mutex)
 {
 //	struct mutex *lock = (struct mutex *)mutex;
 	*mutex = kzalloc(sizeof(struct mutex), GFP_KERNEL);
+	if (*mutex == NULL)
+	{
+		printk("Mutex init fail!\n");
+		return OS_FAILED;
+	}
 	mutex_init(*mutex);
     return OS_SUCCESS;
 }
@@ -136,13 +160,13 @@ OS_APIs void OS_MutexUnLock(OsMutex *mutex)
 
 OS_APIs void OS_TickDelay(u32 ticks)
 {
-
+	kfree(mutex);
 }
 
 
 OS_APIs void OS_MutexDelete(OsMutex *mutex)
 {
-
+	msleep(ticks);
 }
 
 
@@ -151,6 +175,7 @@ OS_APIs void OS_MsDelay(u32 ms)
 	msleep(ms);
 }
 
+/* TODO(aaron) do we need this ?? */
 #define SEMA_LOCK()		OSSchedLock()
 #define SEMA_UNLOCK()		OSSchedUnlock()
 
@@ -162,11 +187,11 @@ OS_APIs s32 OS_SemInit(OsSemaphore *Sem, u16 maxcnt, u16 cnt)
 	return OS_SUCCESS;
 }
 
-OS_APIs bool OS_SemWait(OsSemaphore Sem , u16 timeout)
+OS_APIs bool OS_SemWait(OsSemaphore Sem , u16 timeout_ticks)
 {
 //	struct semaphore *sem = (struct semaphore *)Sem;
 //	down(sem);
-	return down_timeout(Sem, timeout);
+	return down_timeout(Sem, timeout_ticks);
 //    return OS_SUCCESS;
 //    return OS_SUCCESS;
 }
@@ -197,6 +222,7 @@ OS_APIs void OS_SemDelete(OsSemaphore *Sem)
 	kfree(Sem);
 }
 
+/* TODO(aaron) do we need this ?? */
 #define MSGQ_LOCK()		OSSchedLock()
 #define MSGQ_UNLOCK()		OSSchedUnlock()
 

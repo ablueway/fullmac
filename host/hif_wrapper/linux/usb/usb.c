@@ -100,10 +100,11 @@ struct ssv6xxx_usb_glue {
 	bool   dev_ready;
 	struct workqueue_struct *wq;					/* receive rx workqueue */
 	struct work_struct rx_work;
-	u32 *rx_pkt;
+	/* TODO(aaron): be careful */
+	u32 rx_pkt_cnt;
 	void *rx_cb_args;
 	bool rx_wq_running;
-    int (*rx_cb)(struct sk_buff *rx_skb, void *args);
+    int (*rx_cb)(void *rx_skb, void *args);
 };
 #define to_ssv6xxx_usb_dev(d) container_of(d, struct ssv6xxx_usb_glue, kref)
 
@@ -291,6 +292,7 @@ exit:
 	return retval;
 }
 
+#if 0
 static void ssv6xxx_usb_recv_rx_complete(struct urb *urb)
 {
 	struct ssv6xxx_usb_glue *usb_glue = urb->context;
@@ -321,16 +323,16 @@ static void ssv6xxx_usb_recv_rx_complete(struct urb *urb)
 	/* recevied invalid frame, MAX_HCI_RX_AGGR_SIZE(9344) */
 	if (usb_glue->rx_endpoint.rx_filled > MAX_HCI_RX_AGGR_SIZE) {
 		HWIF_DBG_PRINT(&usb_glue->wlan_data, 
-			"recv invalid data length %d\n", 
-				usb_glue->rx_endpoint.rx_filled);
+			"recv invalid data length %d\n", usb_glue->rx_endpoint.rx_filled);
 		goto skip;
 	}
 
 	if (usb_glue->rx_endpoint.rx_filled) {
 
 		/* record the rx pkt cnt in hci_hw_ctrl object's rx_pkt filed */
-		(*usb_glue->rx_pkt)++;
- 
+		//(*usb_glue->rx_pkt)++;
+ 		usb_glue->rx_pkt_cnt++;
+		
 		/* MAX_RETRY_SSV6XXX_ALLOC_BUF(3) */
         for (i = 0; i < MAX_RETRY_SSV6XXX_ALLOC_BUF; i++) {
 		    rx_mpdu = usb_glue->wlan_data.skb_alloc(usb_glue->wlan_data.skb_param, 
@@ -342,16 +344,20 @@ static void ssv6xxx_usb_recv_rx_complete(struct urb *urb)
         }
 		
         if (i == MAX_RETRY_SSV6XXX_ALLOC_BUF)
-            goto skip;
-
+		{    
+			goto skip;
+		}
 		/* get skb_tail pointer as our data ptr to prepare putting new data */
 		data = skb_put(rx_mpdu, usb_glue->rx_endpoint.rx_filled);
 		/* put the received data */
 		memcpy(data, usb_glue->rx_endpoint.rx_buf, usb_glue->rx_endpoint.rx_filled);	
 
-		usb_glue->rx_cb(rx_mpdu, usb_glue->rx_cb_args); 
-	}
-	
+		/* TODO(aaron): need to offer callback to notify orig rx task to receive data */
+		if (usb_glue->rx_cb != NULL)
+		{
+			usb_glue->rx_cb(rx_mpdu, usb_glue->rx_cb_args); 
+		}
+	}	
 skip:
 	queue_work(usb_glue->wq, &usb_glue->rx_work);
 }
@@ -381,7 +387,35 @@ static void ssv6xxx_usb_recv_rx(struct work_struct *work)
 		usb_glue->rx_wq_running = false;
 	}
 }
+#endif
 
+/* TODO(aaron): change the usb rx mechanism for redbull host linux drv archecture */
+static int __must_check ssv6xxx_usb_read(void *dev, void *rx_data_buf, size_t expec_rx_len)
+{
+	int retval = 0;
+	int rx_actul_len = 0;
+
+	struct ssv6xxx_usb_glue *glue = (struct ssv6xxx_usb_glue *)dev;
+
+	retval = usb_bulk_msg(glue->udev,
+				usb_rcvbulkpipe(glue->udev, glue->rx_endpoint.address),
+				rx_data_buf,
+				expec_rx_len,
+				&rx_actul_len,
+				1000);
+	if (!retval) 
+	{
+		printk("recv rx data len=%d\n", rx_actul_len);
+		return rx_actul_len;
+	}
+	else
+	{
+		printk("Fail to rx urb, error=%d\n", retval);
+		return 0;
+	}	
+}
+
+#if 0
 /* 
  * For usb interface,  we make use of work queue to receive the rx frame.
  */
@@ -392,6 +426,8 @@ static int __must_check ssv6xxx_usb_read(void *usb_glue, void *buf, size_t *size
     //printk(KERN_INFO "<==%s()\n", __func__);
 	return 0;
 }
+#endif
+
 
 static int ssv6xxx_usb_send_tx(struct ssv6xxx_usb_glue *usb_glue, struct sk_buff *skb, size_t size)
 {
@@ -591,16 +627,19 @@ static int ssv6xxx_chk_usb_speed(struct ssv6xxx_usb_glue *usb_glue)
 }
 
  
+//static void ssv6xxx_usb_rx_task(void *dev, 
+//					int (*rx_cb)(struct sk_buff *rx_skb, void *args), 
+//					void *args, u32 *pkt) 
 static void ssv6xxx_usb_rx_task(void *dev, 
-					int (*rx_cb)(struct sk_buff *rx_skb, void *args), 
-					void *args, u32 *pkt) 
+					int (*rx_cb)(void *rx_skb, void *args), void *args) 
 {
     //struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
 	struct ssv6xxx_usb_glue *usb_glue = (struct ssv6xxx_usb_glue *)dev;
     printk(KERN_INFO "==>%s()\n", __func__);    
 	usb_glue->rx_cb = rx_cb;
 	usb_glue->rx_cb_args = args;
-	usb_glue->rx_pkt = pkt;
+
+	//usb_glue->rx_pkt = pkt;
 
 	/**
 	* schedule_work - put work task in ssv6xxx_usb_wq workqueue
@@ -708,28 +747,15 @@ static void ssv6xxx_usb_sysplf_reset(void *dev, u32 addr, u32 value)
 	printk(KERN_INFO "<==%s()\n", __func__);	
 }
 
-#if 0
-static struct ssv6xxx_hwif_ops usb_ops =
+static void ssv6xxx_usb_irq_enable(void *dev)
 {
-    .read            		= ssv6xxx_usb_read,
-    .write           		= ssv6xxx_usb_write,
-    .readreg	     		= ssv6xxx_usb_read_reg,
-    .writereg        		= ssv6xxx_usb_write_reg,
-    .safe_readreg    		= ssv6xxx_usb_read_reg,
-    .safe_writereg   		= ssv6xxx_usb_write_reg,
-    .burst_readreg   		= ssv6xxx_usb_burst_read_reg,
-    .burst_writereg  		= ssv6xxx_usb_burst_write_reg,    
-    .burst_safe_readreg   	= ssv6xxx_usb_burst_read_reg,
-    .burst_safe_writereg  	= ssv6xxx_usb_burst_write_reg,    
-    .load_fw         		= ssv6xxx_usb_load_firmware,
-    .property        		= ssv6xxx_usb_property,
-    .hwif_rx_task    		= ssv6xxx_usb_rx_task,
-    .start_usb_acc   		= ssv6xxx_usb_start_acc,
-    .stop_usb_acc    		= ssv6xxx_usb_stop_acc,
-    .jump_to_rom     		= ssv6xxx_usb_jump_to_rom,
-	.sysplf_reset    		= ssv6xxx_usb_sysplf_reset, 
-};
-#endif
+	printk(KERN_INFO "not support %s()\n", __func__);
+}
+
+static void ssv6xxx_usb_irq_disable(void *dev, bool iswaitirq)
+{
+	printk(KERN_INFO "not support %s()\n", __func__);	
+}
 
 struct ssv_unify_drv usb_ops = 
 {
@@ -753,7 +779,9 @@ struct ssv_unify_drv usb_ops =
 	    .start_usb_acc   		= ssv6xxx_usb_start_acc,
 	    .stop_usb_acc    		= ssv6xxx_usb_stop_acc,
 	    .jump_to_rom     		= ssv6xxx_usb_jump_to_rom,
-		.sysplf_reset    		= ssv6xxx_usb_sysplf_reset, 
+		.sysplf_reset    		= ssv6xxx_usb_sysplf_reset,
+		.irq_enable				= ssv6xxx_usb_irq_enable,
+		.irq_disable			= ssv6xxx_usb_irq_disable,		
 	}
 };
 
@@ -845,18 +873,14 @@ static int ssv_usb_probe(struct usb_interface *interface,
 		      const struct usb_device_id *id)
 {
 	struct ssv6xxx_platform_data *pwlan_data;
-	//struct ssv6xxx_usb_glue *usb_glue;
 	struct usb_host_interface *iface_desc;
-	struct usb_endpoint_descriptor *endpoint;
-	int i;
+	int ep_idx = 0 ;
 	int retval = -ENOMEM;
-	unsigned int epnum;
 
 
-	/* ==>ssv_usb_probe() */
     printk(KERN_INFO "==>%s()\n", __func__);
 	printk(KERN_INFO "=======================================\n");
-	printk(KERN_INFO "==          TURISMO - USB            ==\n");
+	printk(KERN_INFO "== TURISMO With Redbull Project-USB  ==\n");
 	printk(KERN_INFO "=======================================\n");
 
     /* allocate memory for our device state and initialize it */
@@ -872,6 +896,7 @@ static int ssv_usb_probe(struct usb_interface *interface,
 	mutex_init(&usb_glue->io_mutex);
 	mutex_init(&usb_glue->cmd_mutex);
 
+#if 0
 	/* INIT RX */
 	INIT_WORK(&usb_glue->rx_work, ssv6xxx_usb_recv_rx);
 	usb_glue->rx_wq_running = false;
@@ -880,6 +905,7 @@ static int ssv_usb_probe(struct usb_interface *interface,
 		dev_err(&interface->dev, "Could not allocate Work Queue\n");
 		goto error;
 	}
+#endif
 
 	/* point to the device of usb interface which use in the device tree */
 	usb_glue->dev = &interface->dev;
@@ -904,11 +930,10 @@ static int ssv_usb_probe(struct usb_interface *interface,
 	/* setup the endpoint information */
 	iface_desc = interface->cur_altsetting;
 
-	for (i = 0; i < iface_desc->desc.bNumEndpoints; ++i) {
-		
-		endpoint = &iface_desc->endpoint[i].desc;	
-		epnum = endpoint->bEndpointAddress & 0x0f;
-   
+	for (ep_idx = 0; ep_idx < iface_desc->desc.bNumEndpoints; ++ep_idx) {
+		struct usb_endpoint_descriptor *endpoint = &iface_desc->endpoint[ep_idx].desc;	
+		unsigned int epnum = endpoint->bEndpointAddress & 0x0f;   
+
 		if (epnum == SSV_EP_CMD) {
 			usb_glue->cmd_endpoint.address = endpoint->bEndpointAddress;
 			usb_glue->cmd_endpoint.packet_size = le16_to_cpu(endpoint->wMaxPacketSize);

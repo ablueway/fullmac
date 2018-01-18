@@ -16,7 +16,7 @@
 #include <linux/semaphore.h>
 #include <linux/mutex.h>
 #include <linux/delay.h>
-
+#include <linux/jiffies.h>
 //#include <linux/kthread.h>
 //#include <linux/timer.h>
 
@@ -69,7 +69,7 @@ typedef OsMessgQ *OsMsgQ;
 #define OS_TASK_ENTER_CRITICAL()        
 #define OS_TASK_EXIT_CRITICAL()         
 
-#define TICK_RATE_MS 			(1000)
+#define TICK_RATE_MS 			(1)
 #define TASK_IDLE_STK_SIZE 		(100)
 
 extern void TaskSwHook(void);

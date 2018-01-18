@@ -105,11 +105,10 @@
 /* Message Commands: */
 #define OS_MSG_FRAME_TRAPPED        1
 
-//#define OS_TICKTYPE portTickType //freertos
 #define OS_TICKTYPE unsigned long
-//#define OS_TICK_RATE_MS (1000/OS_TICKS_PER_SEC) //freertos:portTICK_RATE_MS
 #define OS_TICK_RATE_MS TICK_RATE_MS
-#define OS_TICK_HZ     (1000/OS_TICK_RATE_MS) 
+#define OS_TICK_HZ     (1000 / OS_TICK_RATE_MS) 
+
 #define OS_MIN_STK_SIZE  TASK_IDLE_STK_SIZE //freerots:configMINIMAL_STACK_SIZE
 
 
