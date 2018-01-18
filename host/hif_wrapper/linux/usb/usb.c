@@ -139,8 +139,8 @@ static void ssv6xxx_usb_delete(struct kref *kref)
 	usb_free_urb(usb_glue->rx_endpoint.rx_urb);
 	
 	//flush_workqueue(usb_glue->wq);
-	destroy_workqueue(usb_glue->wq);
-	usb_glue->rx_wq_running = false;
+//	destroy_workqueue(usb_glue->wq);
+//	usb_glue->rx_wq_running = false;
 	
 	usb_put_dev(usb_glue->udev);
 	kfree(usb_glue);
