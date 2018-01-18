@@ -600,7 +600,7 @@ s32 ssv6xxx_drv_send(void *dat, size_t len)
 									&& (s_drv_cur->drv_ops.write != NULL))
 	{
 		/* TODO(aaron): fix the tx data path */
-		retVal = s_drv_cur->drv_ops.write(usb_glue, dat, len, 0x0);	
+		retVal = s_drv_cur->drv_ops.write(usb_glue, dat, len);	
 	}
 	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
 									&& (s_drv_cur->drv_ops.send != NULL))

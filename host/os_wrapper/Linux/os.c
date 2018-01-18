@@ -13,9 +13,7 @@
 #include <linux/kthread.h>
 #include <linux/timer.h>
 #include <linux/time.h>
-#include <linux/kthread.h>
 #include <linux/kfifo.h>
-
 #include <linux/kthread.h>
 #include <linux/timer.h>
 #include "os.h"

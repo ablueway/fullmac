@@ -6,9 +6,6 @@
 #ifndef _OS_DEF_H_
 #define _OS_DEF_H_
 
-//#include <linux/kernel.h>
-//#include <linux/random.h>
-//#include <linux/spinlock.h>
 #include <porting.h>
 
 #include <linux/semaphore.h>
@@ -25,9 +22,7 @@
 
 /*============OS parameter setting===================*/
 
-//typedef void (*OsTask)(void *);
 typedef int (*OsTask)(void *data);
-
 typedef void *OsTaskHandle;
 typedef void *OsTimer;
 typedef void (*OsTimerHandler)(OsTimer xTimer);
@@ -35,8 +30,6 @@ typedef void (*OsTimerHandler)(OsTimer xTimer);
 typedef struct mutex *OsMutex;
 typedef struct semaphore *OsSemaphore;
 typedef struct kfifo *OsMsgQ;
-
-typedef struct semaphore OsSemaphore;
 
 #define OS_TASK_ENTER_CRITICAL()        
 #define OS_TASK_EXIT_CRITICAL()         

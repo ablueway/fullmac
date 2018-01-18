@@ -292,11 +292,6 @@ exit:
 }
 
 
-
-
-
-
-
 /* TODO(aaron): change the usb rx mechanism for redbull host linux drv archecture */
 static int __must_check ssv6xxx_usb_read(void *dev, void *rx_data_buf, size_t expec_rx_len)
 {
@@ -310,20 +305,18 @@ static int __must_check ssv6xxx_usb_read(void *dev, void *rx_data_buf, size_t ex
 				rx_data_buf,
 				expec_rx_len,
 				&rx_actul_len,
-				1000);
-	if (!retval) 
+				TRANSACTION_TIMEOUT);
+	if (!retval)
 	{
 		printk("recv rx data len=%d\n", rx_actul_len);
 		return rx_actul_len;
 	}
 	else
 	{
-		printk("Fail to rx urb, error=%d\n", retval);
+		printk("usb rx fail, error code(%d)\n", retval);
 		return 0;
 	}	
 }
-
-
 
 /* TODO(aaron): change the usb tx mechanism for redbull host linux drv archecture */
 static int __must_check ssv6xxx_usb_write(void *dev, void *buf, size_t len)
@@ -383,8 +376,6 @@ static int __must_check ssv6xxx_usb_read_reg(void *dev, u32 addr, u32 *buf)
 
 	return retval;
 }
-
-	struct ssv6xxx_usb_glue *usb_glue = (struct ssv6xxx_usb_glue *)dev;
 
 static int __must_check ssv6xxx_usb_write_reg(void *dev, u32 addr, u32 buf)
 {
