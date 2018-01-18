@@ -7,6 +7,7 @@
 #include <linux/random.h>
 #include <linux/spinlock.h>
 #include <linux/semaphore.h>
+//#include <semaphore.h>
 #include <linux/mutex.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
@@ -15,6 +16,9 @@
 #include <linux/time.h>
 #include <linux/kthread.h>
 #include <linux/kfifo.h>
+
+#include <linux/kthread.h>
+#include <linux/timer.h>
 
 #include "os.h"
 /*TODO: aaron */
@@ -160,7 +164,7 @@ OS_APIs s32 OS_MutexInit(OsMutex *mutex)
     return OS_SUCCESS;
 }
 
-OS_APIs void OS_MutexLock(OsMutex mutex)
+OS_APIs void OS_MutexLock(OsMutex *mutex)
 {
 	struct mutex *lock = (struct mutex *)mutex;
 	mutex_lock(lock);
@@ -177,7 +181,8 @@ OS_APIs void OS_TickDelay(u32 ticks)
     msleep(ticks);
 }
 
-OS_APIs void OS_MutexDelete(OsMutex mutex)
+
+OS_APIs void OS_MutexDelete(OsMutex *mutex)
 {
         kfree(mutex);
 }
@@ -211,8 +216,9 @@ OS_APIs bool OS_SemWait(OsSemaphore Sem , u16 timeout_ticks)
 OS_APIs u8 OS_SemSignal(OsSemaphore Sem)
 {
 	//struct semaphore *sem = (struct semaphore *)Sem;
+	struct semaphore *sem = (struct semaphore *)Sem;
 
-	up(Sem);
+	up(sem);
 
     return OS_SUCCESS;
 }

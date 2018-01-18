@@ -77,10 +77,6 @@ OsSemaphore ap_sta_on_off_sphr = NULL;
 OsSemaphore scanning_sphr = NULL;
 
 
-OsSemaphore ap_sta_on_off_sphr;
-OsSemaphore scanning_sphr;
-
-
 #if (AP_MODE_ENABLE == 1)  
 static s32 _ssv6xxx_wifi_auto_channel_selection(u16 channel_mask, u32 channel_5g_mask,u8 vif_idx);
 #endif
@@ -2635,12 +2631,6 @@ H_APIs u32 ssv6xxx_get_aplist_info(void **ap_list)
 static inline int _ssv6xxx_start_scan(void)
 {
     if (NULL == scanning_sphr)
-    if (OS_SUCCESS == OS_SemInit(&scanning_sphr, 1, 0))
-        return 0;
-    else
-        return -1;
-#else
-    if (NULL == scanning_sphr)
     {
         if (OS_SUCCESS == OS_SemInit(&scanning_sphr, 1, 0))
             return 0;
@@ -2665,7 +2655,7 @@ static inline bool _ssv6xxx_wait_scan_done(u32 timeOut)
 	{
         ret = FALSE;
     }
-    OS_SemDelete(&scanning_sphr);
+    OS_SemDelete(scanning_sphr);
 	scanning_sphr = NULL;
 #endif
     return ret;

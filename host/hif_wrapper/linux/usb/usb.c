@@ -337,7 +337,7 @@ static int __must_check ssv6xxx_usb_write(void *dev, void *buf, size_t len)
 					buf, len, &tx_actul_len, TRANSACTION_TIMEOUT);
 	if (!retval) 
 	{
-		printk("recv rx data len=%d\n", tx_actul_len);
+		printk("send tx data len=%d\n", tx_actul_len);
 		return tx_actul_len;
 	}
 	else
@@ -377,6 +377,7 @@ static int __must_check ssv6xxx_usb_read_reg(void *dev, u32 addr, u32 *buf)
 	return retval;
 }
 
+	struct ssv6xxx_usb_glue *usb_glue = (struct ssv6xxx_usb_glue *)dev;
 
 static int __must_check ssv6xxx_usb_write_reg(void *dev, u32 addr, u32 buf)
 {
@@ -635,9 +636,10 @@ struct ssv_unify_drv usb_ops =
 };
 #endif
 
-static struct unified_drv_ops usb_ops = 
+struct unified_drv_ops usb_ops = 
 {
-	.drv_info.flags = 0x0,
+	.name = "SSV6XXX_USB",
+	.drv_info.flags = UNIFY_LINUX_USB_DRV_INFO_FLAGS,
 	.drv_ops = 
 	{
 	    .read            		= ssv6xxx_usb_read,

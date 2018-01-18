@@ -6,6 +6,9 @@
 #ifndef _OS_DEF_H_
 #define _OS_DEF_H_
 
+//#include <linux/kernel.h>
+//#include <linux/random.h>
+//#include <linux/spinlock.h>
 #include <porting.h>
 
 #include <linux/semaphore.h>
@@ -16,12 +19,14 @@
 
 
 
+
 #define OS_EVENT_TBL_SIZE (8)   	/* Size of event table */
 #define OS_RDY_TBL_SIZE   (8)   	/* Size of ready table */
 #define OS_EVENT_NAME_SIZE (32)    	/* Determine the size of the name of a Sem, Mutex, Mbox or Q    */
 
 /*============OS parameter setting===================*/
 
+//typedef void (*OsTask)(void *);
 typedef int (*OsTask)(void *data);
 
 typedef void *OsTaskHandle;
@@ -31,6 +36,8 @@ typedef void (*OsTimerHandler)(OsTimer xTimer);
 typedef struct mutex *OsMutex;
 typedef struct semaphore *OsSemaphore;
 typedef struct kfifo *OsMsgQ;
+
+typedef struct semaphore OsSemaphore;
 
 #define OS_TASK_ENTER_CRITICAL()        
 #define OS_TASK_EXIT_CRITICAL()         

@@ -285,7 +285,7 @@ void TXRXTask_Task(void *args)
 #if (__SSV_UNIX_SIM__ == 0)
                 else
                 {
-                    list_q_insert_safe(&tx_hwq[i],&tx_hwq[i], (struct ssv_list_q *)outFrm, tx_mtx);
+                    list_q_insert_safe(&tx_hwq[i],&tx_hwq[i], (struct ssv_list_q *)outFrm, &tx_mtx);
                     outFrm = NULL;
                     break;
                 }
@@ -585,6 +585,7 @@ int TXRXTask_RxTask(void *args)
 }
 #else
 void TXRXTask_TxTask(void *args)
+#endif
 {
     void *tFrame = NULL;
     FrmL *outFrm = NULL;
@@ -737,9 +738,18 @@ TX_RESEND:
         }
     }
     TxTask_Done = true;
+
+#ifdef __linux__
+	return 0;
+#endif	
 }
 
+
+#ifdef __linux__
+int TXRXTask_RxTask(void *args)
+#else
 void TXRXTask_RxTask(void *args)
+#endif
 {
     void * rFrame = NULL;
     u8  *msg_data = NULL;
@@ -856,6 +866,10 @@ void TXRXTask_RxTask(void *args)
         os_frame_free(rFrame);
         rFrame = NULL;
     }	
+	
+#ifdef __linux__
+	return 0;
+#endif
 }
 #endif
 #endif
