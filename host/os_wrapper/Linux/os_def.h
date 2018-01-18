@@ -23,6 +23,7 @@
 /*============OS parameter setting===================*/
 
 typedef int (*OsTask)(void *data);
+
 typedef void *OsTaskHandle;
 typedef void *OsTimer;
 typedef void (*OsTimerHandler)(OsTimer xTimer);

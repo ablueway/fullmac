@@ -22,6 +22,7 @@
 //#include <log.h>
 
 
+
 /*TODO(aaron): need to know how many task does the redbull host needed ? */
 u8 g_total_task_cnt = 0;
 #define MAX_OS_TASK_NUM 	(10)
@@ -159,7 +160,7 @@ OS_APIs s32 OS_MutexInit(OsMutex *mutex)
     return OS_SUCCESS;
 }
 
-OS_APIs void OS_MutexLock(OsMutex *mutex)
+OS_APIs void OS_MutexLock(OsMutex mutex)
 {
 	struct mutex *lock = (struct mutex *)mutex;
 	mutex_lock(lock);
@@ -173,15 +174,13 @@ OS_APIs void OS_MutexUnLock(OsMutex *mutex)
 
 OS_APIs void OS_TickDelay(u32 ticks)
 {
-	kfree(mutex);
+    msleep(ticks);
 }
 
-
-OS_APIs void OS_MutexDelete(OsMutex *mutex)
+OS_APIs void OS_MutexDelete(OsMutex mutex)
 {
-	msleep(ticks);
+        kfree(mutex);
 }
-
 
 OS_APIs void OS_MsDelay(u32 ms)
 {
