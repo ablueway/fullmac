@@ -59,9 +59,11 @@ KERN_SRCS += ./hal/SSV6006/ssv6006_efuse.c
 ################################################################################
 KERN_SRCS += ./hif_wrapper/ssv_drv.c
 KERN_SRCS += ./hif_wrapper/linux/usb/usb.c
+#KERN_SRCS += ./hif_wrapper/linux/usb_linux/usb_if_impl.c
+
 
 ################################################################################
-# Define Include INIT Source File Rule						   		   	       #	
+# Define Include INIT Source File Rule						   		   	       #		
 ################################################################################
 KERN_SRCS += ./init/init.c
 KERN_SRCS += ./init/country_cfg.c

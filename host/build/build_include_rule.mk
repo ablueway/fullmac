@@ -28,6 +28,9 @@ EXTRA_CFLAGS += -I$(KBUILD_TOP)/hal/SSV6006/regs/SSV6006C
 
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/hif_wrapper
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/hif_wrapper/linux/usb
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/hwif/sdio
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/hwif/spi
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/hwif/usb
 
 #EXTRA_CFLAGS += -I$(KBUILD_TOP)/hwif
 #EXTRA_CFLAGS += -I$(KBUILD_TOP)/hwif/sdio
