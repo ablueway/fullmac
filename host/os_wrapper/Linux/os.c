@@ -14,7 +14,7 @@
 #include <linux/timer.h>
 #include <linux/time.h>
 #include <linux/kthread.h>
-#include <linux/timer.h>
+#include <linux/kfifo.h>
 
 #include "os.h"
 /*TODO: aaron */
@@ -226,39 +226,52 @@ OS_APIs void OS_SemDelete(OsSemaphore *Sem)
 #define MSGQ_LOCK()		OSSchedLock()
 #define MSGQ_UNLOCK()		OSSchedUnlock()
 
+
 /* Message Queue: */
-OS_APIs s32 OS_MsgQCreate( OsMsgQ *MsgQ, u32 QLen )
+OS_APIs s32 OS_MsgQCreate(OsMsgQ *MsgQ, u32 QLen)
 {
+	s32 ret;
+	*MsgQ = kzalloc(sizeof (struct kfifo), GFP_KERNEL);
+	ret = kfifo_alloc(*MsgQ, (QLen * sizeof(OsMsgQEntry)), GFP_KERNEL);
+	if (ret) {
+		printk(KERN_ERR "error kfifo_alloc\n");
+		return OS_FAILED;
+	}
     return OS_SUCCESS;
 }
 
-OS_APIs s32 OS_MsgQDelete( OsMsgQ MsgQ)
+OS_APIs s32 OS_MsgQEnqueue(OsMsgQ MsgQ, OsMsgQEntry *MsgItem, bool fromISR)
 {
-    return OS_SUCCESS;
+    s32 actul_len = kfifo_in(MsgQ, MsgItem, sizeof(OsMsgQEntry));
+	return (actul_len == sizeof(OsMsgQEntry)) ? OS_SUCCESS : OS_FAILED;
 }
 
-OS_APIs s32 OS_MsgQEnqueue( OsMsgQ MsgQ, OsMsgQEntry *MsgItem, bool fromISR )
+OS_APIs s32 OS_MsgQEnqueueTry(OsMsgQ MsgQ, OsMsgQEntry *MsgItem, bool fromISR)
 {
-    return OS_SUCCESS;
-}
-
-OS_APIs s32 OS_MsgQEnqueueTry( OsMsgQ MsgQ, OsMsgQEntry *MsgItem, bool fromISR )
-{
-    return OS_SUCCESS;
-}
-
-OS_APIs s32 OS_MsgQDequeue( OsMsgQ MsgQ, OsMsgQEntry *MsgItem, u32 timeOut, bool fromISR )
-
-{
-    return OS_SUCCESS;
+    s32 actul_len = kfifo_in(MsgQ, MsgItem, sizeof(OsMsgQEntry));
+	return (actul_len == sizeof(OsMsgQEntry)) ? OS_SUCCESS : OS_FAILED;
 }
 
 
-OS_APIs s32 OS_MsgQWaitingSize( OsMsgQ MsgQ )
+OS_APIs s32 OS_MsgQDequeue(OsMsgQ MsgQ, OsMsgQEntry *MsgItem, u32 timeOut, bool fromISR)
 {
-    return OS_SUCCESS;
+    s32 actul_len = kfifo_out(MsgQ, MsgItem, sizeof(OsMsgQEntry));
+	return (actul_len == sizeof(OsMsgQEntry)) ? OS_SUCCESS : OS_FAILED;
 }
 
+
+OS_APIs s32 OS_MsgQWaitingSize(OsMsgQ MsgQ)
+{
+    return kfifo_len(MsgQ);
+}
+
+OS_APIs s32 OS_MsgQDelete(OsMsgQ MsgQ)
+{
+    kfifo_free(MsgQ);
+	kree(MsgQ);
+	MsgQ = NULL;
+    return OS_SUCCESS;
+}
 
 
 /* Timer: */
@@ -286,4 +299,3 @@ OS_APIs void *OS_TimerGetData(OsTimer timer)
 {
    return NULL;
 }
-

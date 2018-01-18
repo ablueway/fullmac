@@ -292,102 +292,6 @@ exit:
 	return retval;
 }
 
-#if 0
-static void ssv6xxx_usb_recv_rx_complete(struct urb *urb)
-{
-	struct ssv6xxx_usb_glue *usb_glue = urb->context;
- 
-	struct sk_buff *rx_mpdu = NULL;
-	unsigned char *data;
-    int i;
-
-	usb_glue->rx_endpoint.rx_res = urb->status;
-
-	if (urb->status) {
-		HWIF_DBG_PRINT(&usb_glue->wlan_data, 
-			"fail rx status received:%d\n", urb->status);
-
-		usb_glue->rx_endpoint.rx_filled = 0;
-		usb_glue->rx_endpoint.rx_res = urb->status;
-		//if (((usb_glue->err_cnt)++) > 5)
-		//	WARN_ON(1);
-		goto skip;
-	}
-
-	usb_glue->err_cnt = 0;
-	usb_glue->rx_endpoint.rx_filled = urb->actual_length;
-	
-	/* for debug */
-	//ssv6xxx_dump_rx_desc(usb_glue->rx_endpoint.rx_buf);
-	
-	/* recevied invalid frame, MAX_HCI_RX_AGGR_SIZE(9344) */
-	if (usb_glue->rx_endpoint.rx_filled > MAX_HCI_RX_AGGR_SIZE) {
-		HWIF_DBG_PRINT(&usb_glue->wlan_data, 
-			"recv invalid data length %d\n", usb_glue->rx_endpoint.rx_filled);
-		goto skip;
-	}
-
-	if (usb_glue->rx_endpoint.rx_filled) {
-
-		/* record the rx pkt cnt in hci_hw_ctrl object's rx_pkt filed */
-		//(*usb_glue->rx_pkt)++;
- 		usb_glue->rx_pkt_cnt++;
-		
-		/* MAX_RETRY_SSV6XXX_ALLOC_BUF(3) */
-        for (i = 0; i < MAX_RETRY_SSV6XXX_ALLOC_BUF; i++) {
-		    rx_mpdu = usb_glue->wlan_data.skb_alloc(usb_glue->wlan_data.skb_param, 
-											MAX_HCI_RX_AGGR_SIZE, GFP_ATOMIC);
-		    if (rx_mpdu != NULL)
-                break;
-			
-            mdelay(1);
-        }
-		
-        if (i == MAX_RETRY_SSV6XXX_ALLOC_BUF)
-		{    
-			goto skip;
-		}
-		/* get skb_tail pointer as our data ptr to prepare putting new data */
-		data = skb_put(rx_mpdu, usb_glue->rx_endpoint.rx_filled);
-		/* put the received data */
-		memcpy(data, usb_glue->rx_endpoint.rx_buf, usb_glue->rx_endpoint.rx_filled);	
-
-		/* TODO(aaron): need to offer callback to notify orig rx task to receive data */
-		if (usb_glue->rx_cb != NULL)
-		{
-			usb_glue->rx_cb(rx_mpdu, usb_glue->rx_cb_args); 
-		}
-	}	
-skip:
-	queue_work(usb_glue->wq, &usb_glue->rx_work);
-}
-
-static void ssv6xxx_usb_recv_rx(struct work_struct *work)
-{
-	struct ssv6xxx_usb_glue *usb_glue = 
-		container_of(work, struct ssv6xxx_usb_glue, rx_work);
-	int size = MAX_HCI_RX_AGGR_SIZE; 
-	int retval;
-
-	/* prepare a read */
-	usb_fill_bulk_urb(usb_glue->rx_endpoint.rx_urb, usb_glue->udev, 
-		usb_rcvbulkpipe(usb_glue->udev, usb_glue->rx_endpoint.address),
-		usb_glue->rx_endpoint.rx_buf, size, ssv6xxx_usb_recv_rx_complete, usb_glue);
-
-	usb_glue->rx_endpoint.rx_urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
-
-	/* submit bulk in urb, which means no data to deliver */
-	usb_glue->rx_endpoint.rx_filled = 0;
-
-	/* do it */
-	retval = usb_submit_urb(usb_glue->rx_endpoint.rx_urb, GFP_ATOMIC);
-	if (retval) {
-		HWIF_DBG_PRINT(&usb_glue->wlan_data, 
-			"Fail to submit rx urb, error=%d\n", retval);
-		usb_glue->rx_wq_running = false;
-	}
-}
-#endif
 
 /* TODO(aaron): change the usb rx mechanism for redbull host linux drv archecture */
 static int __must_check ssv6xxx_usb_read(void *dev, void *rx_data_buf, size_t expec_rx_len)
@@ -402,89 +306,54 @@ static int __must_check ssv6xxx_usb_read(void *dev, void *rx_data_buf, size_t ex
 				rx_data_buf,
 				expec_rx_len,
 				&rx_actul_len,
-				1000);
-	if (!retval) 
+				TRANSACTION_TIMEOUT);
+	if (!retval)
 	{
 		printk("recv rx data len=%d\n", rx_actul_len);
 		return rx_actul_len;
 	}
 	else
 	{
-		printk("Fail to rx urb, error=%d\n", retval);
+		printk("usb rx fail, error code(%d)\n", retval);
 		return 0;
 	}	
 }
 
-#if 0
-/* 
- * For usb interface,  we make use of work queue to receive the rx frame.
- */
-static int __must_check ssv6xxx_usb_read(void *usb_glue, void *buf, size_t *size, int mode)
+/* TODO(aaron): change the usb tx mechanism for redbull host linux drv archecture */
+static int __must_check ssv6xxx_usb_write(void *dev, void *buf, size_t len)
 {
-    //printk(KERN_INFO "==>%s()\n", __func__);
-	*size = 0;
-    //printk(KERN_INFO "<==%s()\n", __func__);
-	return 0;
-}
-#endif
+	int retval = 0;
+	int tx_len = len;
+	int tx_actul_len = 0;
 
+	struct ssv6xxx_usb_glue *usb_glue = (struct ssv6xxx_usb_glue *)dev;
 
-static int ssv6xxx_usb_send_tx(struct ssv6xxx_usb_glue *usb_glue, struct sk_buff *skb, size_t size)
-{
-	int foolen = 0, retval = 0;
-	int tx_len = size;	
-
-    //printk(KERN_INFO "==>%s()\n", __func__);
-	
 	/* for USB 3.0 port, add padding byte and let host driver send short packet */
-	if ((tx_len % usb_glue->tx_endpoint.packet_size) == 0) {
-		skb_put(skb, 1);
+	if ((len % usb_glue->tx_endpoint.packet_size) == 0) {
 		tx_len++;
 	}
 
 	retval = usb_bulk_msg(usb_glue->udev, 
 					usb_sndbulkpipe(usb_glue->udev, usb_glue->tx_endpoint.address),
-					skb->data, tx_len, &foolen, TRANSACTION_TIMEOUT);
-	if (retval) 
-		HWIF_DBG_PRINT(&usb_glue->wlan_data, "Cannot send tx data, retval=%d\n", retval);
-	
-
-    //printk(KERN_INFO "<==%s()\n", __func__);
-	return retval;
-}
-
-static int __must_check ssv6xxx_usb_write(void *dev, void *buf, size_t len, u8 queue_num)
-{
-    int retval = (-1);	
-    //struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
-	struct ssv6xxx_usb_glue *usb_glue = (struct ssv6xxx_usb_glue *)dev;
-    //printk(KERN_INFO "==>%s()\n", __func__);
-    if (IS_GLUE_INVALID(usb_glue))
-        return retval;
-
-	/* for debug */
-	//ssv6xxx_dump_tx_desc(buf);
-	/* use urb to send tx data */
-    if ((retval = ssv6xxx_usb_send_tx(usb_glue, (struct sk_buff *)buf, len)) < 0) {
-		HWIF_DBG_PRINT(&usb_glue->wlan_data, "%s: Fail to send tx data\n", __FUNCTION__);
-		//if (((usb_glue->err_cnt)++) > 5)
-		//	WARN_ON(1);
-	} else {
-		usb_glue->err_cnt = 0;
+					buf, len, &tx_actul_len, TRANSACTION_TIMEOUT);
+	if (!retval) 
+	{
+		printk("recv rx data len=%d\n", tx_actul_len);
+		return tx_actul_len;
 	}
-
-    //printk(KERN_INFO "<==%s()\n", __func__);
-	return retval;
+	else
+	{
+		printk("usb tx fail, error code(%d)\n", retval);
+		return 0;
+	}	
 }
 
-
-static int __must_check __ssv6xxx_usb_read_reg(struct ssv6xxx_usb_glue *usb_glue, 
-														u32 addr, u32 *buf)
+static int __must_check ssv6xxx_usb_read_reg(void *dev, u32 addr, u32 *buf)
 {
     int retval = (-1);
 	struct ssv6xxx_read_reg read_reg;
 	struct ssv6xxx_read_reg_result result;
-    //printk(KERN_INFO "==>%s()\n", __func__);
+	struct ssv6xxx_usb_glue *usb_glue = (struct ssv6xxx_usb_glue *)dev;
 	
 	if (IS_GLUE_INVALID(usb_glue)) {
 		/* TODO(aaron):  should we add debug msg here ? */		
@@ -506,61 +375,42 @@ static int __must_check __ssv6xxx_usb_read_reg(struct ssv6xxx_usb_glue *usb_glue
 			"%s: Fail to read register address %x\n", __FUNCTION__, addr);
 	}
 
-    //printk(KERN_INFO "<==%s()\n", __func__);
 	return retval;
 }
 
-static int __must_check ssv6xxx_usb_read_reg(void *dev, u32 addr, u32 *buf)
-{
-    //struct ssv6xxx_usb_glue *usb_glue = dev_get_drvdata(child->parent);
-	struct ssv6xxx_usb_glue *usb_glue = (struct ssv6xxx_usb_glue *)dev;
-	//printk(KERN_INFO "==>%s()\n", __func__);
-	return __ssv6xxx_usb_read_reg(usb_glue, addr, buf);
-}
 
-
-static int __must_check __ssv6xxx_usb_write_reg(struct ssv6xxx_usb_glue *usb_glue, u32 addr,
- 		u32 buf)
+static int __must_check ssv6xxx_usb_write_reg(void *dev, u32 addr, u32 buf)
 {
 	int retval = (-1);
-	struct ssv6xxx_write_reg write_reg;
-    //printk(KERN_INFO "==>%s()\n", __func__);
+	struct ssv6xxx_write_reg write_reg;	
+	struct ssv6xxx_usb_glue *usb_glue = (struct ssv6xxx_usb_glue *)dev;
+
 	if (IS_GLUE_INVALID(usb_glue))
 		return retval;
 	
 	memset(&write_reg, 0, sizeof(struct ssv6xxx_write_reg));	
 	write_reg.addr = cpu_to_le32(addr);
 	write_reg.value = cpu_to_le32(buf);
-	retval = ssv6xxx_usb_cmd(usb_glue, SSV6200_CMD_WRITE_REG, &write_reg, sizeof(struct ssv6xxx_write_reg), NULL);
+	retval = ssv6xxx_usb_cmd(usb_glue, SSV6200_CMD_WRITE_REG, &write_reg, 
+								sizeof(struct ssv6xxx_write_reg), NULL);
 	if (retval) 
-		HWIF_DBG_PRINT(&usb_glue->wlan_data, "%s: Fail to write register address %x, value %x\n", __FUNCTION__, addr, buf);
-
-    //printk(KERN_INFO "<==%s()\n", __func__);	
+	{ 
+		HWIF_DBG_PRINT(&usb_glue->wlan_data, 
+			"%s: Fail to write register address %x, value %x\n", 
+			__FUNCTION__, addr, buf);
+	}
 	return retval;
-}
-
-static int __must_check ssv6xxx_usb_write_reg(void *dev, u32 addr, u32 buf)
-{
-	struct ssv6xxx_usb_glue *usb_glue = (struct ssv6xxx_usb_glue *)dev;
-    //printk(KERN_INFO "==>%s()\n", __func__);
-	return __ssv6xxx_usb_write_reg(usb_glue, addr, buf);
 }
 
 static int __must_check ssv6xxx_usb_burst_read_reg(void *dev, u32 *addr, u32 *buf, u8 reg_amount)
 {
-    //not support
-    //printk(KERN_INFO "==>%s()\n", __func__);    
     printk(KERN_INFO "not support\n");
-	//printk(KERN_INFO "<==%s()\n", __func__);
 	return -EOPNOTSUPP;
 }
 
 static int __must_check ssv6xxx_usb_burst_write_reg(void *dev, u32 *addr, u32 *buf, u8 reg_amount)
 {
-    //not support
-    //printk(KERN_INFO "==>%s()\n", __func__);    
-    printk(KERN_INFO "not support\n");
-	//printk(KERN_INFO "<==%s()\n", __func__);    
+    printk(KERN_INFO "not support\n");  
     return -EOPNOTSUPP;
 }
 
@@ -802,7 +652,7 @@ static void ssv6xxx_usb_power_off(struct ssv6xxx_platform_data *pdata, struct us
 }
 
 
-static void _read_chip_id(struct ssv6xxx_usb_glue *usb_glue)
+static void ssv_read_chip_id(struct ssv6xxx_usb_glue *usb_glue)
 {
     u32 regval;
     int ret;
@@ -813,19 +663,19 @@ static void _read_chip_id(struct ssv6xxx_usb_glue *usb_glue)
     //CHIP ID
     // Chip ID registers should be common to all SSV6xxx devices. So these registers 
     // must not come from ssv6xxx_reg.h but defined somewhere else.
-    ret = __ssv6xxx_usb_read_reg(usb_glue, ADR_CHIP_ID_3, &regval);
+    ret = ssv6xxx_usb_read_reg(usb_glue, ADR_CHIP_ID_3, &regval);
     *((u32 *)&_chip_id[0]) = __be32_to_cpu(regval);
 
     if (ret == 0)
-        ret = __ssv6xxx_usb_read_reg(usb_glue, ADR_CHIP_ID_2, &regval);
+        ret = ssv6xxx_usb_read_reg(usb_glue, ADR_CHIP_ID_2, &regval);
     *((u32 *)&_chip_id[4]) = __be32_to_cpu(regval);
 
     if (ret == 0)
-        ret = __ssv6xxx_usb_read_reg(usb_glue, ADR_CHIP_ID_1, &regval);
+        ret = ssv6xxx_usb_read_reg(usb_glue, ADR_CHIP_ID_1, &regval);
     *((u32 *)&_chip_id[8]) = __be32_to_cpu(regval);
 
     if (ret == 0)
-        ret = __ssv6xxx_usb_read_reg(usb_glue, ADR_CHIP_ID_0, &regval);
+        ret = ssv6xxx_usb_read_reg(usb_glue, ADR_CHIP_ID_0, &regval);
     *((u32 *)&_chip_id[12]) = __be32_to_cpu(regval);
 
     _chip_id[12+sizeof(u32)] = 0;
@@ -990,7 +840,7 @@ static int ssv_usb_probe(struct usb_interface *interface,
 	usb_set_intfdata(interface, usb_glue);
 	ssv6xxx_usb_power_on(pwlan_data, interface);
 
-	_read_chip_id(usb_glue);
+	ssv_read_chip_id(usb_glue);
 
 	ssv6xxx_dev_init(SSV6XXX_HWM_STA);
 	 
@@ -1106,7 +956,7 @@ static int ssv_usb_do_device_exit(struct device *d, void *arg)
 	struct ssv6xxx_usb_glue *usb_glue = usb_get_intfdata(intf);
 
 	if (usb_glue != NULL) {
-		//TODO: replace direct address access
+		/* TODO(aaron): replace direct address access ?? */
 		printk(KERN_INFO "ssv_usb_do_device_exit: JUMP to ROM\n");
 	}    
 	msleep(50);

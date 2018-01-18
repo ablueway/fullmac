@@ -488,11 +488,12 @@ ssv6xxx_data_result test_cb(void *data, u32 len)
 
 s32 CmdEng_Init(void)
 {
-	u32 i, size, res=OS_SUCCESS;
+	u32 i, size, res = OS_SUCCESS;
 
 	size = sizeof(HostCmdEngInfo_st);
 	gHCmdEngInfo = (HostCmdEngInfo_st *)MALLOC(size);
-    if(NULL==gHCmdEngInfo)
+
+	if (NULL == gHCmdEngInfo)
     {
         LOG_PRINTF("%s(%d):malloc fail\r\n",__FUNCTION__,__LINE__);
         return OS_FAILED;
@@ -513,10 +514,12 @@ s32 CmdEng_Init(void)
 	size = sizeof(g_host_task_info)/sizeof(struct task_info_st);
 	for(i = 0; i < size; i++)
     {
-		if (g_host_task_info[i].qlength> 0)
+		if (g_host_task_info[i].qlength > 0)
         {
+			printk("&g_host_task_info[%d].qevt=%p,g_host_task_info[i].qevt=%p\n", i,&g_host_task_info[i].qevt, g_host_task_info[i].qevt);
+		
 			ASSERT(OS_MsgQCreate(&g_host_task_info[i].qevt,
-				(u32)g_host_task_info[i].qlength)==OS_SUCCESS);
+				(u32)g_host_task_info[i].qlength) == OS_SUCCESS);
 		}
 
 		/* Create Registered Task: */

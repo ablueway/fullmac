@@ -72,7 +72,7 @@ struct unify_drv_ops {
 	/*							Linux Driver								   */
 	/***************************************************************************/	
 	int __must_check (*read)(void *dev, void *rx_data_buf, size_t expec_rx_len);
-	int __must_check (*write)(void *dev, void *buf, size_t len,u8 queue_num);
+	int __must_check (*write)(void *dev, void *buf, size_t len);
     int __must_check (*readreg)(void *dev, u32 addr, u32 *buf);
     int __must_check (*writereg)(void *dev, u32 addr, u32 buf);
     int __must_check (*safe_readreg)(void *dev, u32 addr, u32 *buf);

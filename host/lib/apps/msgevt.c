@@ -223,7 +223,7 @@ s32 msg_evt_init(u32 max_evt_cnt)
 
 	/* max_evt_cnt = 112 */
     MBOX_MAX_MSG_EVENT = max_evt_cnt;
-    size = sizeof(MsgEvent)*MBOX_MAX_MSG_EVENT;
+    size = sizeof(MsgEvent) * MBOX_MAX_MSG_EVENT;
     sg_msgevt_free_list = (MsgEvent *)OS_MemAlloc(size);//sg_msgevent
     ASSERT_RET(sg_msgevt_free_list, OS_FAILED);
     
