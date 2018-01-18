@@ -194,7 +194,6 @@ int CmdEng_Task(void *data)
 
 	while (!kthread_should_stop())
 	{
-		LOG_TRACE("pass in line(%d)\n", __LINE__);
         if ((gHCmdEngInfo->blockcmd_in_q == false) 
 			&& (list_q_len_safe(&gHCmdEngInfo->pending_cmds, &(gHCmdEngInfo->CmdEng_mtx)) > 0))
         {
@@ -207,7 +206,6 @@ int CmdEng_Task(void *data)
             LOG_DEBUGF(LOG_CMDENG, ("[CmdEng]: Pop pending cmd %d to execute\r\n", hCmd->cmd_seq_no));
             CmdEng_TxHdlCmd(pcmd->frame);
 
-			LOG_TRACE("pass in line(%d)\n", __LINE__);
 			OS_MutexLock(gHCmdEngInfo->CmdEng_mtx);
             if (list_q_len(&gHCmdEngInfo->free_FrmQ) < FREE_FRM_NUM)
             {    
@@ -221,16 +219,13 @@ int CmdEng_Task(void *data)
         }
         else
         {
-			LOG_TRACE("pass in line(%d)\n", __LINE__);
 			/* Wait Message: */
             res = msg_evt_fetch(MBOX_CMD_ENGINE, &MsgEv);
             ASSERT(res == OS_SUCCESS);
-			LOG_TRACE("pass in line(%d)\n", __LINE__);
     		//LOG_TRACE("AP needs to handle msg:%d.\n", MsgEv->MsgType);
             switch (MsgEv->MsgType)
             {
             case MEVT_PKT_BUF:
-							LOG_TRACE("pass in line(%d)\n", __LINE__);
                 rxpkt=(CFG_HOST_RXPKT *)MsgEv->MsgData;
                 os_msg_free(MsgEv);
                 CmdEng_HandleQueue(rxpkt);
@@ -240,14 +235,11 @@ int CmdEng_Task(void *data)
             *  Message from software timer timeout event.
             */
             case MEVT_HOST_TIMER:
-							LOG_TRACE("pass in line(%d)\n", __LINE__);
                 os_timer_expired((void *)MsgEv);
                 os_msg_free(MsgEv);
                 break;
 
-
             case MEVT_HOST_CMD:
-							LOG_TRACE("pass in line(%d)\n", __LINE__);
                 msgData=MsgEv->MsgData;
                 msg_evt_free(MsgEv);
                 switch(msgData)
@@ -275,23 +267,17 @@ int CmdEng_Task(void *data)
                     break;
 #endif//__TEST_DATA__
                 default:
-					LOG_TRACE("pass in line(%d)\n", __LINE__);
                     break;
                 }
-				LOG_TRACE("pass in line(%d)\n", __LINE__);
                 break;
             default:
-				LOG_TRACE("pass in line(%d)\n", __LINE__);
 				//SoftMac_DropPkt(MsgEv);
                 LOG_DEBUGF(LOG_CMDENG, ("%s(): unknown message type(%02x) !!\r\n",
                     __FUNCTION__, MsgEv->MsgType));
                 break;
             };
-			LOG_TRACE("pass in line(%d)\n", __LINE__);
         }
-		LOG_TRACE("pass in line(%d)\n", __LINE__);
 	}
-	LOG_TRACE("pass in line(%d)\n", __LINE__);	
 	return 0;
 }
 #else
@@ -526,9 +512,7 @@ s32 CmdEng_Init(void)
 	for(i = 0; i < size; i++)
     {
 		if (g_host_task_info[i].qlength > 0)
-        {
-			printk("&g_host_task_info[%d].qevt=%p,g_host_task_info[i].qevt=%p\n", i,&g_host_task_info[i].qevt, g_host_task_info[i].qevt);
-		
+        {		
 			ASSERT(OS_MsgQCreate(&g_host_task_info[i].qevt,
 				(u32)g_host_task_info[i].qlength) == OS_SUCCESS);
 		}
