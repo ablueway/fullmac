@@ -27,11 +27,6 @@ u8 g_total_task_cnt = 0;
 #define MAX_OS_TASK_NUM 	(10)
 static struct task_struct *g_os_task_tbl[MAX_OS_TASK_NUM] = {NULL};
 
-/*TODO(aaron): need to know how many task does the redbull host needed ? */
-u8 g_total_task_cnt = 0;
-#define MAX_OS_TASK_NUM 	(10)
-static struct task_struct *g_os_task_tbl[MAX_OS_TASK_NUM] = {NULL};
-
 volatile u8 gOsFromISR;
 //static u8 os_init_flag = 0;
 
@@ -137,18 +132,6 @@ OS_APIs void OS_StopScheduler(void)
 	}
 }
 
-OS_APIs void OS_StopScheduler(void)
-{
-	u8 task_idx = 0;
-	for (task_idx = 0; task_idx < MAX_OS_TASK_NUM; task_idx++)
-	{
-		if (g_os_task_tbl[task_idx] != NULL)
-		{
-			kthread_stop(g_os_task_tbl[task_idx]);
-			g_os_task_tbl[task_idx] = NULL;
-		}
-	}
-}
 
 /* TODO(aaron): maybe the return value use unsigned long is best */
 OS_APIs u32 OS_GetSysTick(void)
@@ -188,25 +171,15 @@ OS_APIs void OS_MutexUnLock(OsMutex mutex)
 	mutex_unlock(lock);
 }
 
-OS_APIs void OS_MutexDelete(OsMutex mutex)
-{
-    msleep(ticks);
-}
-
-
 OS_APIs void OS_TickDelay(u32 ticks)
 {
     msleep(ticks);
 }
 
-
-OS_APIs void OS_MutexDelete(OsMutex *mutex)
+OS_APIs void OS_MutexDelete(OsMutex mutex)
 {
-        kfree(mutex);
+	kfree(mutex);
 }
-
-
-
 
 OS_APIs void OS_MsDelay(u32 ms)
 {
