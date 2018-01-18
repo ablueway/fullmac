@@ -151,7 +151,7 @@ void *PBUF_MAlloc_Raw(u32 size, u32 need_header, PBuf_Type_E buf_type)
     PKT_Info *pkt_info=NULL;
 	u32 extra_header=0;
     u32 i;
-    OS_MutexLock(&sg_pbuf_mutex);
+    OS_MutexLock(sg_pbuf_mutex);
     if (need_header)
     {
         extra_header = (PBU_OFFSET+ TXPB_RVSD*TX_PKT_RES_BASE);
@@ -206,7 +206,7 @@ void *PBUF_MAlloc_Raw(u32 size, u32 need_header, PBuf_Type_E buf_type)
                     if(pkt_info == NULL)
                     {
                         LOG_PRINTF("rxpbuf mem fail\r\n");
-                        OS_MutexUnLock(&sg_pbuf_mutex);    
+                        OS_MutexUnLock(sg_pbuf_mutex);    
                         return (void *)pkt_info;
                     }
 
@@ -239,7 +239,7 @@ void *PBUF_MAlloc_Raw(u32 size, u32 need_header, PBuf_Type_E buf_type)
         default:
         break;
     }
-    OS_MutexUnLock(&sg_pbuf_mutex);    
+    OS_MutexUnLock(sg_pbuf_mutex);    
 
     return (void *)pkt_info;
 }
@@ -285,11 +285,11 @@ static void __PBUF_MFree_0(void *PKTMSG)
 
 static inline void __PBUF_MFree_1(void *PKTMSG)
 {   
-    OS_MutexLock(&sg_pbuf_mutex);
+    OS_MutexLock(sg_pbuf_mutex);
 
     __PBUF_MFree_0(PKTMSG);    
 
-    OS_MutexUnLock(&sg_pbuf_mutex);
+    OS_MutexUnLock(sg_pbuf_mutex);
 }
 
 void _PBUF_MFree (void *PKTMSG)

@@ -517,7 +517,6 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
 {
 	union unify_drv_info drv_info;
     ssv6xxx_result res = SSV6XXX_SUCCESS;
-	union ssv_drv_info drv_info;
 
 	/* TODO(aaron): do we need do reset in linux ? */
 #if (__SSV_UNIX_SIM__ == 0)

@@ -176,17 +176,23 @@ OS_APIs s32 OS_MutexInit(OsMutex *mutex)
     return OS_SUCCESS;
 }
 
-OS_APIs void OS_MutexLock(OsMutex *mutex)
+OS_APIs void OS_MutexLock(OsMutex mutex)
 {
 	struct mutex *lock = (struct mutex *)mutex;
 	mutex_lock(lock);
 }
 
-OS_APIs void OS_MutexUnLock(OsMutex *mutex)
+OS_APIs void OS_MutexUnLock(OsMutex mutex)
 {
 	struct mutex *lock = (struct mutex *)mutex;
 	mutex_unlock(lock);
 }
+
+OS_APIs void OS_MutexDelete(OsMutex mutex)
+{
+    msleep(ticks);
+}
+
 
 OS_APIs void OS_TickDelay(u32 ticks)
 {
@@ -198,6 +204,9 @@ OS_APIs void OS_MutexDelete(OsMutex *mutex)
 {
         kfree(mutex);
 }
+
+
+
 
 OS_APIs void OS_MsDelay(u32 ms)
 {
@@ -222,7 +231,6 @@ OS_APIs bool OS_SemWait(OsSemaphore Sem , u16 timeout_ticks)
 //	down(sem);
 	return down_timeout(Sem, timeout_ticks);
 //    return OS_SUCCESS;
-//    return OS_SUCCESS;
 }
 
 OS_APIs u8 OS_SemSignal(OsSemaphore Sem)
@@ -245,7 +253,7 @@ OS_APIs u8 OS_SemSignal_FromISR(OsSemaphore Sem)
     return OS_SUCCESS;
 }
 
-OS_APIs void OS_SemDelete(OsSemaphore *Sem)
+OS_APIs void OS_SemDelete(OsSemaphore Sem)
 {
 //	struct semaphore *sem = (struct semaphore *)Sem;
 //	sem_destroy(sem);

@@ -162,11 +162,11 @@ ssv6xxx_result CmdEng_GetStatus(void *stp)
     if(st == NULL)
         return SSV6XXX_INVA_PARAM;
 
-    OS_MutexLock(&gHCmdEngInfo->CmdEng_mtx);
+    OS_MutexLock(gHCmdEngInfo->CmdEng_mtx);
     st->mode = gHCmdEngInfo->curr_mode;
     st->BlkCmdIn = gHCmdEngInfo->blockcmd_in_q;
     st->BlkCmdNum = list_q_len(&gHCmdEngInfo->pending_cmds);
-    OS_MutexUnLock(&gHCmdEngInfo->CmdEng_mtx);
+    OS_MutexUnLock(gHCmdEngInfo->CmdEng_mtx);
 
     return SSV6XXX_SUCCESS;
 }
@@ -573,7 +573,7 @@ ssv6xxx_result CmdEng_SetOpMode(ModeType mode)
     if(mode > MT_EXIT)
         return SSV6XXX_INVA_PARAM;
 
-    OS_MutexLock(&gHCmdEngInfo->CmdEng_mtx);
+    OS_MutexLock(gHCmdEngInfo->CmdEng_mtx);
 
     switch (gHCmdEngInfo->curr_mode)
     {
@@ -615,7 +615,7 @@ ssv6xxx_result CmdEng_SetOpMode(ModeType mode)
     if(ret == SSV6XXX_SUCCESS)
         gHCmdEngInfo->curr_mode = mode;
 
-    OS_MutexUnLock(&gHCmdEngInfo->CmdEng_mtx);
+    OS_MutexUnLock(gHCmdEngInfo->CmdEng_mtx);
 
     return ret;
 }

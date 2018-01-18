@@ -59,7 +59,7 @@ bool mlme_remove_ap(struct ssv6xxx_ieee80211_bss *bss)
     if(bss==NULL)
         return FALSE;
 
-    OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+    OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
     for(i=0;i<g_max_num_of_ap_list;i++)
     {
         if(MEMCMP((void*)(gDeviceInfo->ap_list[i].bssid.addr), (void*)(bss->bssid.addr), ETHER_ADDR_LEN) == 0)
@@ -68,7 +68,7 @@ bool mlme_remove_ap(struct ssv6xxx_ieee80211_bss *bss)
     		MEMSET((void *)&(gDeviceInfo->ap_list[i]),0,sizeof(struct ssv6xxx_ieee80211_bss));
         }
     }
-    OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+    OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
     return TRUE;
 }
 #if(ENABLE_DYNAMIC_RX_SENSITIVE==1)
@@ -133,9 +133,9 @@ void sta_mode_ap_list_handler (void *data,struct ssv6xxx_ieee80211_bss *ap_list)
                     )
                 {
                     update_ap_info_evt(i,AP_ACT_REMOVE_AP);
-                    OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+                    OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
                     MEMSET((void *)&(ap_list[i]),0,sizeof(struct ssv6xxx_ieee80211_bss));
-                    OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+                    OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
                     empty=i;
                 }
             }
@@ -216,7 +216,7 @@ void sta_mode_ap_list_handler (void *data,struct ssv6xxx_ieee80211_bss *ap_list)
         prev_bss = (struct ssv6xxx_ieee80211_bss *)bss_mem;
         MEMSET((void *)prev_bss, 0, sizeof(struct ssv6xxx_ieee80211_bss));
         #endif
-        OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+        OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
 
         MEMCPY((void *)prev_bss,(void *)&ap_list[i],sizeof(struct ssv6xxx_ieee80211_bss));
         MEMCPY((void *)&ap_list[i],(void *)bss,sizeof(struct ssv6xxx_ieee80211_bss));
@@ -244,7 +244,7 @@ void sta_mode_ap_list_handler (void *data,struct ssv6xxx_ieee80211_bss *ap_list)
             ssv_hal_update_cci_setting(MAX_CCI_SENSITIVE);
         }
         #endif
-        OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+        OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
 
         if(duplicate==0xff)
         {
@@ -342,13 +342,13 @@ static inline void update_ap_info_evt (u16 apIndex ,enum ap_act apAct)
 
 void mlme_clear_ap_list(void)
 {
-    OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+    OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
 
     /*clean gDeviceInfo ap_list record*/
     MEMSET((void*)gDeviceInfo->ap_list,0,sizeof(struct ssv6xxx_ieee80211_bss)*g_max_num_of_ap_list);
 
 
-    OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+    OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
 }
 
 void mlme_sta_mode_deinit(void)

@@ -82,25 +82,25 @@ u32 llist_l_len(struct ssv_llist_head *lhd)
 struct ssv_llist *llist_pop_safe(struct ssv_llist_head *lhd, OsMutex *pmtx)
 {
     struct ssv_llist *_list = NULL;
-    OS_MutexLock(pmtx);
+    OS_MutexLock(*pmtx);
     _list = llist_pop(lhd);
-    OS_MutexUnLock(pmtx);
+    OS_MutexUnLock(*pmtx);
     return _list;
 }
 
 void llist_push_safe(struct ssv_llist_head *lhd, struct ssv_llist *new, OsMutex *pmtx)
 {
-    OS_MutexLock(pmtx);
+    OS_MutexLock(*pmtx);
     llist_push(lhd, new);
-    OS_MutexUnLock(pmtx);
+    OS_MutexUnLock(*pmtx);
 }
 
 u32 llist_l_len_safe(struct ssv_llist_head *lhd, OsMutex *pmtx)
 {
     u32 len = 0;
-    OS_MutexLock(pmtx);
+    OS_MutexLock(*pmtx);
     len = llist_l_len(lhd);
-    OS_MutexUnLock(pmtx);
+    OS_MutexUnLock(*pmtx);
     return len;
 }
 
@@ -172,40 +172,40 @@ unsigned int list_q_len(struct ssv_list_q *qhd)
 u32 list_q_len_safe(struct ssv_list_q *q, OsMutex *pmtx)
 {
     u32 len = 0;
-    OS_MutexLock(pmtx);
+    OS_MutexLock(*pmtx);
     len = q->qlen;
-    OS_MutexUnLock(pmtx);
+    OS_MutexUnLock(*pmtx);
     return len;
 }
 
 void list_q_qtail_safe(struct ssv_list_q *qhd, struct ssv_list_q *newq, OsMutex *pmtx)
 {
-    OS_MutexLock(pmtx);
+    OS_MutexLock(*pmtx);
     list_q_qtail(qhd, newq);
-    OS_MutexUnLock(pmtx);
+    OS_MutexUnLock(*pmtx);
 }
 
 struct ssv_list_q *list_q_deq_safe(struct ssv_list_q *qhd, OsMutex *pmtx)
 {
     struct ssv_list_q *_list = NULL;
-    OS_MutexLock(pmtx);
+    OS_MutexLock(*pmtx);
     _list = list_q_deq(qhd);
-    OS_MutexUnLock(pmtx);
+    OS_MutexUnLock(*pmtx);
     return _list;
 }
 
 void list_q_insert_safe(struct ssv_list_q *qhd, struct ssv_list_q *prev, struct ssv_list_q *newq, OsMutex *pmtx)
 {
-    OS_MutexLock(pmtx);
+    OS_MutexLock(*pmtx);
     list_q_insert(qhd, prev, newq);
-    OS_MutexUnLock(pmtx);
+    OS_MutexUnLock(*pmtx);
 }
 
 void list_q_remove_safe(struct ssv_list_q *qhd,struct ssv_list_q *curt, OsMutex *pmtx)
 {
-    OS_MutexLock(pmtx);
+    OS_MutexLock(*pmtx);
     list_q_remove(qhd, curt);
-    OS_MutexUnLock(pmtx);
+    OS_MutexUnLock(*pmtx);
 }
 
 LIB_APIs s32 ssv6xxx_strrpos(const char *str, char delimiter)
@@ -773,8 +773,6 @@ LIB_APIs void halt(void)
 
 #endif
 
-#endif
-
 extern s32 _ssv6xxx_wifi_ioctl_Ext(u32 cmd_id, void *data, u32 len, bool blocking,const bool mutexLock);
 
 #define CHIP_ID_SSV6051Q_OLD 0x70000000
@@ -934,7 +932,7 @@ void ssv6xxx_set_wakeup_bb_gpio(bool en)
 void ssv6xxx_sta_mode_disconnect(void *Info)
 {
     struct StaInfo* SInfo = (struct StaInfo *)Info;
-    OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+    OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
     SInfo->status=DISCONNECT;
     #if(SW_8023TO80211==1)
     OS_MemSET(SInfo->seq_ctl,0,sizeof(SInfo->seq_ctl));
@@ -944,17 +942,17 @@ void ssv6xxx_sta_mode_disconnect(void *Info)
     gDeviceInfo->cci_current_level=0;
     gDeviceInfo->cci_current_gate=0;
     ssv_hal_update_cci_setting(MAX_CCI_SENSITIVE);
-    OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+    OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
 
 }
 
 void ssv6xxx_sta_mode_connect(void *Info)
 {
     struct StaInfo* SInfo = (struct StaInfo *)Info;
-    OS_MutexLock(&gDeviceInfo->g_dev_info_mutex);
+    OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
     SInfo->status = CONNECT;
     MEMCPY(SInfo->joincfg, SInfo->joincfg_backup, sizeof(struct cfg_join_request));
-    OS_MutexUnLock(&gDeviceInfo->g_dev_info_mutex);
+    OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
 }
 #endif
 
