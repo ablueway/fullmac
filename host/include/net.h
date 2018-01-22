@@ -7,7 +7,8 @@
 #define _NET_H_
 
 #include "host_config.h"
-#include <net_def.h>
+#include <ssv_types.h>
+#include "net_def.h"
 
 
 typedef struct st_dhcps_info{
@@ -40,5 +41,81 @@ typedef struct st_dhcpdipmac
 struct netstack_ip_addr {
   u32 addr;
 };
+
+typedef struct netstack_ip_addr netstack_ip_addr_t;
+
+#define NS_OK           0   //Everything is fine
+#define NS_NG           -1
+#define NS_ERR_MEM      -2  //Out of memory
+#define NS_ERR_ARG      -3  //Invalid arguement
+#define NS_ERR_IMP      -4  //Not implement yet
+#define NS_ERR_CALLER   -5  //Not define error, need to check
+
+typedef int (*eth_input_fn)(void *dat, u32 len);
+typedef int (*reg_fn)(eth_input_fn);
+typedef void (*netdev_link_callback_t)(void *dat);
+#define netstack_inet_addr(cp)         netstack_ipaddr_addr(cp)
+
+// Transfer L2 packet to netstack
+int netstack_input(void *data, u32 len, u8 vif_idx);
+
+// Transfer netstack packet to L2
+int netstack_output(void* net_interface, void *data, u32 len);
+
+//init netstack
+int net_init(void *config);
+
+//Add device with specific setting
+int netdev_init(NET_DEV * pdev, bool dft_dev, bool init_up);
+
+//get hw mac
+int netdev_getmacaddr(const char *ifname, u8 *macaddr);
+//get ipinfo
+int netdev_getipv4info(const char *ifname, u32 *ip, u32 *gw, u32 *netmask);
+//set ipinfo
+int netdev_setipv4info(const char *ifname, u32 ip, u32 gw, u32 netmask);
+
+//get dns server
+//int netdev_get_ipv4dnsaddr(const char *ifname, u32 *dnsserver);
+//set dns server
+//int netdev_set_ipv4dnsaddr(const char *ifname, const u32 *dnsserver);
+
+//get interface status
+int netdev_check_ifup(const char *ifname);
+
+//set interface up
+int netdev_l3_if_up(const char *ifname);
+//set interface down
+int netdev_l3_if_down(const char *ifname);
+//interface link up cb
+void netdev_link_up_cb(void *ifname);
+//interface link down cb
+void netdev_link_down_cb(void *ifname);
+//get all netdev
+u32 netdev_getallnetdev(NET_DEV *pdev, u32 num);
+// set default
+int netdev_set_default(const char *ifname);
+
+//set dhcp client on dev
+int dhcpc_wrapper_set(const char *ifname, const bool enable);
+
+// UDP operation
+
+int netstack_udp_send(void* data, u32 len, u32 srcip, u16 srcport, u32 dstip, u16 dstport, s16 rptsndtimes);
+int netstack_tcp_send(void* data, u32 len, u32 srcip, u16 srcport, u32 dstip, u16 dstport);
+int netstack_dhcps_info_set(dhcps_info *if_dhcps, dhcps_info *des_if_dhcps, u8 vif_idx);
+int netstack_udhcpd_start(void);
+int netstack_udhcpd_stop(void);
+int netstack_dhcp_ipmac_get(dhcpdipmac *ipmac, int *size_count);
+int netstack_find_ip_in_arp_table(u8 * mac,netstack_ip_addr_t *ipaddr);
+int netstack_etharp_unicast (u8 *dst_mac, netstack_ip_addr_t *ipaddr);
+
+u32 netstack_ipaddr_addr(const char *cp);
+char *netstack_inet_ntoa(netstack_ip_addr_t addr);
+
+u16 netstack_ip4_addr1_16(u32 *ipaddr);
+u16 netstack_ip4_addr2_16(u32 *ipaddr);
+u16 netstack_ip4_addr3_16(u32 *ipaddr);
+u16 netstack_ip4_addr4_16(u32 *ipaddr);
 
 #endif /* _NET_H_ */

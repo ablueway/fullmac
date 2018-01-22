@@ -4,14 +4,12 @@
 *  All Rights Reserved
 */
 #include "os.h"
-#include <linux/byteorder/generic.h>
-
 #include <host_apis.h>
 #include <net_mgr.h>
 #include <net_wrapper.h>
 
 
-void netdev_status_change_cb(void *netif)
+void netdev_status_change_cb(struct netif *netif)
 {
 }
 
@@ -20,7 +18,7 @@ void netdev_status_change_cb(void *netif)
  * [in] len: length of real 802.3 packet
  * Transfer incoming wifi data to be processed by netstack 
  */
-int netstack_input(void *data, u32 len, u8 vif_idx)
+int netstack_input(void *data, u32 len)
 {    
     return -1;
 }
@@ -43,7 +41,7 @@ int netstack_output(void *net_interface, void *data, u32 len)
  * 2)add default net interface
  * 3)connect io of netstack and 
  */
-int net_init(void *config)
+int netstack_init(void *config)
 {
     return NS_OK; 
 }
@@ -55,13 +53,8 @@ int net_init(void *config)
  * init netdev
  */
 
-int netdev_init(NET_DEV *pdev, bool dft_dev, bool init_up)
+int netdev_init(struct netdev *pdev, bool dft_dev, bool init_up)
 {      
-    return NS_OK;
-}
-
-int netdev_set_default(const char *ifname)
-{
     return NS_OK;
 }
 
@@ -122,7 +115,7 @@ int dhcpc_wrapper_set(const char *ifname, const bool enable)
     return NS_OK;
 }
 
-u32 netdev_getallnetdev(NET_DEV *pdev, u32 num_of_pdev)
+u32 netdev_getallnetdev(struct netdev *pdev, u32 num_of_pdev)
 {
     return 0;
 }
@@ -135,53 +128,6 @@ int netstack_udp_send(void* data, u32 len, u32 srcip, u16 srcport, u32 dstip, u1
 int netstack_tcp_send(void* data, u32 len, u32 srcip, u16 srcport, u32 dstip, u16 dstport)
 {
     return 0;
-}
-
-int netstack_find_ip_in_arp_table(u8 *mac,netstack_ip_addr_t *ipaddr)
-{
-    return 0;
-}
-
-int netstack_etharp_unicast(u8 *dst_mac, netstack_ip_addr_t *ipaddr)
-{
-    return 0;
-}
-
-
-int netstack_dhcps_info_set(dhcps_info *if_dhcps, dhcps_info *des_if_dhcps, u8 vif_idx)
-{
-#if DHCPD_SUPPORT    
-    return 0;
-#else
-    return -1;
-#endif
-}
-
-int netstack_udhcpd_start(void)
-{
-#if DHCPD_SUPPORT    
-    return 0;
-#else
-    return -1;
-#endif
-}
-
-int netstack_udhcpd_stop(void)
-{
-#if DHCPD_SUPPORT    
-    return 0;
-#else
-    return -1;
-#endif
-}
-
-int netstack_dhcp_ipmac_get(dhcpdipmac *ipmac, int *size_count)
-{
-#if DHCPD_SUPPORT    
-    return 0;
-#else
-    return -1;
-#endif
 }
 
 #define ssv_in_range(c, lo, up)  ((u8)c >= lo && (u8)c <= up)
@@ -200,7 +146,7 @@ int netstack_dhcp_ipmac_get(dhcpdipmac *ipmac, int *size_count)
  * @return n in network byte order
  */
 u16
-ssv_htons(u16 n)
+ssv_htons(u16_t n)
 {
   return ((n & 0xff) << 8) | ((n & 0xff00) >> 8);
 }
@@ -212,9 +158,9 @@ ssv_htons(u16 n)
  * @return n in host byte order
  */
 u16
-ssv_ntohs(u16 n)
+ssv_ntohs(u16_t n)
 {
-  return htons(n);
+  return lwip_htons(n);
 }
 
 /**
@@ -224,7 +170,7 @@ ssv_ntohs(u16 n)
  * @return n in network byte order
  */
 u32
-ssv_htonl(u32 n)
+ssv_htonl(u32_t n)
 {
   return ((n & 0xff) << 24) |
     ((n & 0xff00) << 8) |
@@ -239,9 +185,9 @@ ssv_htonl(u32 n)
  * @return n in host byte order
  */
 u32
-ssv_ntohl(u32 n)
+ssv_ntohl(u32_t n)
 {
-  return htonl(n);
+  return lwip_htonl(n);
 }
 
 /**
@@ -365,33 +311,32 @@ ssv_ipaddr_aton(const char *cp, netstack_ip_addr_t *addr)
  */
 u32 netstack_ipaddr_addr(const char *cp)
 {
-	netstack_ip_addr_t val;
+  netstack_ip_addr_t val;
 
-	if (ssv_ipaddr_aton(cp, &val)) 
-	{
-		return ssv_ip4_addr_get_u32(&val);
-	}
-	return (0xffffffffUL);
+  if (ssv_ipaddr_aton(cp, &val)) {
+    return ssv_ip4_addr_get_u32(&val);
+  }
+  return (0xffffffffUL);
 }
 
 char *netstack_inet_ntoa(netstack_ip_addr_t addr)
 {
-	return NULL;
+    return NULL;
 }
 
-u16 netstack_ip4_addr1_16(u32 *ipaddr)
+u16 netstack_ip4_addr1_16(u32* ipaddr)
 {
-	return 0;
+    return 0;
 }
-u16 netstack_ip4_addr2_16(u32 *ipaddr)
+u16 netstack_ip4_addr2_16(u32* ipaddr)
 {
-	return 0;
+    return 0;
 }
-u16 netstack_ip4_addr3_16(u32 *ipaddr)
+u16 netstack_ip4_addr3_16(u32* ipaddr)
 {
-	return 0;
+    return 0;
 }
-u16 netstack_ip4_addr4_16(u32 *ipaddr)
+u16 netstack_ip4_addr4_16(u32* ipaddr)
 {
-return 0;
+    return 0;
 }

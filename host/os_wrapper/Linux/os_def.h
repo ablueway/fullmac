@@ -13,7 +13,7 @@
 #include <linux/delay.h>
 #include <linux/jiffies.h>
 #include <linux/kfifo.h>
-
+#include <linux/spinlock.h>
 
 
 #define OS_EVENT_TBL_SIZE (8)   	/* Size of event table */
@@ -30,6 +30,8 @@ typedef void (*OsTimerHandler)(OsTimer xTimer);
 typedef struct mutex *OsMutex;
 typedef struct semaphore *OsSemaphore;
 typedef struct kfifo *OsMsgQ;
+
+typedef spinlock_t OsSpinlock;
 
 #define OS_TASK_ENTER_CRITICAL()        
 #define OS_TASK_EXIT_CRITICAL()         

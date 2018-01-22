@@ -88,6 +88,13 @@ typedef struct ssv_vif_st {
         struct ApInfo *APInfo; // AP mode used
         struct StaInfo *StaInfo; //STA mode used
     } m_info;
+
+	/* TODO(aaron): to check it */
+	NET_DEV net_dev;
+	s8 ifidx;
+	s8 bsscfgidx;
+	u8 netif_stop_reason;
+	OsSpinlock netif_stop_lock;	
 } ssv_vif;
 
 typedef struct DeviceInfo{
@@ -142,8 +149,7 @@ typedef struct DeviceInfo{
 
 //timer interrupt count
     u32 fw_timer_interrupt;
-
-}DeviceInfo_st;
+} DeviceInfo_st;
 
 extern DeviceInfo_st *gDeviceInfo;
 

@@ -1231,11 +1231,10 @@ static s32 _ssv6xxx_wifi_send_cmd_directly(void *pCusData, int nCuslen, ssv6xxx_
     sg_host_cmd_seq_no++;
     host_cmd->cmd_seq_no=sg_host_cmd_seq_no;
     MEMCPY(host_cmd->un.dat8, (u8*)pCusData, (u32)nCuslen);
-//#ifndef __SSV_UNIX_SIM__
-#if (__SSV_UNIX_SIM__ == 0)
+
     if(!ssv6xxx_drv_tx_resource_enough(OS_FRAME_GET_DATA_LEN(frame)))
 		ret=SSV6XXX_FAILED;
-#endif
+
     if(ret==SSV6XXX_SUCCESS)
     {
         if(ssv6xxx_drv_send(OS_FRAME_GET_DATA(frame), OS_FRAME_GET_DATA_LEN(frame)) <0){
@@ -1370,13 +1369,10 @@ ssv6xxx_result ap_mode_on(Ap_setting *ap_setting, s32 step)
                 return SSV6XXX_FAILED;
             }
         
-//#ifndef __SSV_UNIX_SIM__
-#if (__SSV_UNIX_SIM__ == 0)
             if(check_efuse_chip_id() != SSV6XXX_SUCCESS)
             {
                 return SSV6XXX_FAILED;
             }
-#endif  //#ifndef __SSV_UNIX_SIM__
         }
 
         //Set Host API on
@@ -1728,13 +1724,7 @@ ssv6xxx_result _ssv6xxx_wifi_ap(Ap_setting *ap_setting,s32 step,const bool mutex
                 if(gDeviceInfo->vif[ap_setting->vif_idx].hw_mode == SSV6XXX_HWM_AP)
                     ap_mode_off(ap_setting->vif_idx);
 
-//#ifdef __SSV_UNIX_SIM__
-#if (__SSV_UNIX_SIM__ == 1)
 
-            ret = ap_mode_on(ap_setting,step);
-
-#else //Normal case
-            {
                 u8 retry_ini=INI_CNT;
                 ssv6xxx_wifi_update_available_channel();
                 while((SSV6XXX_SUCCESS != (ret=ap_mode_on(ap_setting,step))) &&
@@ -1747,8 +1737,6 @@ ssv6xxx_result _ssv6xxx_wifi_ap(Ap_setting *ap_setting,s32 step,const bool mutex
                     LOG_PRINTF("R\r\n");
                 }
             }
-#endif
-            //ret = ap_mode_on(ap_setting,step);
 
         }
         else // AP off
@@ -1801,13 +1789,10 @@ ssv6xxx_result bus_mode_on(u8 vif_idx)
     ssv6xxx_memcpy(vif->self_mac,config_mac,6);
     ssv6xxx_get_cust_mac(vif->self_mac);
 
-//#ifndef __SSV_UNIX_SIM__
-#if (__SSV_UNIX_SIM__ == 0)
     if(check_efuse_chip_id() != SSV6XXX_SUCCESS)
     {
         return SSV6XXX_FAILED;
     }
-#endif  //#ifndef __SSV_UNIX_SIM__
 
     //Set Host API on
     active_host_api = HOST_API_ACTIVE;
@@ -1856,7 +1841,7 @@ ssv6xxx_result sta_mode_on(ssv6xxx_hw_mode hw_mode, u8 vif_idx)
     }
 
     //Set default MAC addr
-    ssv6xxx_memcpy(vif->self_mac,config_mac,6);
+    ssv6xxx_memcpy(vif->self_mac, config_mac, ETH_ALEN);
     ssv6xxx_get_cust_mac(vif->self_mac);
     if(vif->idx>0)
     {
@@ -1865,13 +1850,10 @@ ssv6xxx_result sta_mode_on(ssv6xxx_hw_mode hw_mode, u8 vif_idx)
         vif->self_mac[3] |=((vif->idx-1)<<20);
     }
 
-//#ifndef __SSV_UNIX_SIM__
-#if (__SSV_UNIX_SIM__ == 0)
     if(check_efuse_chip_id() != SSV6XXX_SUCCESS)
     {
         return SSV6XXX_FAILED;
     }
-#endif  //#ifndef __SSV_UNIX_SIM__
 
     //Set Host API on
     active_host_api = HOST_API_ACTIVE;
@@ -2045,10 +2027,6 @@ ssv6xxx_result _ssv6xxx_wifi_station(u8 hw_mode,Sta_setting *sta_station,const b
                     sconfig_mode_off(sta_station->vif_idx);
             }
 
-#if (__SSV_UNIX_SIM__ == 1)
-            ret = sta_mode_on(hw_mode,sta_station->vif_idx);
-
-#else //Normal case
             {
                 u8 retry_ini=INI_CNT;
                 ssv6xxx_wifi_update_available_channel();
@@ -2058,8 +2036,6 @@ ssv6xxx_result _ssv6xxx_wifi_station(u8 hw_mode,Sta_setting *sta_station,const b
 					platform_dev_init();
                 }
             }
-#endif
-
         }
         else //station off
         {

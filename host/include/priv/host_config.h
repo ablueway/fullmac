@@ -273,12 +273,11 @@ BIT[19]=CHAN5G(5825, 165)
 //Define the solution
 #define SMART_CONFIG_SOLUTION ICOMM_SMART_LINK
 
-//#ifndef __SSV_UNIX_SIM__
-#if (__SSV_UNIX_SIM__ == 0)
-    #if(SMART_CONFIG_SOLUTION==WECHAT_AIRKISS_ON_HOST)
-    //# ERROR Configuration ...
-    #endif
+
+#if (SMART_CONFIG_SOLUTION == WECHAT_AIRKISS_ON_HOST)
+//# ERROR Configuration ...
 #endif
+
 
 //This macro is for SmartConfig mode, evey bit corrsebonds to a channel, for example: bit[0] -> channel 0, bit[1] ->cahnnel 1.
 //If user assign 0 to channel mask to netmgr_wifi_scan or netmgr_wifi_sconfig, we use the default value.
@@ -373,12 +372,9 @@ BIT[19]=CHAN5G(5825, 165)
 #else
 #define RECOVER_ENABLE                  1
 #endif
-//#ifndef __SSV_UNIX_SIM__
-#if (__SSV_UNIX_SIM__ == 0)
+
 #define RECOVER_MECHANISM               1 //0:Used GPIO interrupt, 1:Used Timer interrupt
-#else
-#define RECOVER_MECHANISM               0 //0:Used GPIO interrupt, 1:Used Timer interrupt
-#endif
+
 #define IPC_CHECK_TIMER                 1000 //For IPC interrupt
 
 // ------------------------- Power Saving ---------------------------

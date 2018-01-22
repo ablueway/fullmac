@@ -74,7 +74,7 @@ KERN_SRCS += ./init/macaddr.c
 # Define Include LIB Source File Rule						   	   		       #	
 ################################################################################
 KERN_SRCS += ./lib/apps/host_global.c
-KERN_SRCS += ./lib/apps/host_log.c
+#KERN_SRCS += ./lib/apps/host_log.c
 KERN_SRCS += ./lib/apps/msgevt.c
 KERN_SRCS += ./lib/apps/pbuf.c
 

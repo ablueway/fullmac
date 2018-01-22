@@ -53,11 +53,7 @@ u32 g_heap_max;
 u32 g_dump_tx;
 u32 g_tx_allocate_fail;
 #endif
-/* not in */
-//#ifdef __SSV_UNIX_SIM__
-#if (__SSV_UNIX_SIM__ == 1)
-OsMutex			g_wsimp_mutex;
-#endif
+
 
 void host_global_init(void)
 {
@@ -74,11 +70,6 @@ void host_global_init(void)
 #endif 
 
     g_RunTaskCount = 0;
-
-/* not in */
-#if (__SSV_UNIX_SIM__ == 1)
-	OS_MutexInit(&g_wsimp_mutex);
-#endif	
 }
 
 

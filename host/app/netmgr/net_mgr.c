@@ -9,13 +9,13 @@
 #endif
 
 #include <host_config.h>
+#include "net_wrapper.h"
 #include <ssv_hal.h>
 
 #include <ssv_drv.h>
 
 #include <dev.h>
 //#include <netstack.h>
-#include "net_wrapper.h"
 #include <os_wrapper.h>
 #include "net_mgr.h"
 
@@ -25,7 +25,7 @@
 
 #include <ssv_common.h>
 
-#ifdef __linux__
+#if 0 //def __linux__
 int netmgr_task(void *arg)
 {
 	return 0;
@@ -66,7 +66,9 @@ void ssv_netmgr_init_netdev(bool default_cfg)
 
 
 extern u16 g_sta_channel_mask;
+#if(ENABLE_SMART_CONFIG==1)
 extern SSV6XXX_USER_SCONFIG_OP ssv6xxx_user_sconfig_op;
+#endif
 extern struct Host_cfg g_host_cfg;
 
 static bool g_switch_join_cfg_b = false;
@@ -88,10 +90,11 @@ typedef struct st_netmgr_sconfig_result
 static netmgr_sconfig_result sconfig_result;
 
 extern u32 g_sconfig_solution;
+#if(ENABLE_SMART_CONFIG==1)
 extern u16 g_SconfigChannelMask;
 extern u32 g_Sconfig5gChannelMask;
 extern u8 g_sconfig_auto_join;
-
+#endif
 bool g_sconfig_user_mode;
 bool g_sconfig_running=FALSE;
 
@@ -252,12 +255,12 @@ void netmgr_wifi_link_register_cb(netdev_link_callback_t link_up_cb, netdev_link
     }
 }
 
-void ssv_netmgr_add_netdev(u8 vif_idx,bool init_up)
+void ssv_netmgr_add_netdev(u8 vif_idx, bool init_up)
 {
     if (g_netifdev[vif_idx].add_state == FALSE)
     {
-		LOG_PRINTF("ssv_netmgr_add_netdev vif=%d,init_up=%d\r\n",vif_idx,init_up);
-		ssv6xxx_wifi_get_mac((u8 *)g_netifdev[vif_idx].hwmac,vif_idx);
+		LOG_PRINTF("ssv_netmgr_add_netdev vif=%d,init_up=%d\r\n", vif_idx,init_up);
+		ssv6xxx_wifi_get_mac((u8 *)g_netifdev[vif_idx].hwmac, vif_idx);
 		MEMCPY((void *)(g_netifdev[vif_idx].name),if_name[vif_idx], sizeof(WLAN_IFNAME));
 		g_netifdev[vif_idx].ipaddr = g_netmgr_config[vif_idx].ipaddr;
 		g_netifdev[vif_idx].netmask = g_netmgr_config[vif_idx].netmask;
@@ -311,6 +314,7 @@ void netmgr_task_init(void)
 
 void netmgr_wifi_reg_cbs(void)
 {
+#if(ENABLE_SMART_CONFIG==1)
 	/* in, ssv6xxx_user_sconfig_op.UserSconfigPaserData = SmartConfigPaserData; */
     if (ssv6xxx_user_sconfig_op.UserSconfigPaserData != NULL) 
 	{
@@ -318,6 +322,7 @@ void netmgr_wifi_reg_cbs(void)
         ssv6xxx_wifi_reg_promiscuous_rx_cb(
 			(promiscuous_data_handler)ssv6xxx_user_sconfig_op.UserSconfigPaserData);
     }
+#endif
 
     ssv6xxx_wifi_reg_recovery_cb(_netmgr_wifi_recovery_cb);
 
@@ -347,8 +352,11 @@ void netmgr_init_global_parms(void)
 #endif
 
     g_wifi_is_joining_b = false;
+
+#if(ENABLE_SMART_CONFIG==1)
     g_SconfigChannelMask = DEFAULT_SCONFIG_CHANNEL_MASK; 		// 0x7FFE(ch 1-14)
     g_Sconfig5gChannelMask = DEFAULT_SCONFIG_5G_CHANNEL_MASK;	// 0x00FFFFF(ch 1-14)
+#endif
 
     MEMSET(&sconfig_result,0,sizeof(sconfig_result));
 }
@@ -1442,6 +1450,7 @@ void netmgr_wifi_station_off(u8 vif_idx)
 
 void netmgr_wifi_sconfig_off(u8 vif_idx)
 {
+#if(ENABLE_SMART_CONFIG==1)
     wifi_mode mode;
     wifi_sta_cfg *sta_cfg = NULL;
 
@@ -1455,9 +1464,13 @@ void netmgr_wifi_sconfig_off(u8 vif_idx)
     }
 
     MEMSET((void *)sta_cfg, 0, sizeof(wifi_sta_cfg));
-    if((ssv6xxx_user_sconfig_op.UserSconfigDeinit!=NULL)&&(g_sconfig_user_mode==TRUE)){
+
+    if ((ssv6xxx_user_sconfig_op.UserSconfigDeinit != NULL) 
+							&& (g_sconfig_user_mode==TRUE)) 
+	{
         ssv6xxx_user_sconfig_op.UserSconfigDeinit();
     }
+
     g_sconfig_running=FALSE;
 
     mode = SSV6XXX_HWM_SCONFIG;
@@ -1466,6 +1479,7 @@ void netmgr_wifi_sconfig_off(u8 vif_idx)
     netmgr_wifi_control(mode, NULL, sta_cfg);
 
     FREE(sta_cfg);
+#endif
 }
 
 
@@ -1537,6 +1551,7 @@ int netmgr_wifi_sconfig_done(u8 *resp_data, u32 len, bool IsUDP,u32 port)
 
 static int _netmgr_wifi_sconfig(u16 channel_mask, u32 channel_5g_mask)
 {
+#if(ENABLE_SMART_CONFIG == 1)		
     struct cfg_sconfig_request *SconfigReq = NULL;
     u8 vif_idx;
     LOG_DEBUGF(LOG_L4_NETMGR, ("netmgr_wifi_sconfig \r\n"));
@@ -1562,10 +1577,11 @@ static int _netmgr_wifi_sconfig(u16 channel_mask, u32 channel_5g_mask)
 
     ssv6xxx_wifi_align_available_channel_mask(SSV6XXX_HWM_SCONFIG, &channel_mask,&channel_5g_mask);
 
-    if(g_sconfig_user_mode==TRUE)
+
+    if (g_sconfig_user_mode==TRUE)
     {
         ssv6xxx_promiscuous_enable();
-        if(ssv6xxx_user_sconfig_op.UserSconfigInit!=NULL)
+        if (ssv6xxx_user_sconfig_op.UserSconfigInit!=NULL)
         {
             ssv6xxx_user_sconfig_op.UserSconfigInit();
         }
@@ -1595,7 +1611,7 @@ static int _netmgr_wifi_sconfig(u16 channel_mask, u32 channel_5g_mask)
     }
 
     OS_MemFree(SconfigReq);
-
+#endif
     return 0;
 }
 
@@ -2839,19 +2855,22 @@ int netmgr_task(void *arg)
                                 {
                                     if(netmgr_wifi_check_sta(NULL))
                                     {
+#if(ENABLE_SMART_CONFIG==1)                                    
                                         if(ssv6xxx_user_sconfig_op.UserSconfigConnect!=NULL)
                                         {
                                             ssv6xxx_user_sconfig_op.UserSconfigConnect();
                                         }
+#endif
                                     }
-
+#if(ENABLE_SMART_CONFIG==1)
                                     if(ssv6xxx_user_sconfig_op.UserSconfigDeinit!=NULL)
                                     {
                                         ssv6xxx_user_sconfig_op.UserSconfigDeinit();
                                     }
-
+#endif
                                     g_sconfig_user_mode=FALSE;
-                                }
+
+								}
                                 else
                                 {
                                     if(netmgr_wifi_check_sta(NULL))
@@ -2869,6 +2888,7 @@ int netmgr_task(void *arg)
                 }
                 case MSG_SCONFIG_SCANNING_DONE:
                 {
+#if(ENABLE_SMART_CONFIG == 1)
                     wifi_sta_join_cfg *join_cfg = NULL;
                     if((1==g_sconfig_auto_join)&&(sconfig_result.valid==1))
                     {
@@ -2889,6 +2909,7 @@ int netmgr_task(void *arg)
                             LOG_PRINTF("%s(%d):malloc fail\r\n",__FUNCTION__,__LINE__);                                
                         }
                     }        
+#endif
                     break;
                 }
                 case MSG_JOIN_RESULT:
@@ -3043,6 +3064,7 @@ int netmgr_task(void *arg)
                     }
                     else
                     {
+#if(ENABLE_SMART_CONFIG==1)                    
                         if((ssv6xxx_user_sconfig_op.UserSconfigSM!=NULL)&&(g_sconfig_user_mode==TRUE)){
                             if(1== ssv6xxx_user_sconfig_op.UserSconfigSM()){
                                 OS_MsDelay(50);
@@ -3056,6 +3078,7 @@ int netmgr_task(void *arg)
                                 msg_evt = NULL;
                             }
                         }
+#endif						
                     }
                     break;
                 }
@@ -3333,17 +3356,19 @@ void netmgr_task(void *arg)
                                 {
                                     if(netmgr_wifi_check_sta(NULL))
                                     {
+#if(ENABLE_SMART_CONFIG==1)                                    
                                         if(ssv6xxx_user_sconfig_op.UserSconfigConnect!=NULL)
                                         {
                                             ssv6xxx_user_sconfig_op.UserSconfigConnect();
                                         }
+#endif
                                     }
-
+#if(ENABLE_SMART_CONFIG==1)
                                     if(ssv6xxx_user_sconfig_op.UserSconfigDeinit!=NULL)
                                     {
                                         ssv6xxx_user_sconfig_op.UserSconfigDeinit();
                                     }
-
+#endif
                                     g_sconfig_user_mode=FALSE;
                                 }
                                 else
@@ -3542,6 +3567,7 @@ void netmgr_task(void *arg)
                     }
                     else
                     {
+#if(ENABLE_SMART_CONFIG==1)                    
                         if((ssv6xxx_user_sconfig_op.UserSconfigSM!=NULL)&&(g_sconfig_user_mode==TRUE)){
                             if(1== ssv6xxx_user_sconfig_op.UserSconfigSM()){
                                 OS_MsDelay(50);
@@ -3555,6 +3581,7 @@ void netmgr_task(void *arg)
                                 msg_evt = NULL;
                             }
                         }
+#endif
                     }
                     break;
                 }

@@ -500,6 +500,7 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
 {
 	union unify_drv_info drv_info;
     ssv6xxx_result res = SSV6XXX_SUCCESS;
+
 	platform_dev_init();
 
 #if (SSV_LOG_DEBUG == 1)
@@ -516,7 +517,8 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
 
     /* TODO:aaron */
     host_global_init();
-    ssv6xxx_init_task_para();
+
+	ssv6xxx_init_task_para();
 
 
     /* Total = 112 g_host_cfg.pool_size = POOL_SIZE(72),
@@ -527,8 +529,11 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
 	ASSERT(PBUF_Init(POOL_SIZE) == OS_SUCCESS);
 #endif
 
-    //net_init(NULL);
-     /**
+
+	net_init(NULL);
+	//netstack_init(NULL);
+
+	/**
 	 * Initialize Host simulation platform. The Host initialization sequence
 	 * shall be the same as the sequence on the real host platform.
 	 * @ Initialize host device drivers (SDIO/SIM/UART/SPI ...)
@@ -537,7 +542,7 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
 
     LOG_PRINTF("Try to connecting CABRIO via %s...\n\r", INTERFACE);
 
-	/* #define INTERFACE "spi" */
+	/* #define INTERFACE "usb" */
 	drv_info.fields.os_type = DRV_INFO_FLAG_OS_TYPE_LINUX;
 	drv_info.fields.register_type = DRV_INFO_FLAG_REGISTER_TYPE_PASSIVE;
 	drv_info.fields.hw_type = DRV_INFO_FLAG_HW_TYPE_USB;	
@@ -565,11 +570,12 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
     AP_Init(WLAN_MAX_STA);
 #endif
 
+	/* TODO(aaron): linux need this ? */
     /* netmgr int */
-    //ssv_netmgr_init(true);
+    ssv_netmgr_init(true);
 
     /* we can set default ip address and default dhcpd server config */
-    //ssv_netmgr_init_netdev(true);
+    ssv_netmgr_init_netdev(true);
 
     wifi_start_by_host_mode(hmode);
 
