@@ -43,22 +43,6 @@
 #define MSEC_PER_SEC (1000L)
 #endif
 
-// static __inline unsigned int jiffies_to_msecs(const unsigned long j)
-// {
-// #if HZ <= MSEC_PER_SEC && !(MSEC_PER_SEC % HZ)
-// 	return (MSEC_PER_SEC / HZ) * j;
-// #elif HZ > MSEC_PER_SEC && !(HZ % MSEC_PER_SEC)
-// 	return (j + (HZ / MSEC_PER_SEC) - 1)/(HZ / MSEC_PER_SEC);
-// #else
-// 	return (j * MSEC_PER_SEC) / HZ;
-// #endif
-// }
-
-
-
-
-
-
 
 typedef u32 os_time_t;
 //Current time

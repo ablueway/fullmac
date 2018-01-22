@@ -11,7 +11,8 @@
 #include <ssv_dev.h>
 #include <dev.h>
 
-#include <ssv_ether.h>
+//#include <ssv_ether.h>
+#include "net_wrapper.h"
 #include <cmd_def.h>
 #if (AP_MODE_ENABLE == 1)        
 #include <ap_def.h>

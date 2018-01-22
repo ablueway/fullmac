@@ -10,11 +10,11 @@
 
 //#include "host_cmd_engine_priv.h"
 #include <host_apis.h>
-#include <netstack.h>
+#include "net_wrapper.h"
 
 #define WLAN_IFNAME "wlan0"
 
-#define NET_MGR_NO_SYS 0
+//#define NET_MGR_NO_SYS 0
 
 #define NET_MGR_AUTO_RETRY
 
@@ -87,6 +87,7 @@ typedef struct st_netmgr_cfg
     u32 netmask;
     u32 gw;
     u32 dns;
+/* TODO(aaron): replace by linux */	
     struct st_dhcps_info dhcps;
     bool s_dhcpd_enable;
     bool s_dhcpc_enable;

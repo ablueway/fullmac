@@ -2045,7 +2045,6 @@ ssv6xxx_result _ssv6xxx_wifi_station(u8 hw_mode,Sta_setting *sta_station,const b
                     sconfig_mode_off(sta_station->vif_idx);
             }
 
-//#ifdef __SSV_UNIX_SIM__
 #if (__SSV_UNIX_SIM__ == 1)
             ret = sta_mode_on(hw_mode,sta_station->vif_idx);
 
@@ -2053,14 +2052,10 @@ ssv6xxx_result _ssv6xxx_wifi_station(u8 hw_mode,Sta_setting *sta_station,const b
             {
                 u8 retry_ini=INI_CNT;
                 ssv6xxx_wifi_update_available_channel();
-                while((SSV6XXX_SUCCESS != (ret=sta_mode_on(hw_mode,sta_station->vif_idx))) &&
-                   (retry_ini > 0))
+                while ((SSV6XXX_SUCCESS != (ret=sta_mode_on(hw_mode,sta_station->vif_idx))) && (retry_ini > 0))
                 {
                     retry_ini--;
-                    platform_ldo_en(0);
-                    OS_MsDelay(10);
-                    platform_ldo_en(1);
-                    LOG_PRINTF("R\r\n");
+					platform_dev_init();
                 }
             }
 #endif

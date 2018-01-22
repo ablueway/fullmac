@@ -17,12 +17,9 @@
 #ifndef __HIF_WRAPPER_H__
 #define __HIF_WRAPPER_H__
 
+//typedef s32 (*irq_handler)(int, void *);
 
-#ifdef __linux__
-#include "hwif.h"
-#else
-#include "ssv_drv_if.h"
-#endif
+
 
 #define DRV_INFO_FLAG_OS_TYPE_SHIFT				0x0
 #define DRV_INFO_FLAG_OS_TYPE_MASK				0x000000FF
@@ -88,7 +85,7 @@ struct unify_drv_ops {
     void (*irq_enable)(void *dev);
     void (*irq_disable)(void *dev,bool iswaitirq);
     int (*irq_getstatus)(void *dev,int *status);
-    void (*irq_request)(void *dev,irq_handler_t irq_handler,void *irq_dev);
+    void (*irq_request)(void *dev, s32 (*irq_handler)(int, void *),void *irq_dev);
     void (*irq_trigger)(void *dev);
 
 	void (*pmu_wakeup)(void *dev);
@@ -143,15 +140,10 @@ struct unify_drv_ops {
 };
 
 struct ssv_unify_drv {
+	
 	char name[UNIFY_DRV_NAME_MAX_LEN];
 	union unify_drv_info drv_info;
 	struct unify_drv_ops drv_ops;
-
-//#ifdef __linux__
-//	struct ssv6xxx_hwif_ops drv_ops;
-//#else
-//	struct ssv6xxx_drv_ops drv_ops;
-//#endif
 };
 
 #endif /* __HIF_WRAPPER_H__ */

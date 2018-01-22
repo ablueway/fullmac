@@ -27,9 +27,9 @@
 
 #define PRINT LOG_PRINTF
 #define MSLEEP(x) \
-if(x<TICK_RATE_MS){             \
-    platform_udelay(x*1000);    \
-}else{                          \
+if (x < TICK_RATE_MS) {             \
+    platform_udelay(x * 1000);    \
+} else {                          \
     OS_MsDelay(x);              \
 }
 #define UDELAY(x) platform_udelay(x) //OS_TickDelay(1)

@@ -4,7 +4,8 @@
 #include <os.h>
 #include "regs/ssv6006_hw_regs.h"
 #include "ssv6006_efuse.h"
-#include <ssv_ether.h>
+//#include <ssv_ether.h>
+#include "net_wrapper.h"
 #include <ssv_dev.h>
 
 struct efuse_map SSV_EFUSE_ITEM_TABLE[] = {

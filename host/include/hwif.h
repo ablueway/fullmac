@@ -19,10 +19,7 @@
 #ifndef __HWIF_H__
 #define __HWIF_H__
 
-
-#include <linux/mmc/host.h>
 //#include <ssv6xxx_common.h> 
-#include <linux/skbuff.h>
 
 // general adress for chip id
 #define SYS_REG_BASE           0xc0000000
@@ -67,52 +64,6 @@
 		if ((_pdata != NULL) && ((_pdata)->dbg_control)) \
 			printk(format, ##args); \
     } while (0)
-
- 
-struct sdio_scatter_req;
-/**
-* Hardware Interface (SDIO/SPI) APIs for ssv6200 on Linux platform.
-*/
-struct ssv6xxx_hwif_ops {
-    int __must_check (*read)(void *dev, void *buf,size_t *size, int mode);
-    int __must_check (*write)(void *dev, void *buf, size_t len,u8 queue_num);
-    int __must_check (*readreg)(void *dev, u32 addr, u32 *buf);
-    int __must_check (*writereg)(void *dev, u32 addr, u32 buf);
-    int __must_check (*safe_readreg)(void *dev, u32 addr, u32 *buf);
-    int __must_check (*safe_writereg)(void *dev, u32 addr, u32 buf);
-    int __must_check (*burst_readreg)(void *dev, u32 *addr, u32 *buf, u8 reg_amount);
-    int __must_check (*burst_writereg)(void *dev, u32 *addr, u32 *buf, u8 reg_amount);    
-    int __must_check (*burst_safe_readreg)(void *dev, u32 *addr, u32 *buf, u8 reg_amount);
-    int __must_check (*burst_safe_writereg)(void *dev, u32 *addr, u32 *buf, u8 reg_amount);    
-
-	int (*trigger_tx_rx)(void *dev);
-    int (*irq_getmask)(void *dev, u32 *mask);
-    void (*irq_setmask)(void *dev,int mask);
-    void (*irq_enable)(void *dev);
-    void (*irq_disable)(void *dev,bool iswaitirq);
-    int (*irq_getstatus)(void *dev,int *status);
-    void (*irq_request)(void *dev,irq_handler_t irq_handler,void *irq_dev);
-    void (*irq_trigger)(void *dev);
-
-	void (*pmu_wakeup)(void *dev);
-    int __must_check (*load_fw)(void *dev, u32 start_addr, u8 *data, int data_length);
-    void (*load_fw_pre_config_device)(void *dev);
-    void (*load_fw_post_config_device)(void *dev);
-    int (*cmd52_read)(void *dev, u32 addr, u32 *value);
-    int (*cmd52_write)(void *dev, u32 addr, u32 value);
-    bool (*support_scatter)(void *dev);    
-    int (*rw_scatter)(void *dev, void *scat_req);
-    bool (*is_ready)(void *dev);
-    int (*write_sram)(void *dev, u32 addr, u8 *data, u32 size);
-    void (*interface_reset)(void *dev);    
-    int (*start_usb_acc)(void *dev, u8 epnum);
-    int (*stop_usb_acc)(void *dev, u8 epnum);
-    int (*jump_to_rom)(void *dev);
-    int (*property)(void *dev);
-    void (*sysplf_reset)(void *dev, u32 addr, u32 value);
-    void (*hwif_rx_task)(void *dev, int (*rx_cb)(struct sk_buff *rx_skb, void *args), void *args, u32 *pkt); 
-};
-
 
 struct ssv6xxx_platform_data {
     //use to avoid remove mmc cause dead lock.

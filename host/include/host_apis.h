@@ -19,7 +19,8 @@
 #include <ssv_ex_lib.h>
 
 #include <ssv_common.h>
-#include <ssv_ether.h>
+//#include <ssv_ether.h>
+#include "net_wrapper.h"
 #include <ssv_hal.h>
 
 #define SSV6XXX_APLIST_PAGE_COUNT  10
@@ -173,7 +174,7 @@ struct ap_sta_status_station{
 
 typedef struct ap_sta_status {
     bool          status;
-    ssv6xxx_hw_mode            vif_operate[MAX_VIF_NUM];
+    ssv6xxx_hw_mode vif_operate[MAX_VIF_NUM];
     union {
         struct ap_sta_status_ap ap_status;
         struct ap_sta_status_station station_status;

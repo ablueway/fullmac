@@ -12,7 +12,8 @@
 #include <log.h>
 
 
-#include <ssv_ether.h>
+//#include <ssv_ether.h>
+#include "net_wrapper.h"
 
 #include "ap_sta_info.h"
 #include <os_wrapper.h>

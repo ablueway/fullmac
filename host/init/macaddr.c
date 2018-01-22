@@ -10,8 +10,8 @@
 
 #include <os.h>
 #include <log.h>
-#include <ssv_ether.h>
-
+//#include <ssv_ether.h>
+#include "net_wrapper.h"
 
 typedef enum t_MAC_METHOD_TYP{
     EFUSE_MAC,

@@ -59,6 +59,7 @@ KERN_SRCS += ./hal/SSV6006/ssv6006_efuse.c
 ################################################################################
 KERN_SRCS += ./hif_wrapper/ssv_drv.c
 KERN_SRCS += ./hif_wrapper/linux/usb/usb.c
+
 ################################################################################
 # Define Include INIT Source File Rule						   		   	       #	
 ################################################################################
@@ -85,7 +86,7 @@ KERN_SRCS += ./lib/ssv_msg.c
 ################################################################################
 # Define Include NET WRAPPER Source File Rule						   	       #	
 ################################################################################
-KERN_SRCS += ./net_wrapper/linux/netstack.c
+KERN_SRCS += ./net_wrapper/linux/net.c
 
 ################################################################################
 # Define Include OS WRAPPER Source File Rule						   	       #	

@@ -165,7 +165,7 @@ typedef struct task_info_st
 
 #define OS_INTR_MAY_ENABLE()      \
     if (gOsFromISR == false)      \
-        OS_INTR_ENABLE()          \
+        OS_INTR_ENABLE()          
 
 #endif
 
@@ -174,9 +174,6 @@ typedef struct task_info_st
  *  Flag to indicate whether ISR handler is running or not.
  */
 extern volatile u8 gOsFromISR;
-
-
-
 
 OS_APIs s32 OS_Init( void );
 OS_APIs unsigned long OS_Random(void);
@@ -187,26 +184,13 @@ OS_APIs void OS_ExitCritical(u32 val);
 
 
 /* Task: */
-OS_APIs s32  OS_TaskCreate( OsTask task, const char *name, u32 stackSize, void *param, u32 pri, OsTaskHandle *taskHandle );
+OS_APIs s32  OS_TaskCreate( OsTask task, const char *name, u32 stackSize, void *param, u32 pri, OsTaskHandle *taskHandle);
 OS_APIs void OS_TaskDelete( OsTaskHandle taskHandle );
 OS_APIs void OS_StartScheduler( void );
 OS_APIs void OS_Terminate( void );
 
 
-#if 0 //def __linux__
-/* Mutex: */
-OS_APIs s32  OS_MutexInit(OsMutex *mutex);
-OS_APIs void OS_MutexLock(OsMutex *mutex);
-OS_APIs void OS_MutexUnLock(OsMutex *mutex);
-OS_APIs void OS_MutexDelete(OsMutex *mutex);
-/*semaphore*/
-OS_APIs s32 OS_SemInit(OsSemaphore *Sem, u16 maxcnt, u16 cnt);
-OS_APIs bool OS_SemWait(OsSemaphore *Sem, u16 timeout);
-OS_APIs u8 OS_SemSignal(OsSemaphore *Sem);
-OS_APIs u8 OS_SemSignal_FromISR(OsSemaphore *Sem);
-OS_APIs void OS_SemDelete(OsSemaphore *Sem);
-OS_APIs u32 OS_SemCntQuery(OsSemaphore *Sem);
-#else
+
 /* Mutex: */
 OS_APIs s32  OS_MutexInit( OsMutex *mutex );
 OS_APIs void OS_MutexLock( OsMutex mutex );
@@ -219,8 +203,6 @@ OS_APIs u8 OS_SemSignal( OsSemaphore Sem);
 OS_APIs u8 OS_SemSignal_FromISR( OsSemaphore Sem);
 OS_APIs void OS_SemDelete(OsSemaphore Sem);
 OS_APIs u32 OS_SemCntQuery( OsSemaphore Sem);
-#endif
-
 
 /* Delay: */
 OS_APIs void OS_MsDelay(u32 ms);

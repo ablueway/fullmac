@@ -11,8 +11,8 @@
 #include <os_wrapper.h>
 #include <netmgr/net_mgr.h>
 #include "ssv_dev.h"
-#include <ssv_ether.h>
-
+//#include <ssv_ether.h>
+#include "net_wrapper.h"
 #if (CLI_ENABLE==1)
 #include <cli.h>
 

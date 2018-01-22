@@ -118,9 +118,10 @@ OS_APIs void __OS_MemFree( void *m );
 OS_APIs void OS_MemSET(void *pdest, u8 byte, u32 size);
 OS_APIs void OS_MemCPY(void *pdest, const void *psrc, u32 size);
 
-/*=========================================*/
-void platform_ldo_en_pin_init(void);
-void platform_ldo_en(bool en);
+
+/*============ Platform HW dependence ====================*/
+void platform_dev_init(void); 
+
 void platform_udelay(u32 us_delay);
 
 #endif

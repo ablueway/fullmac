@@ -7,7 +7,8 @@
 
 #ifndef WPA_AUTH_I_H
 #define WPA_AUTH_I_H
-#include <ssv_ether.h>
+//#include <ssv_ether.h>
+#include "net_wrapper.h"
 #include "common/defs.h"
 #include "common/wpa_common.h"
 //#include "wpa_auth.h"

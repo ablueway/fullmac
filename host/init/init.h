@@ -21,7 +21,8 @@
 #include <SmartConfig.h>
 #endif
 #include <net_mgr.h>
-#include <netstack.h>
+//#include <netstack.h>
+#include <net_wrapper.h>
 #include <dev.h>
 #include "hif_wrapper.h"
 
@@ -68,10 +69,7 @@ extern void Cli_Init(s32 argc, char *argv[]);
 extern struct task_info_st g_txrx_task_info[];
 extern struct task_info_st g_host_task_info[];
 extern struct task_info_st g_timer_task_info[];
-/* in */
-#if !NET_MGR_NO_SYS
 extern struct task_info_st st_netmgr_task[];
-#endif
 /* in */
 #if DHCPD_SUPPORT
 extern struct task_info_st st_dhcpd_task[];
@@ -89,6 +87,5 @@ extern int ssv6xxx_init_ap_mac(void *vif);
 extern s32 AP_Init(u32 max_sta_num);
 #endif
 extern void ssv_netmgr_init_netdev(bool default_cfg);
-
 
 #endif /* __INIT_H__ */

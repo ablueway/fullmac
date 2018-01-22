@@ -10,14 +10,14 @@
 
 #include <porting.h>
 
-typedef enum{
+typedef enum ssv6200_hwmode {
     SSV6XXX_HWM_STA		,
     SSV6XXX_HWM_AP		,
     SSV6XXX_HWM_IBSS	,
     SSV6XXX_HWM_WDS	    ,
     SSV6XXX_HWM_SCONFIG ,
     SSV6XXX_HWM_INVALID	
-}ssv6xxx_hw_mode;
+} ssv6xxx_hw_mode;
 
 typedef enum{
 	AP_STATE_INIT			,

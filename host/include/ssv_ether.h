@@ -13,8 +13,8 @@
 
  */
 
-#ifndef _LINUX_IF_ETHER_H
-#define _LINUX_IF_ETHER_H
+#ifndef _SSV_IF_ETHER_H
+#define _SSV_IF_ETHER_H
 
 #include <ssv_types.h>
 #include <porting.h>
@@ -196,4 +196,4 @@ static inline int is_valid_ether_addr(const u8 *addr)
 	return !is_multicast_ether_addr(addr) && !is_zero_ether_addr(addr);
 }
 
-#endif	/* _LINUX_IF_ETHER_H */
+#endif	/* _SSV_IF_ETHER_H */

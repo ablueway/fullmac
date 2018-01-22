@@ -655,12 +655,12 @@ u32 netdev_getallnetdev(struct netdev *pdev, u32 num_of_pdev)
     return num;
 }
 
-s32 netdev_get_netdev(struct netdev *pdev, u8 if_idx)
+s32 netdev_get_netdev(NET_DEV pdev, u8 if_idx)
 {
     struct netif *pwlan = NULL;
     pwlan = netif_find(WLAN_IFNAME);
 
-    if(pwlan)
+    if (pwlan)
     {
         MEMCPY((void *)&pdev[0].name, (void *)&pwlan->name, sizeof(pwlan->name));
         MEMCPY((void *)&pdev[0].hwmac, (void *)&pwlan->hwaddr, sizeof(pwlan->hwaddr));

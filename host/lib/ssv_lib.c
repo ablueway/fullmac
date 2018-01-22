@@ -751,24 +751,14 @@ LIB_APIs void hex_dump (const void *addr, u32 size)
     return;
 }
 
-#ifdef __linux__
+#if 0 //def __linux__
 
 /* the halt() already implement in arch/x86/include/asm/paravirt.h */
 
 #else
-LIB_APIs void halt(void)
-{
-/* TODO: aaron */
-//#if (__SSV_UNIX_SIM__)
-#if (__SSV_UNIX_SIM__ == 1)
-    abort();
-//	system("pause");
-//	exit(EXIT_FAILURE);
-#else
-	/*lint -save -e716 */
-    while (1) ;
-	/*lint -restore */
-#endif
+LIB_APIs void ssv_halt(void)
+{    
+	while (1) ;
 }
 
 #endif
@@ -817,10 +807,11 @@ extern const char *rlsversion;
 
 int ssv6xxx_init_mac(void* vif)
 {
-    ssv_vif* vf=(ssv_vif*)vif;
-    if(gDeviceInfo->recovering != TRUE)
+    ssv_vif *vf = (ssv_vif *)vif;
+    if (gDeviceInfo->recovering != TRUE)
     {
-    	LOG_DEBUG("\33[35mRELEASE VERSION: %s     SW VERSION: %s\r\nBUILD DATE: %s\33[0m\r\n",rlsversion,ssv_version, ssv_date);
+    	LOG_DEBUG("\33[35mRELEASE VERSION: %s SW VERSION: %s\r\nBUILD DATE: %s\33[0m\r\n",
+			rlsversion,ssv_version, ssv_date);
     }
     return ssv_hal_init_mac(vf->self_mac);
 }

@@ -87,8 +87,8 @@ typedef struct ssv_vif_st {
     union{
         struct ApInfo *APInfo; // AP mode used
         struct StaInfo *StaInfo; //STA mode used
-    }m_info;
-}ssv_vif;
+    } m_info;
+} ssv_vif;
 
 typedef struct DeviceInfo{
 

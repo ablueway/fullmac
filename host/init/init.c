@@ -55,6 +55,7 @@ int g_auto_retry_times_delay = NET_MGR_AUTO_RETRY_DELAY;        // 5
 int g_auto_retry_times_max = NET_MGR_AUTO_RETRY_TIMES;  // 0xFFFF
 #endif
 
+
 // #define SSV_IGMP_DEMO // multicast udp demo
 
 #ifdef SSV_IGMP_DEMO
@@ -185,20 +186,6 @@ int ssv_test_udp_init(void)
 #endif
 
 
-
-void stop_and_halt(void)
-{
-    // while (1) {}
-    /* lint -restore */
-}                               // end of - stop_and_halt -
-
-int ssv6xxx_add_interface(ssv6xxx_hw_mode hw_mode)
-{
-    // 0:false 1:true
-    return 1;
-}
-
-
 void ssv6xxx_init_task_para(void)
 {
     g_txrx_task_info[0].prio = OS_TX_TASK_PRIO;
@@ -206,9 +193,8 @@ void ssv6xxx_init_task_para(void)
     g_host_task_info[0].prio = OS_CMD_ENG_PRIO;
     g_timer_task_info[0].prio = OS_TMR_TASK_PRIO;
     /* in */
-#if !NET_MGR_NO_SYS
     st_netmgr_task[0].prio = OS_NETMGR_TASK_PRIO;
-#endif
+
     /* in */
 #if DHCPD_SUPPORT
     st_dhcpd_task[0].prio = OS_DHCPD_TASK_PRIO;
@@ -220,7 +206,7 @@ void ssv6xxx_init_task_para(void)
 }
 
 
-int ssv6xxx_start(ssv_vif * vif)
+int ssv6xxx_start(ssv_vif *vif)
 {
     // u32 wifi_mode;
     ssv6xxx_drv_start();
@@ -254,16 +240,6 @@ int ssv6xxx_start(ssv_vif * vif)
     return SSV6XXX_SUCCESS;
 }
 
-
-
-/**
- *  Entry point of the firmware code. After system booting, this is the
- *  first function to be called from boot code. This function need to
- *  initialize the chip register, software protoctol, RTOS and create
- *  tasks. Note that, all memory resources needed for each software
- *  modulle shall be pre-allocated in initialization time.
- */
-/* return int to avoid from compiler warning */
 #if (ENABLE_SMART_CONFIG == 1)
 void init_smart_config(void)
 {
@@ -473,7 +449,7 @@ ssv6xxx_result wifi_start(wifi_mode mode, bool static_ip, bool dhcp_server)
     }
 #endif
     /* in */
-#if (ENABLE_SMART_CONFIG==1)
+#if (ENABLE_SMART_CONFIG == 1)
     else if (mode == SSV6XXX_HWM_SCONFIG)
     {
         return wifi_smart_config_start();
@@ -513,19 +489,18 @@ ssv6xxx_result wifi_start_by_host_mode(ssv6xxx_hw_mode hmode)
     return res;
 }
 
+/**
+ *  Entry point of the firmware code. After system booting, this is the
+ *  first function to be called from boot code. This function need to
+ *  initialize the chip register, software protoctol, RTOS and create
+ *  tasks. Note that, all memory resources needed for each software
+ *  modulle shall be pre-allocated in initialization time.
+ */
 int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
 {
 	union unify_drv_info drv_info;
     ssv6xxx_result res = SSV6XXX_SUCCESS;
-
-	/* TODO(aaron): do we need do reset in linux ? */
-#if (__SSV_UNIX_SIM__ == 0)
-    platform_ldo_en_pin_init();
-    // ldo_en 0 -> 1 equal to HW reset.
-    platform_ldo_en(0);
-    OS_MsDelay(10);
-    platform_ldo_en(1);
-#endif
+	platform_dev_init();
 
 #if (SSV_LOG_DEBUG == 1)
     g_log_module = CONFIG_LOG_MODULE;
@@ -537,29 +512,22 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
 
     init_host_default_config(IS_HT_SUPPORT);
 
-	/**
-	* On simulation/emulation platform, initialize RTOS (simulation OS)
-	* first. We use this simulation RTOS to create the whole simulation
-	* and emulation platform.
-	*/
-	/* TODO:aaron */
     OS_Init();
 
     /* TODO:aaron */
     host_global_init();
     ssv6xxx_init_task_para();
 
-    LOG_init(true, true, LOG_LEVEL_ON, LOG_MODULE_MASK(LOG_MODULE_EMPTY),false);
 
     /* Total = 112 g_host_cfg.pool_size = POOL_SIZE(72),
        g_host_cfg.pool_sec_size = POOL_SEC_SIZE(16) SSV_TMR_MAX(24) */
-    msg_evt_init(MAC_EVENT_COUNT);
+	ASSERT(msg_evt_init(MAC_EVENT_COUNT) == OS_SUCCESS);
 
-#if (CONFIG_USE_LWIP_PBUF==0)    
-	ASSERT( PBUF_Init(POOL_SIZE) == OS_SUCCESS );
-#endif//#if CONFIG_USE_LWIP_PBUF
+#if (CONFIG_USE_LWIP_PBUF == 0)    
+	ASSERT(PBUF_Init(POOL_SIZE) == OS_SUCCESS);
+#endif
 
-    netstack_init(NULL);
+    //net_init(NULL);
      /**
 	 * Initialize Host simulation platform. The Host initialization sequence
 	 * shall be the same as the sequence on the real host platform.
@@ -582,6 +550,7 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
         return -1;
     }
 
+
     ASSERT(ssv_hal_init() == true);
 
     if (ssv6xxx_wifi_init() != SSV6XXX_SUCCESS)
@@ -597,10 +566,10 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
 #endif
 
     /* netmgr int */
-    ssv_netmgr_init(true);
+    //ssv_netmgr_init(true);
 
     /* we can set default ip address and default dhcpd server config */
-    ssv_netmgr_init_netdev(true);
+    //ssv_netmgr_init_netdev(true);
 
     wifi_start_by_host_mode(hmode);
 
