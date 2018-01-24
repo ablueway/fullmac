@@ -58,13 +58,16 @@ void OS_MemSET(void *pdest, u8 byte, u32 size)
 void platform_dev_init(void)
 {
 	/* default do nothing */
+	printk("%s()at line(%d)\n",__FUNCTION__,__LINE__);	
 }
 
 //=====================find fw to download=======================
 #include <ssv_hal.h>
 bool platform_download_firmware(void)
 {
+	/* TODO(aaron): to do the FW DL for USB in redbull */
     return ssv6xxx_download_fw((u8 *)SSV_HAL_FW_BIN, sizeof(SSV_HAL_FW_BIN));
+//	return TRUE;
 }
 void platform_read_firmware(void *d,void *s,u32 len)
 {

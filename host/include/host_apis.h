@@ -206,7 +206,7 @@ typedef enum{
 
 
 struct stamode_setting {
-  struct sta_setting* sta_cfg;
+  struct sta_setting *sta_cfg;
   ssv6xxx_hw_mode   mode;
 };
 

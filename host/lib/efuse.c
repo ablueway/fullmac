@@ -11,8 +11,9 @@
 #include <ssv_dev.h>
 #include "efuse.h"
 
-u32 read_chip_id()
+u32 read_chip_id(void)
 {
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     return ssv_hal_read_chip_id();
 }
 

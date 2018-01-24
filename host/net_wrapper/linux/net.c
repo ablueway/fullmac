@@ -97,23 +97,27 @@ int netdev_check_ifup(const char *ifname)
 //set interface up
 int netdev_l3_if_up(const char *ifname)
 {
+	printk("L3 if_up(%s)\n", ifname);
     return NS_OK;
 }
 
 //set interface down
 int netdev_l3_if_down(const char *ifname)
 {   
+	printk("L3 if_down(%s)\n", ifname);
     return NS_OK;
 }
 
 //interface link up cb
 void netdev_link_up_cb(void *ifname)
 {   
+	printk("L2 netdev_link_up(%s)\n", (char *)ifname);
 }
 
 //interface link down cb
 void netdev_link_down_cb(void *ifname)
 {   
+	printk("L2 netdev_link_down(%s)\n", (char *)ifname);
 }
 
 //set dhcp client on dev

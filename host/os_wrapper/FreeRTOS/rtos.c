@@ -219,7 +219,7 @@ OS_APIs void *OS_TimerGetData( OsTimer timer )
     return OS_SUCCESS;
 }
 
-OS_APIs s32 OS_SemInit( OsSemaphore* Sem , u16 maxcnt , u16 cnt)
+OS_APIs s32 OS_SemInit(OsSemaphore *Sem, u16 maxcnt , u16 cnt)
 {
 //	 u8 xReturn = OS_FAILED;
     if ((cnt > maxcnt) || (maxcnt == 0))

@@ -209,34 +209,42 @@ void ssv6xxx_init_task_para(void)
 int ssv6xxx_start(ssv_vif *vif)
 {
     // u32 wifi_mode;
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     ssv6xxx_drv_start();
 
     /* Reset MAC & Re-Init */
 
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     /* Initialize ssv6200 mac */
     if (-1 == ssv6xxx_init_mac(vif))
     {
+		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
         return SSV6XXX_FAILED;
     }
-
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     // Set ap or station register
     if ((SSV6XXX_HWM_STA == vif->hw_mode)
         || (SSV6XXX_HWM_SCONFIG == vif->hw_mode))
     {
+		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
         if (-1 == ssv6xxx_init_sta_mac(vif->hw_mode))
         {
-            return SSV6XXX_FAILED;
+			LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
+			return SSV6XXX_FAILED;
         }
     }
     else
     {
+		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);    
         if (-1 == ssv6xxx_init_ap_mac(vif))
         {
-            return SSV6XXX_FAILED;
+			LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
+			return SSV6XXX_FAILED;
         }
     }
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);	
     customer_extra_setting();
-
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     return SSV6XXX_SUCCESS;
 }
 
@@ -345,17 +353,15 @@ void init_host_default_config(bool support_ht)
 
 ssv6xxx_result STAmode_default(bool bJoin)
 {
-
-    wifi_sta_join_cfg join_cfg;
     int ret = 0;
     wifi_mode mode = SSV6XXX_HWM_STA;
     u32 start_tick = 0;
     bool timeout = false;
 
-    MEMSET((void *)&join_cfg, 0, sizeof(join_cfg));
-
     if (bJoin)
     {
+    	wifi_sta_join_cfg join_cfg;
+	    MEMSET((void *)&join_cfg, 0, sizeof(join_cfg));
         MEMCPY((void *)join_cfg.ssid.ssid, JOIN_DEFAULT_SSID,
                STRLEN(JOIN_DEFAULT_SSID));
         join_cfg.ssid.ssid_len = STRLEN(JOIN_DEFAULT_SSID);
@@ -374,7 +380,9 @@ ssv6xxx_result STAmode_default(bool bJoin)
         sta.vif_idx = 0;
 
         ret = netmgr_wifi_control_async(mode, NULL, &sta);
+        printk("STAmode_default ret(%d)\r\n", ret);
     }
+	
     if (ret != 0)
     {
         LOG_PRINTF("STA mode error (%d)\r\n", bJoin);
@@ -382,7 +390,6 @@ ssv6xxx_result STAmode_default(bool bJoin)
     }
 
     start_tick = OS_GetSysTick();
-    timeout = false;
     while (!netmgr_wifi_check_sta(NULL))
     {
         // wait 3 second timeout
@@ -397,10 +404,12 @@ ssv6xxx_result STAmode_default(bool bJoin)
     if (timeout)
     {
         LOG_PRINTF("STA mode timeout\r\n");
+		printk("%s(%d)\n",__FUNCTION__,__LINE__);		
         return SSV6XXX_FAILED;
     }
 
     LOG_PRINTF("STA mode success\r\n");
+	printk("%s(%d)\n",__FUNCTION__,__LINE__);
     return SSV6XXX_SUCCESS;
 }
 
@@ -464,6 +473,7 @@ ssv6xxx_result wifi_start_by_host_mode(ssv6xxx_hw_mode hmode)
     ssv6xxx_result res = SSV6XXX_SUCCESS;
 
     /* default hmode = SSV6XXX_HWM_STA */
+	printk("%s(%d),hmode(%d)\n",__FUNCTION__,__LINE__,hmode);
     switch (hmode)
     {
     case SSV6XXX_HWM_STA:
@@ -486,7 +496,8 @@ ssv6xxx_result wifi_start_by_host_mode(ssv6xxx_hw_mode hmode)
     default:
         res = wifi_start(SSV6XXX_HWM_STA, false, false);
     }
-    return res;
+	printk("%s(%d),res(%d)\n",__FUNCTION__,__LINE__,res);
+	return res;
 }
 
 /**
@@ -498,7 +509,7 @@ ssv6xxx_result wifi_start_by_host_mode(ssv6xxx_hw_mode hmode)
  */
 int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
 {
-	union unify_drv_info drv_info;
+	union ssv_drv_info drv_info;
     ssv6xxx_result res = SSV6XXX_SUCCESS;
 
 	platform_dev_init();
@@ -584,5 +595,7 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
 
     ssv6xxx_wifi_cfg();
 #endif
+	//OS_StartScheduler();
+
     return res;
 }

@@ -25,15 +25,11 @@
 static s16 s_drv_cnt;
 
 
-//static struct ssv6xxx_drv_ops *s_drv_array[MAX_SSV6XXX_DRV];
-///static struct ssv6xxx_drv_ops   *s_drv_cur;
-
-static struct ssv_unify_drv *s_drv_array[MAX_SSV6XXX_DRV];
-struct ssv_unify_drv *s_drv_cur;
+static struct ssv_hif_drv *s_drv_array[MAX_SSV6XXX_DRV];
+struct ssv_hif_drv *s_drv_cur;
 
 
-bool ssv6xxx_drv_register(struct ssv_unify_drv *ssv_drv);
-//bool ssv6xxx_drv_register(struct ssv6xxx_drv_ops *ssv_drv);
+bool ssv6xxx_drv_register(struct ssv_hif_drv *ssv_drv);
 bool ssv6xxx_drv_unregister(u16 i);
 
 static bool _ssv6xxx_drv_started = false;
@@ -42,9 +38,8 @@ u32 drv_trx_time = 0; //ms
 
 OsMutex drvMutex;
 
-//extern struct ssv6xxx_drv_ops g_drv_usb_linux;
-extern struct ssv_unify_drv usb_ops;
 
+extern struct ssv_hif_drv usb_ops;
 extern struct ssv6xxx_usb_glue *usb_glue;
 
 void CmdEng_RxHdlData(void *frame);
@@ -199,7 +194,7 @@ bool ssv6xxx_drv_ack_int(void)
     return ret;
 }
 
-bool ssv6xxx_drv_register(struct ssv_unify_drv *ssv_drv)
+bool ssv6xxx_drv_register(struct ssv_hif_drv *ssv_drv)
 {
     u16 i;
     bool ret = false;
@@ -271,7 +266,7 @@ bool ssv6xxx_drv_module_init(void)
     SDRV_TRACE("%s() <=\r\n", __FUNCTION__);
 
     s_drv_cnt = 0;
-    MEMSET(s_drv_array, 0x00, MAX_SSV6XXX_DRV * sizeof(struct ssv_unify_drv *));
+    MEMSET(s_drv_array, 0x00, MAX_SSV6XXX_DRV * sizeof(struct ssv_hif_drv *));
     s_drv_cur = 0;
 
     // register each driver
@@ -350,10 +345,10 @@ void ssv6xxx_drv_module_release(void)
     SDRV_TRACE("%s() =>\r\n", __FUNCTION__);
 }
 
-bool ssv6xxx_drv_select(char name[UNIFY_DRV_NAME_MAX_LEN], union unify_drv_info drv_info)
+bool ssv6xxx_drv_select(char name[SSV_HIF_DRV_NAME_MAX_LEN], union ssv_drv_info drv_info)
 {
     u16 i;
-	struct ssv_unify_drv *drv_target = NULL;
+	struct ssv_hif_drv *drv_target = NULL;
 
     SDRV_TRACE("%s() <= : name = %s, s_drv_cnt = %d, s_drv_cur = (0x%08x)\r\n",
 		__FUNCTION__, name, s_drv_cnt, (unsigned int)s_drv_cur);
@@ -630,7 +625,8 @@ u32 ssv6xxx_drv_read_reg(u32 addr)
 	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX)
 									&& (s_drv_cur->drv_ops.readreg != NULL))
 	{
-		s_drv_cur->drv_ops.readreg(usb_glue, addr, &retVal);	
+		s_drv_cur->drv_ops.readreg(usb_glue, addr, &retVal);
+		printk("drv read(%x)=0x%x\n", addr, retVal);
 	}
 	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
 									&& (s_drv_cur->drv_ops.read_reg != NULL))
@@ -662,7 +658,8 @@ bool ssv6xxx_drv_write_reg(u32 addr, u32 data)
 	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX)
 									&& (s_drv_cur->drv_ops.writereg != NULL))
 	{
-    	ret = s_drv_cur->drv_ops.writereg(usb_glue, addr, data);	
+		printk("drv write(0x%x)=0x%x\n", addr, data);
+		ret = s_drv_cur->drv_ops.writereg(usb_glue, addr, data);
 	}
 	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
 									&& (s_drv_cur->drv_ops.write_reg != NULL))
@@ -855,7 +852,7 @@ bool ssv6xxx_drv_start(void)
     OS_MUTEX_LOCK(drvMutex);
 	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX))
 	{
-	    SDRV_FAIL("%s linux drv non-support write_sram call back\n",__FUNCTION__);
+	    SDRV_FAIL("%s linux drv non-support drv_start call back\n",__FUNCTION__);
     	ret = TRUE;	
 	}
 	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
@@ -1088,4 +1085,3 @@ bool ssv6xxx_drv_detect_card(void)
 
     return ret;
 }
-

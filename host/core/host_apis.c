@@ -1818,20 +1818,23 @@ ssv6xxx_result sta_mode_on(ssv6xxx_hw_mode hw_mode, u8 vif_idx)
     {
         vif = &gDeviceInfo->vif[vif_idx];
     }
-
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     if(!vif->m_info.StaInfo)
     {
         LOG_PRINTF("_alloc_sta_info \n\r");
         vif->m_info.StaInfo = _alloc_sta_info();
-    }
-    
-    if(!vif->m_info.StaInfo)
-        return SSV6XXX_FAILED;
-    //gDeviceInfo->StaInfo->vif = (void*)vif;
+	    if(!vif->m_info.StaInfo)
+		{
+			LOG_PRINTF("_alloc_sta_info fail\n\r");
+			return SSV6XXX_FAILED;
+		}
+	}
 
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
 
     if(gDeviceInfo->used_vif==0)
     {
+		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);    
         ssv6xxx_HW_disable();
         if(-1==ssv_hal_chip_init())
         {
@@ -1839,7 +1842,7 @@ ssv6xxx_result sta_mode_on(ssv6xxx_hw_mode hw_mode, u8 vif_idx)
             return SSV6XXX_FAILED;
         }
     }
-
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     //Set default MAC addr
     ssv6xxx_memcpy(vif->self_mac, config_mac, ETH_ALEN);
     ssv6xxx_get_cust_mac(vif->self_mac);
@@ -1849,18 +1852,22 @@ ssv6xxx_result sta_mode_on(ssv6xxx_hw_mode hw_mode, u8 vif_idx)
         vif->self_mac[3] &= MAC_MASK;
         vif->self_mac[3] |=((vif->idx-1)<<20);
     }
-
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     if(check_efuse_chip_id() != SSV6XXX_SUCCESS)
     {
+		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);    
         return SSV6XXX_FAILED;
     }
 
     //Set Host API on
     active_host_api = HOST_API_ACTIVE;
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
 
     OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
     //Set global variable
     vif->hw_mode = hw_mode;
+
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
 
     if(gDeviceInfo->used_vif==0)
     {
@@ -1870,12 +1877,13 @@ ssv6xxx_result sta_mode_on(ssv6xxx_hw_mode hw_mode, u8 vif_idx)
             LOG_PRINTF("ssv6xxx_start fail!!\r\n");
 
             OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
+			LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
             return SSV6XXX_FAILED;
         }
     }
     OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
 
-
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     if(gDeviceInfo->used_vif==0)
     {
         ssv_hal_add_interface(vif->idx,SSV6XXX_HWM_STA,vif->self_mac,STA_DEFAULT_CHANNEL);
@@ -1891,17 +1899,24 @@ ssv6xxx_result sta_mode_on(ssv6xxx_hw_mode hw_mode, u8 vif_idx)
         ssv_hal_add_interface(vif->idx,SSV6XXX_HWM_STA,vif->self_mac,0);
     }
 
-    if(vif->hw_mode ==SSV6XXX_HWM_SCONFIG){
-        ssv_hal_sconfig_rx_data_flow();
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
+    if(vif->hw_mode ==SSV6XXX_HWM_SCONFIG)
+	{
+		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
+		ssv_hal_sconfig_rx_data_flow();
         ssv_hal_accept_none_wsid_frame();
         ssv_hal_reduce_phy_cca_bits();        
     }
     else
     {
-        ssv_hal_update_cci_setting(MAX_CCI_SENSITIVE);    
+		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
+		ssv_hal_update_cci_setting(MAX_CCI_SENSITIVE);    
     }
+
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);	
     if(gDeviceInfo->used_vif==0)
     {
+		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);    
         _ssv6xxx_wifi_set_rc_values(FALSE);
         //ampdu tx
         _ssv6xxx_set_ampdu_param(AMPDU_TX_OPT_ENABLE,g_host_cfg.ampdu_tx_enable,vif->idx,FALSE);
@@ -1912,15 +1927,17 @@ ssv6xxx_result sta_mode_on(ssv6xxx_hw_mode hw_mode, u8 vif_idx)
         ssv6xxx_wifi_set_tx_pwr_mode(g_host_cfg.tx_power_mode);
 
         ssv_hal_sta_reject_bcn();
+		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);		
     }
 
     gDeviceInfo->used_vif++;
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);	
     return SSV6XXX_SUCCESS;
 }
 
 void sta_mode_off(u8 vif_idx)
 {
-    ssv_vif* vif=NULL;    
+    ssv_vif *vif=NULL;    
 
     ASSERT(vif_idx<MAX_VIF_NUM);
     
@@ -1991,8 +2008,13 @@ ssv6xxx_result _ssv6xxx_wifi_station(u8 hw_mode,Sta_setting *sta_station,const b
 {
     ssv6xxx_result ret = SSV6XXX_SUCCESS;
 
+    LOG_PRINTF("%s() at line(%d)\n",__FUNCTION__,__LINE__);
+
+    LOG_PRINTF("%s() at line(%d), hw_mode(%d)\n",__FUNCTION__,__LINE__,hw_mode);
+
     //Detect host API status
-    if((SSV6XXX_HWM_STA != hw_mode)&&(SSV6XXX_HWM_SCONFIG != hw_mode)){
+    if ((SSV6XXX_HWM_STA != hw_mode)&&(SSV6XXX_HWM_SCONFIG != hw_mode))
+	{
         return SSV6XXX_FAILED;
     }
 
@@ -2015,44 +2037,63 @@ ssv6xxx_result _ssv6xxx_wifi_station(u8 hw_mode,Sta_setting *sta_station,const b
                 break;
         }
 
-        if(sta_station->status) //Station on
+	    LOG_PRINTF("%s() at line(%d),sta_station->status=(%s)\n",
+			__FUNCTION__,__LINE__,(sta_station->status == true)?"true":"false");
+
+		if(sta_station->status) //Station on
         {
+		    LOG_PRINTF("%s() at line(%d),active_host_api(%s)\n",__FUNCTION__,__LINE__,(active_host_api==HOST_API_ACTIVE)?"ACTIVE":"DE-ACTIVE");
+		
             if((HOST_API_ACTIVE==active_host_api)&&
                (gDeviceInfo->vif[sta_station->vif_idx].hw_mode != SSV6XXX_HWM_INVALID))
             {
+        		printk("%s() at line(%d)\n",__FUNCTION__,__LINE__);
                 //if(gDeviceInfo->vif[sta_station->vif_idx].hw_mode)
-                if(gDeviceInfo->vif[sta_station->vif_idx].hw_mode == SSV6XXX_HWM_STA)
-                    sta_mode_off(sta_station->vif_idx);
-                else if(gDeviceInfo->vif[sta_station->vif_idx].hw_mode == SSV6XXX_HWM_SCONFIG)
-                    sconfig_mode_off(sta_station->vif_idx);
+                if (gDeviceInfo->vif[sta_station->vif_idx].hw_mode == SSV6XXX_HWM_STA)
+            	{
+            		printk("%s() at line(%d)\n",__FUNCTION__,__LINE__);
+	                sta_mode_off(sta_station->vif_idx);
+                }
+				else if(gDeviceInfo->vif[sta_station->vif_idx].hw_mode == SSV6XXX_HWM_SCONFIG)
+				{
+            		printk("%s() at line(%d)\n",__FUNCTION__,__LINE__);
+	                sconfig_mode_off(sta_station->vif_idx);
+				}
             }
-
             {
                 u8 retry_ini=INI_CNT;
+        		printk("%s() at line(%d)\n",__FUNCTION__,__LINE__);
                 ssv6xxx_wifi_update_available_channel();
-                while ((SSV6XXX_SUCCESS != (ret=sta_mode_on(hw_mode,sta_station->vif_idx))) && (retry_ini > 0))
+        		printk("%s() at line(%d)\n",__FUNCTION__,__LINE__);
+                while ((SSV6XXX_SUCCESS != (ret= sta_mode_on(hw_mode,sta_station->vif_idx))) && (retry_ini > 0))
                 {
                     retry_ini--;
 					platform_dev_init();
                 }
             }
-        }
+			printk("%s() at line(%d)\n",__FUNCTION__,__LINE__);
+		}
         else //station off
         {
+	    	LOG_PRINTF("%s() at line(%d)\n",__FUNCTION__,__LINE__);        
             if(hw_mode == SSV6XXX_HWM_STA)
                 sta_mode_off(sta_station->vif_idx);
+
+	    	LOG_PRINTF("%s() at line(%d)\n",__FUNCTION__,__LINE__);        
 
             if(hw_mode == SSV6XXX_HWM_SCONFIG)
                 sconfig_mode_off(sta_station->vif_idx);
 
         }
-    }while(0);
+    } while(0);
 
-    if(mutexLock)
+	LOG_PRINTF("%s() at line(%d)\n",__FUNCTION__,__LINE__);        
+    if (mutexLock)
         OS_MutexUnLock(g_host_api_mutex);
 
-    return ret;
 
+	LOG_PRINTF("%s() at line(%d),ret(%d)\n",__FUNCTION__,__LINE__,ret);        
+    return ret;
 }
 
 /**********************************************************
@@ -2139,12 +2180,19 @@ void ap_mode_status(struct ap_sta_status_ap *ap_info)
 }
 void sta_mode_status(struct ap_sta_status_station *status_info,u8 vif_idx)
 {
-    ssv_vif* vif = &gDeviceInfo->vif[vif_idx];
-    //mac addr
+    ssv_vif *vif = &gDeviceInfo->vif[vif_idx];
+
+	printk("%s(%d)\n",__FUNCTION__,__LINE__);
+	//mac addr
     MEMCPY(status_info->selfmac, vif->self_mac,ETH_ALEN);
     status_info->apinfo.status = vif->m_info.StaInfo->status;
+
+	printk("%s(%d)\n",__FUNCTION__,__LINE__);
+
     if((vif->m_info.StaInfo->status != DISCONNECT)&&(gDeviceInfo->recovering != TRUE))
     {
+		printk("%s(%d)\n",__FUNCTION__,__LINE__);
+
         //ssid
         MEMCPY((void*)status_info->ssid.ssid,(void*)vif->m_info.StaInfo->joincfg->bss.ssid.ssid,vif->m_info.StaInfo->joincfg->bss.ssid.ssid_len);
         //status_info->u.station.ssid.ssid[gDeviceInfo->joincfg->bss.ssid.ssid_len]=0;
@@ -2155,6 +2203,9 @@ void sta_mode_status(struct ap_sta_status_station *status_info,u8 vif_idx)
         MEMCPY(status_info->apinfo.Mac,(void*)vif->m_info.StaInfo->joincfg->bss.bssid.addr,6);
         status_info->apinfo.status = vif->m_info.StaInfo->status;
         status_info->capab_info = vif->m_info.StaInfo->joincfg->bss.capab_info;
+
+		printk("%s(%d)\n",__FUNCTION__,__LINE__);		
+		printk("%s(%d)vif->m_info.StaInfo->joincfg->sec_type((%d)\n",__FUNCTION__,__LINE__, vif->m_info.StaInfo->joincfg->sec_type);
         switch(vif->m_info.StaInfo->joincfg->sec_type)
         {
             case SSV6XXX_SEC_NONE:
@@ -2187,20 +2238,25 @@ void sta_mode_status(struct ap_sta_status_station *status_info,u8 vif_idx)
 
         status_info->pairwise_cipher=vif->m_info.StaInfo->joincfg->bss.pairwise_cipher[0];
         status_info->group_cipher = vif->m_info.StaInfo->joincfg->bss.group_cipher;
-    }
+		printk("%s(%d)\n",__FUNCTION__,__LINE__);
+	}
+	printk("%s(%d)\n",__FUNCTION__,__LINE__);
 }
 ssv6xxx_result _ssv6xxx_wifi_status(Ap_sta_status *status_info,const bool mutexLock)
 {
     ssv6xxx_result ret = SSV6XXX_SUCCESS;
+
+	printk("%s(%d)\n",__FUNCTION__,__LINE__);
+	
     //Detect host API status
-    if(mutexLock)
+    if (mutexLock)
         OS_MutexLock(g_host_api_mutex);
 
     do {
         int i;
         status_info->status= active_host_api;
         OS_MutexLock(gDeviceInfo->g_dev_info_mutex);
-        for(i=0;i<MAX_VIF_NUM;i++)
+		for(i=0;i<MAX_VIF_NUM;i++)
         {
             status_info->vif_operate[i] = gDeviceInfo->vif[i].hw_mode;
 #if (AP_MODE_ENABLE == 1)
@@ -2210,19 +2266,19 @@ ssv6xxx_result _ssv6xxx_wifi_status(Ap_sta_status *status_info,const bool mutexL
             }
             else
 #endif    
-            if ((SSV6XXX_HWM_STA == status_info->vif_operate[i])||(SSV6XXX_HWM_SCONFIG == status_info->vif_operate[i]))//station mode  & sconfig mode
+			if ((status_info->vif_operate[i] == SSV6XXX_HWM_STA) || 
+				(SSV6XXX_HWM_SCONFIG == status_info->vif_operate[i]))//station mode  & sconfig mode
             {
-                sta_mode_status((struct ap_sta_status_station*)(&status_info->vif_u[i]),i);
+				sta_mode_status((struct ap_sta_status_station*)(&status_info->vif_u[i]),i);
             }
         }
         OS_MutexUnLock(gDeviceInfo->g_dev_info_mutex);
-    }while(0);
-
+    } while (0);
     if(mutexLock)
         OS_MutexUnLock(g_host_api_mutex);
 
+	printk("%s(%d),ret(%d)\n",__FUNCTION__,__LINE__,ret);
     return ret;
-
 }
 
 /**********************************************************
@@ -3428,9 +3484,9 @@ H_APIs ssv6xxx_result ssv6xxx_set_voltage_mode(u32 mode)
 
 H_APIs bool ssv6xxx_wifi_support_5g_band(void)
 {
-    if((RF_5G_BAND==g_host_cfg.support_rf_band)&&
-        (TRUE==ssv_hal_support_5g_band())&&
-        (g_host_cfg.support_ht==1))
+    if((RF_5G_BAND==g_host_cfg.support_rf_band) && 
+		(TRUE==ssv_hal_support_5g_band())		&& 
+		(g_host_cfg.support_ht==1))
         return TRUE;
     else
         return FALSE;

@@ -41,7 +41,7 @@ typedef struct frameList
 extern s32 ap_handle_ps(void *pPktInfo);
 extern struct Host_cfg g_host_cfg;
 
-extern struct ssv_unify_drv *s_drv_cur;
+extern struct ssv_hif_drv *s_drv_cur;
 
 static OsMutex task_mtx;
 static OsMutex tx_mtx;
@@ -459,11 +459,13 @@ int TXRXTask_RxTask(void *args)
 	{
 	    while (curr_mode != MT_EXIT)
 	    {
+		    printk("%s()at line(%d)\n",__FUNCTION__,__LINE__);
 			if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX)
 						&& (s_drv_cur->drv_info.fields.hw_type == DRV_INFO_FLAG_HW_TYPE_USB))
 			{
 				/* TODO(aaron): use timeout sem to avoid rx work queue polling mechanism */
-				OS_SemWait(rx_frm_sphr, 10000);
+			    printk("%s()at line(%d)\n",__FUNCTION__,__LINE__);
+				OS_SemWait(rx_frm_sphr, 6000);
 			}
 			else
 			{
@@ -491,10 +493,13 @@ int TXRXTask_RxTask(void *args)
 	                       	LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_WARNING, 
 								("[RxTask]: wakeup from sleep!\r\n"));
 	                        //continue;
+	                        printk("[RxTask]: wakeup from sleep!\r\n");
 	                    }
 	                    os_frame_push(rFrame, g_host_cfg.trx_hdr_len);
 	                    msg_data = OS_FRAME_GET_DATA(rFrame);
 	                }
+                   	printk("[RxTask]: wakeup from sleep!\n");
+					
 	                recv_len = ssv6xxx_drv_recv(msg_data, OS_FRAME_GET_DATA_LEN(rFrame));
 	            }
 
@@ -516,11 +521,15 @@ int TXRXTask_RxTask(void *args)
 	            {
 	                LOG_DEBUGF(LOG_TXRX|LOG_LEVEL_SERIOUS, 
 						("[TxRxTask]: recv_len == 0 at frame %p, first 8 bytes content is dumpped as below:\r\n", rFrame));
-	                hex_dump(msg_data, 8);
+					printk("%s() recv_len(0) at frame(%p)\n",__FUNCTION__,rFrame);
+					printk("the pkt first 8 bytes content as below:\n");
+					hex_dump(msg_data, 8);
+					break;
 	            }
 	            else
 	            {
-	                //LOG_DEBUG("[TxRxTask]: Rx semaphore comes in, but not frame receive\r\n");
+					//LOG_DEBUG("[TxRxTask]: Rx semaphore comes in, but not frame receive\r\n");
+					printk("[TxRxTask]: Rx semaphore comes in, but not frame receive\r\n");
 #if(RECOVER_ENABLE == 1)
 #if(RECOVER_MECHANISM == 0)
 	                u32 i;

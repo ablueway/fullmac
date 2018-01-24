@@ -18,6 +18,8 @@
 #ifndef _USB_DEF_H_
 #define _USB_DEF_H_
 
+#include "hif_wrapper.h"
+
 /* debug message */
 #define USB_DBG(fmt, ...)    pr_debug(fmt "\n", ##__VA_ARGS__)
 
@@ -34,6 +36,46 @@
 /* Define CMD */
 #define SSV6200_CMD_WRITE_REG		0x01
 #define SSV6200_CMD_READ_REG		0x02
+
+
+/* Define these values to match devices */
+#define USB_SSV_VENDOR_ID  0x8065
+#define USB_SSV_PRODUCT_ID 0x6000
+
+#define TRANSACTION_TIMEOUT			(3000) /* ms */
+#define SSV6XXX_MAX_TXCMDSZ			(sizeof(struct ssv6xxx_cmd_hdr))
+#define SSV6XXX_MAX_RXCMDSZ			(sizeof(struct ssv6xxx_cmd_hdr))
+#define SSV6XXX_CMD_HEADER_SIZE		(sizeof(struct ssv6xxx_cmd_hdr) - sizeof(union ssv6xxx_payload))
+#define USB_CMD_SEQUENCE			255
+#define MAX_RETRY_SSV6XXX_ALLOC_BUF	3
+
+
+#define SET_USB_HIF_STATE(p_hif_data, state) (p_hif_data->hif_state = state)
+
+#define IS_USB_GLUE_INVALID(usb_glue)  \
+      ((usb_glue == NULL) \
+		|| (usb_glue->hif_data.hif_state != SSV6_HIF_ACTIVE) \
+      )
+
+#define UNIFY_LINUX_USB_DRV_INFO_FLAGS ((DRV_INFO_FLAG_OS_TYPE_LINUX << DRV_INFO_FLAG_OS_TYPE_SHIFT) || \
+					(DRV_INFO_FLAG_REGISTER_TYPE_PASSIVE << DRV_INFO_FLAG_REGISTER_TYPE_SHIFT) || \
+					(DRV_INFO_FLAG_HW_TYPE_USB << DRV_INFO_FLAG_HW_TYPE_SHIFT))
+
+#define to_ssv6xxx_usb_dev(d) container_of(d, struct ssv6xxx_usb_glue, kref)
+
+#define GET_SSV6XXX_USB_SPEED(usb_glue) ((usb_glue)->udev->speed)
+
+// general adress for chip id
+#define SYS_REG_BASE           0xc0000000
+
+#define ADR_CHIP_ID_0                          (SYS_REG_BASE+0x00000008)          
+#define ADR_CHIP_ID_1                          (SYS_REG_BASE+0x0000000c)          
+#define ADR_CHIP_ID_2                          (SYS_REG_BASE+0x00000010)          
+#define ADR_CHIP_ID_3                          (SYS_REG_BASE+0x00000014) 
+
+#define SSVCABRIO_PLAT_EEP_MAX_WORDS	2048
+
+#define USB_DBG_PRINT 	HIF_DBG_PRINT
 
 struct ssv6xxx_read_reg_result {
 	u32		value;	
@@ -82,6 +124,25 @@ struct ssv6xxx_rx_endpoint {
 	void			  	*rx_buf;		/* the buffer to receive data */
 	unsigned int		rx_filled;		/* number of bytes which we receive in the buffer */
 	int					rx_res;
+};
+
+/* Structure to hold all of our device specific stuff */
+struct ssv6xxx_usb_glue {
+	struct device                   *dev;			/* driver model's view of this device of usb interface */
+	struct usb_device               *udev;			/* the usb device for this device */
+	struct usb_interface            *interface;		/* the usb interface device for this device */
+	struct ssv_hif_data     		hif_data;		/* for hif driver common data */
+	struct ssv6xxx_cmd_endpoint      cmd_endpoint;	/* command endpoint */
+	struct ssv6xxx_cmd_endpoint      rsp_endpoint;	/* response endpoint */
+	struct ssv6xxx_tx_endpoint       tx_endpoint;	/* tx endpoint */
+	struct ssv6xxx_rx_endpoint		rx_endpoint;	/* rx endpoint */
+	struct kref		kref;
+	struct mutex	io_mutex;						/* synchronize I/O with disconnect */
+	struct mutex	cmd_mutex;						/* blocking cmd/rsp */
+	u16	   sequence;								/* keep global usb cmd sequence number to assign */
+	u16	   err_cnt;									/* TODO(aaron): need SW handle retry ?? */
+	bool   dev_ready;
+	struct work_struct dev_init;
 };
  
 #endif /* _USB_DEF_H_ */

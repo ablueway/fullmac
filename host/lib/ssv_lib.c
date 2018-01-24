@@ -792,6 +792,7 @@ ssv6xxx_result check_efuse_chip_id(void)
 #endif
        (efuse_chip_id == 0))
     {
+		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);    
         return SSV6XXX_SUCCESS;
     }
     else
@@ -861,7 +862,7 @@ extern struct task_info_st g_host_task_info[];
 extern s32 g_watchdog_check_time;
 extern void timer_sta_reorder_release(void* data1, void* data2);
 
-void ssv6xxx_HW_disable()
+void ssv6xxx_HW_disable(void)
 {
 	g_hw_enable = FALSE;
 #if(RECOVER_ENABLE == 1)
@@ -870,19 +871,23 @@ void ssv6xxx_HW_disable()
     os_cancel_timer(check_watchdog_timer,(u32)NULL,(u32)NULL);
 #endif //#if(RECOVER_MECHANISM == 1)
 #else
-   ssv_hal_watchdog_disable();
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
+	ssv_hal_watchdog_disable();
 #endif //#if(RECOVER_ENABLE == 1)
     //os_cancel_timer(timer_sta_reorder_release,(u32)NULL,(u32)NULL);
 
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
+
     ssv6xxx_drv_irq_disable(false);
+
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     ssv_hal_rf_disable();
 
     //Disable MCU
     ssv_hal_mcu_disable();
 
+	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     return;
-
-
 }
 void ssv6xxx_HW_enable(void)
 {

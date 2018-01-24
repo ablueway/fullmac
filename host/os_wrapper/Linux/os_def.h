@@ -33,8 +33,8 @@ typedef struct kfifo *OsMsgQ;
 
 typedef spinlock_t OsSpinlock;
 
-#define OS_TASK_ENTER_CRITICAL()        
-#define OS_TASK_EXIT_CRITICAL()         
+#define OS_TASK_ENTER_CRITICAL() OS_EnterCritical()
+#define OS_TASK_EXIT_CRITICAL()  OS_ExitCritical(0)      
 
 #define TICK_RATE_MS 			(1)
 #define TASK_IDLE_STK_SIZE 		(100)

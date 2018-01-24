@@ -10,24 +10,17 @@
 
 #include <hif_wrapper.h>
 
-//#if (defined _WIN32)
 #if (_WIN32 == 1)
-	#include "types.h"
-	#include "ssv_drv_config.h"
-#else //(defined __SSV_UNIX_SIM__ || defined __linux__)
-    #include <ssv_types.h>
+#include "types.h"
+#include "ssv_drv_config.h"
+#else
+#include <ssv_types.h>
 #endif
 
 #include <log.h>
 #include <host_config.h>
 
 #include <ssv_hal.h>
-
-//#include <hif_wrapper.h>
-
-//#ifndef MAX_BUF
-//#define MAX_BUF			(8*1024)
-//#endif
 
 #define	_SDRV_DEBUG		0
 #define _SDRV_TRACE		0
@@ -78,7 +71,7 @@ Note :
 	if Fail!, this func will do nothing.
 --------------------------------------------------------------- */
 //bool	ssv6xxx_drv_select(u32 drv_info);
-bool	ssv6xxx_drv_select(char name[32], union unify_drv_info drv_info);
+bool	ssv6xxx_drv_select(char name[SSV_HIF_DRV_NAME_MAX_LEN], union ssv_drv_info drv_info);
 void	ssv6xxx_drv_list(void);
 
 
@@ -115,4 +108,3 @@ bool ssv6xxx_drv_wakeup_wifi(bool sw);
 bool ssv6xxx_drv_tx_resource_enough(u32 frame_len);
 
 #endif /* _SSV_DRV_H_ */
-

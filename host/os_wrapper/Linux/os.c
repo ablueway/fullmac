@@ -202,8 +202,17 @@ OS_APIs bool OS_SemWait(OsSemaphore Sem , u16 timeout_ticks)
 {
 //	struct semaphore *sem = (struct semaphore *)Sem;
 //	down(sem);
-	return down_timeout(Sem, timeout_ticks);
-//    return OS_SUCCESS;
+	if (timeout_ticks > 0)
+	{
+		return down_timeout(Sem, timeout_ticks);
+	}
+	else if (timeout_ticks == 0)
+	{
+		return down_interruptible(Sem);
+		//down(Sem);
+		//return OS_SUCCESS;
+	}
+	return OS_FAILED;
 }
 
 OS_APIs u8 OS_SemSignal(OsSemaphore Sem)

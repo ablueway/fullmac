@@ -390,7 +390,7 @@ void netmgr_cfg_set(netmgr_cfg *p_cfg, u8 vif_idx)
 void netmgr_netif_status_set(bool on,u8 vif_idx)
 {
     LOG_DEBUGF(LOG_L4_NETMGR, ("L3 Link %s\r\n",(on==true?"ON":"OFF")));
-
+	printk("vif(%d), L3 Link %s\r\n", vif_idx, (on==true?"ON":"OFF"));
     if (on)
         netdev_l3_if_up(g_netifdev[vif_idx].name);
     else
@@ -414,8 +414,8 @@ bool netmgr_check_netif_up(u8 vif_idx)
 
 void netmgr_netif_link_set(bool on,u8 vif_idx)
 {
-    LOG_DEBUGF(LOG_L4_NETMGR, ("L2 Link %s\r\n",(on==true?"ON":"OFF")));
-
+	LOG_DEBUGF(LOG_L4_NETMGR, ("L2 Link %s\r\n",(on==true?"ON":"OFF")));
+	LOG_PRINTF("L2 Link %s\r\n",(on==true?"ON":"OFF"));
     if (on)
     {
         if(g_wifi_link_up_cb != NULL)
@@ -890,6 +890,7 @@ bool netmgr_wifi_check_sta(u8 *vif_idx)
     Ap_sta_status *info = NULL;
     bool bRet = false;
     u8 i;
+	printk("%s() at line(%d)\n",__FUNCTION__,__LINE__);
 
     info = (Ap_sta_status *)MALLOC(sizeof(Ap_sta_status));
     if (info == NULL)
@@ -911,10 +912,12 @@ bool netmgr_wifi_check_sta(u8 *vif_idx)
         }
     }
 
-    if(vif_idx)
+    if (vif_idx)
         *vif_idx = i;
+	
     OS_MemFree(info);
 
+	printk("%s()at(%d),bRet(%d)\n",__FUNCTION__,__LINE__,bRet);
     return bRet;
 }
 
@@ -1292,7 +1295,9 @@ int netmgr_wifi_control_async(wifi_mode mode, wifi_ap_cfg *ap_cfg, wifi_sta_cfg 
     wifi_sta_cfg *sta_cfg_msg = NULL;
 
     LOG_DEBUGF(LOG_L4_NETMGR, ("netmgr_wifi_control_async \r\n"));
-    
+
+	printk("netmgr_wifi_control_async\n");
+	
     g_wifi_is_joining_b = false;
 
     msg_evt = msg_evt_alloc();
@@ -1302,40 +1307,40 @@ int netmgr_wifi_control_async(wifi_mode mode, wifi_ap_cfg *ap_cfg, wifi_sta_cfg 
         return -1;
     }
 
-	#ifdef NET_MGR_AUTO_RETRY
+#ifdef NET_MGR_AUTO_RETRY
 	if (g_auto_retry_status != S_TRY_INVALID)
-    {
-       g_auto_retry_status = S_TRY_INVALID;
-       LOG_DEBUGF(LOG_L4_NETMGR, ("AUTO RETRY INVLAID\r\n"));
-    }
-	#endif
+	{
+		g_auto_retry_status = S_TRY_INVALID;
+		LOG_DEBUGF(LOG_L4_NETMGR, ("AUTO RETRY INVLAID\r\n"));
+	}
+#endif
 
     g_sconfig_running = FALSE;
 
     msg_evt->MsgType = MEVT_NET_MGR_EVENT;
     msg_evt->MsgData = MSG_CONTROL_REQ;
     
-	#if (AP_MODE_ENABLE == 1)
-    if (ap_cfg)
-    {
-        if(ap_cfg->channel!=EN_CHANNEL_AUTO_SELECT)
-        {
-            if(FALSE==ssv6xxx_wifi_is_available_channel(SSV6XXX_HWM_AP,ap_cfg->channel))
-            {
-                LOG_PRINTF("%d not available_channel\r\n",ap_cfg->channel);
-                return -1;
-            }
-        }
-        ap_cfg_msg = (wifi_ap_cfg *)MALLOC(sizeof(wifi_ap_cfg));
-        if(NULL==ap_cfg_msg)
-        {
-            msg_evt_free(msg_evt);
-            LOG_PRINTF("%s(%d):malloc fail\r\n",__FUNCTION__,__LINE__);
-            return -1;
-        }
-        MEMCPY((void * )ap_cfg_msg, (void * )ap_cfg, sizeof(wifi_ap_cfg));
-    }
-	#endif
+#if (AP_MODE_ENABLE == 1)
+	if (ap_cfg)
+	{
+	    if(ap_cfg->channel!=EN_CHANNEL_AUTO_SELECT)
+	    {
+	        if(FALSE==ssv6xxx_wifi_is_available_channel(SSV6XXX_HWM_AP,ap_cfg->channel))
+	        {
+	            LOG_PRINTF("%d not available_channel\r\n",ap_cfg->channel);
+	            return -1;
+	        }
+	    }
+	    ap_cfg_msg = (wifi_ap_cfg *)MALLOC(sizeof(wifi_ap_cfg));
+	    if(NULL==ap_cfg_msg)
+	    {
+	        msg_evt_free(msg_evt);
+	        LOG_PRINTF("%s(%d):malloc fail\r\n",__FUNCTION__,__LINE__);
+	        return -1;
+	    }
+	    MEMCPY((void * )ap_cfg_msg, (void * )ap_cfg, sizeof(wifi_ap_cfg));
+	}
+#endif
     if (sta_cfg)
     {
         sta_cfg_msg = (wifi_sta_cfg *)MALLOC(sizeof(wifi_sta_cfg));
@@ -2118,13 +2123,14 @@ int netmgr_wifi_control(wifi_mode mode, wifi_ap_cfg *ap_cfg, wifi_sta_cfg *sta_c
     int ret = 0;
 
     LOG_DEBUGF(LOG_L4_NETMGR, ("netmgr_wifi_control \r\n"));
+	printk("netmgr_wifi_control\n");
 
     if (mode >= SSV6XXX_HWM_INVALID)
     {
         return -1;
     }
 
-    if ((mode == SSV6XXX_HWM_STA)||(mode == SSV6XXX_HWM_SCONFIG))
+    if ((mode == SSV6XXX_HWM_STA) || (mode == SSV6XXX_HWM_SCONFIG))
     {
         if (sta_cfg)
         {
@@ -2134,15 +2140,20 @@ int netmgr_wifi_control(wifi_mode mode, wifi_ap_cfg *ap_cfg, wifi_sta_cfg *sta_c
             {
                 netmgr_dhcpd_start(false,sta_cfg->vif_idx);
             }
-            sta_setting.mode = mode;
+
+			sta_setting.mode = mode;
             sta_setting.sta_cfg =sta_cfg;
+
+            LOG_PRINTF("sta_setting.mode=%d\r\n",sta_setting.mode);
+            LOG_PRINTF("sta_setting.sta_cfg.status(%d)\r\n", sta_setting.sta_cfg->status);
+            LOG_PRINTF("sta_setting.sta_cfg->vif_idx(%d)\r\n", sta_setting.sta_cfg->vif_idx);			
             LOG_PRINTF("Nmgr ctl STA vif=%d\r\n",sta_cfg->vif_idx);
 
-            _ssv6xxx_wifi_send_cmd((void *)&sta_setting, sizeof(struct stamode_setting),SSV6XXX_HOST_CMD_SET_STA_CFG);
+            _ssv6xxx_wifi_send_cmd((void *)&sta_setting, sizeof(struct stamode_setting), SSV6XXX_HOST_CMD_SET_STA_CFG);
 
             OS_SemWait(ap_sta_on_off_sphr,0);
             
-            //ret = ssv6xxx_wifi_station(mode,sta_cfg);
+            ret = ssv6xxx_wifi_station(mode,sta_cfg);
 
             ssv_netmgr_add_netdev(sta_cfg->vif_idx,FALSE);
             if ((ret == (int)SSV6XXX_SUCCESS) && g_netmgr_config[sta_cfg->vif_idx].s_dhcpc_enable)
@@ -2152,6 +2163,7 @@ int netmgr_wifi_control(wifi_mode mode, wifi_ap_cfg *ap_cfg, wifi_sta_cfg *sta_c
                 if (sta_cfg->status)
                 {
                     //netmgr_dhcpc_set(true);
+					LOG_PRINTF("no dhcpc STA vif=%d\r\n",sta_cfg->vif_idx);
                 }
                 else
                 {
@@ -2806,6 +2818,7 @@ int netmgr_task(void *arg)
                     }
                     if (sta_cfg_msg)
                     {
+						LOG_PRINTF("free sta cfg msg\r\n");
                         FREE(sta_cfg_msg);
                     }
                     break;

@@ -19,7 +19,9 @@
     }else{ \
         __OS_MemFree((ptr)); \
     }
+
 #define PRINTF LOG_PRINTF
+
 #define OS_MUTEX_LOCK(x) { \
     OS_MutexLock(x); \
 }
