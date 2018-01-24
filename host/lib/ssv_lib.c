@@ -884,7 +884,7 @@ void ssv6xxx_HW_disable(void)
     ssv_hal_rf_disable();
 
     //Disable MCU
-    ssv_hal_mcu_disable();
+    //ssv_hal_mcu_disable();
 
 	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     return;

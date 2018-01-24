@@ -626,7 +626,7 @@ u32 ssv6xxx_drv_read_reg(u32 addr)
 									&& (s_drv_cur->drv_ops.readreg != NULL))
 	{
 		s_drv_cur->drv_ops.readreg(usb_glue, addr, &retVal);
-		printk("drv read(%x)=0x%x\n", addr, retVal);
+//		printk("drv read(%x)=0x%x\n", addr, retVal);
 	}
 	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)
 									&& (s_drv_cur->drv_ops.read_reg != NULL))
@@ -658,7 +658,7 @@ bool ssv6xxx_drv_write_reg(u32 addr, u32 data)
 	if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_LINUX)
 									&& (s_drv_cur->drv_ops.writereg != NULL))
 	{
-		printk("drv write(0x%x)=0x%x\n", addr, data);
+//		printk("drv write(0x%x)=0x%x\n", addr, data);
 		ret = s_drv_cur->drv_ops.writereg(usb_glue, addr, data);
 	}
 	else if ((s_drv_cur->drv_info.fields.os_type == DRV_INFO_FLAG_OS_TYPE_RTOS)

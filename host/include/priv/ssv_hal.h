@@ -32,7 +32,8 @@ typedef char             s8;
 #if 0 //(CONFIG_CHIP_ID==SSV6006B)
 #include <hal/SSV6006/firmware/SSV6006B/ssv6006_uart_bin.h>
 #elif (CONFIG_CHIP_ID==SSV6006C)
-#include <hal/SSV6006/firmware/SSV6006C/ssv6006_uart_bin.h>
+//#include <hal/SSV6006/firmware/SSV6006C/ssv6006_uart_bin.h>
+#include "ssv6006_uart_bin.h"
 #endif
 
 #define SSV_HAL_FW_BIN ssv6006_uart_bin

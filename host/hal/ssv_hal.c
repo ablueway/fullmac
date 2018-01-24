@@ -49,7 +49,6 @@ static bool _ssv_hal_register(const struct ssv_hal_ops *ssv_hal)
         {
             s_hal_array[i] = (struct ssv_hal_ops *)ssv_hal;
             s_hal_cnt++;
-            //LOG_PRINTF("%s() => : ok! s_hal_cnt = %d, i = %d, ssv_hal = (0x%08x, %s)\r\n", __FUNCTION__, s_hal_cnt, i, ssv_hal, ssv_hal->name);
             return TRUE;
         }
     }
@@ -58,6 +57,7 @@ static bool _ssv_hal_register(const struct ssv_hal_ops *ssv_hal)
     LOG_PRINTF("%s should never reach here!\r\n",__FUNCTION__);
     return FALSE;
 }
+
 #if 0
 static bool _ssv_hal_unregister(u16 i)
 {
@@ -1156,145 +1156,122 @@ u32 ssv_hal_process_hci_aggr_tx(void* tFrame, void* aggr_buf, u32* aggr_len)
 
 int ssv_hal_hci_aggr_en(HCI_AGGR_HW trx, bool en)
 {
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     if(NULL==s_hal_cur->hci_aggr_en)
     {
 		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
         return -1;
     }
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     return s_hal_cur->hci_aggr_en(trx, en);
 }
 int ssv_hal_download_fw(u8 *fw_bin, u32 len)
 {
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
+
     if(NULL==s_hal_cur->download_fw)
     {
 		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
         return -1;
     }
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     return s_hal_cur->download_fw(fw_bin,len);
 }
 
 int ssv_hal_accept_none_wsid_frame(void)
 {
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     if(NULL==s_hal_cur->accept_none_wsid)
     {
 		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
         return -1;
     }
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     return s_hal_cur->accept_none_wsid();
 }
 
 int ssv_hal_drop_none_wsid_frame(void)
 {
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
 	if(NULL==s_hal_cur->drop_none_wsid)
 	{		
 		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
 		return -1;
 	}
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     return s_hal_cur->drop_none_wsid();
 }
 
 int ssv_hal_drop_probe_request(bool IsDrop)
 {
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     if(NULL==s_hal_cur->drop_porbe_request)
     {
 		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
         return -1;
     }
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     return s_hal_cur->drop_porbe_request(IsDrop);
 }
 
 int ssv_hal_sta_rcv_all_bcn(void)
 {
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     if(NULL==s_hal_cur->sta_rcv_all_bcn)
     {
 		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
         return -1;
     }
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     return s_hal_cur->sta_rcv_all_bcn();
 }
 
 int ssv_hal_sta_rcv_specific_bcn(void)
 {
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     if(NULL==s_hal_cur->sta_rcv_specific_bcn)
     {
 		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
         return -1;
     }
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     return s_hal_cur->sta_rcv_specific_bcn();
 }
 
 int ssv_hal_sta_reject_bcn(void)
 {
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     if(NULL==s_hal_cur->sta_reject_bcn)
     {
 		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
         return -1;
     }
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     return s_hal_cur->sta_reject_bcn();
 }
 
 int ssv_hal_acs_rx_mgmt_flow(void)
 {
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     if(NULL==s_hal_cur->acs_rx_mgmt_flow)
     {
 		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
         return -1;
     }
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     return s_hal_cur->acs_rx_mgmt_flow();
 }
 
 int ssv_hal_ap_rx_mgmt_flow(void)
 {
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     if(NULL==s_hal_cur->ap_rx_mgmt_flow)
     {
 		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
         return -1;
     }
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
-    return s_hal_cur->ap_rx_mgmt_flow();
+	return s_hal_cur->ap_rx_mgmt_flow();
 }
 
 int ssv_hal_sconfig_rx_data_flow(void)
 {
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     if(NULL==s_hal_cur->sconfig_rx_data_flow)
     {
 		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
         return -1;
     }
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     return s_hal_cur->sconfig_rx_data_flow();
 }
 
 int ssv_hal_sta_rx_data_flow(void)
 {
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     if(NULL==s_hal_cur->sta_rx_data_flow)
     {
 		LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
         return -1;
     }
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
-    return s_hal_cur->sta_rx_data_flow();
+	return s_hal_cur->sta_rx_data_flow();
 }
 
 const char *ssv_hal_get_chip_name(void)

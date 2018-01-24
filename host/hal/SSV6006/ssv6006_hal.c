@@ -51,7 +51,7 @@
 #define FW_STATUS_HOST_CONFIRM_BIT   (1<<30)
 
 #define ENABLE_FW_SELF_CHECK
-//#define FW_BLOCK_SIZE                   (1024)
+#define FW_BLOCK_SIZE                   (1024)
 #define FW_CHECKSUM_INIT                (0x12345678)
 
 // ToDo Liam : replace it from header file.
@@ -612,8 +612,8 @@ static int _ssv6006_hal_init_mac(u8 *self_mac, bool fullInit)
     //LOG_PRINTF("1M2=%x\r\n",GET_STA_MAC_47_32);
 
     /**
-        * Reset all wsid table entry to invalid.
-        */
+     * Reset all wsid table entry to invalid.
+     */
 #if 0
     if(ret == TRUE) ret = MAC_REG_WRITE(ADR_WSID0, 0x00000000);
     if(ret == TRUE) ret = MAC_REG_WRITE(ADR_WSID1, 0x00000000);
@@ -680,7 +680,6 @@ static int _ssv6006_hal_init_mac(u8 *self_mac, bool fullInit)
         }
     }
 
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     if(g_host_cfg.usePA)
     {
         
@@ -691,9 +690,6 @@ static int _ssv6006_hal_init_mac(u8 *self_mac, bool fullInit)
 #if((RECOVER_ENABLE==1)&&(RECOVER_MECHANISM==1))
 	MAC_REG_SET_BITS(ADR_MASK_TYPHOST_INT_MAP,0,~(1<<27)); //Enable MS_TIMER 3
 #endif    
-
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
-
 #if(CONFIG_CHIP_ID==SSV6006B)
 	SET_MTX_DUR_RSP_TOUT_G(255); //for AMPDU, SET MAX TX Timeout duration
 #endif
@@ -709,18 +705,14 @@ static int _ssv6006_hal_init_mac(u8 *self_mac, bool fullInit)
     //Enable EDCA low threshold EDCA-3[8] EDCA-2[8]
     MAC_REG_WRITE(ADR_MB_THRESHOLD9, 0x00000808);
 #endif
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
+
     /**
         * Disable tx/rx ether trap table.
         */
 	MAC_REG_WRITE(ADR_TX_ETHER_TYPE_0, 0x00000000);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
 	MAC_REG_WRITE(ADR_TX_ETHER_TYPE_1, 0x00000000);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
 	MAC_REG_WRITE(ADR_RX_ETHER_TYPE_0, 0x00000000);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
 	MAC_REG_WRITE(ADR_RX_ETHER_TYPE_1, 0x00000000);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
 #if 0
     if(ret == TRUE) ret = MAC_REG_WRITE(ADR_TX_ETHER_TYPE_0, 0x00000000);
     if(ret == TRUE) ret = MAC_REG_WRITE(ADR_TX_ETHER_TYPE_1, 0x00000000);
@@ -733,7 +725,6 @@ static int _ssv6006_hal_init_mac(u8 *self_mac, bool fullInit)
         */
     /*lint -save -e732  Loss of sign (assignment) (int to unsigned int)*/
     hw_buf_ptr = ssv6006_hal_pbuf_alloc((s32)sizeof(struct ssv6006_hw_sec),(int)NOTYPE_BUF);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
 	/*lint -restore */
     if((hw_buf_ptr>>28) != 8)
     {
@@ -742,80 +733,62 @@ static int _ssv6006_hal_init_mac(u8 *self_mac, bool fullInit)
     	//WARN_ON(1);
     	return -1;
     }
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
-    if(gDeviceInfo->recovering != TRUE)
-        LOG_PRINTF("%s(): ssv6006 reserved space=0x%08x, size=%d\r\n",__FUNCTION__, hw_buf_ptr, sizeof(struct ssv6006_hw_sec));
+    if (gDeviceInfo->recovering != TRUE)
+        LOG_PRINTF("%s(): ssv6006 reserved space=0x%08x, size=%d\r\n",
+        	__FUNCTION__, hw_buf_ptr, sizeof(struct ssv6006_hw_sec));
 
 
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     /**
-        * Init ssv6200 hardware security table: clean the table.
-        * And set PKT_ID for hardware security.
-        */
+     * Init ssv6200 hardware security table: clean the table.
+     * And set PKT_ID for hardware security.
+     */
 
     hw_sec_key = hw_buf_ptr;
-    LOG_PRINTF("hw_sec_key(0x%x)\r\n",(u32)hw_sec_key);
 	//==>Section 1. Write Sec table to SRAM
     for(j=0; j<sizeof(struct ssv6006_hw_sec); j+=4) {
         MAC_REG_WRITE(hw_sec_key+j, 0);
     }
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     /*lint -save -e838*/
     regval = ((hw_sec_key >> 16) << SCRT_PKT_ID_SFT);
     MAC_REG_READ(ADR_SCRT_SET, regval);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
 	regval &= SCRT_PKT_ID_I_MSK;
 	regval |= ((hw_sec_key >> 16) << SCRT_PKT_ID_SFT);
 
 	MAC_REG_WRITE(ADR_SCRT_SET, regval);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     /*lint -restore*/
     /* set B mode ack/cts rate */
     //B_2M long preamble response 1M control rate
     SET_MTX_RESPFRM_RATE_01(0);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     //B_5.5M long preamble  response 1M control rate
     SET_MTX_RESPFRM_RATE_02(0);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     //B_11M long preamble  response 1M control rate
     SET_MTX_RESPFRM_RATE_03(0);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     //B_2M short preamble response 1M control rate
     SET_MTX_RESPFRM_RATE_11(0);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     //B_5.5M short preamble  response 1M control rate
     SET_MTX_RESPFRM_RATE_12(0);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     //B_11M short preamble  response 1M control rate
     SET_MTX_RESPFRM_RATE_13(0);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     /* set G mode ack/cts rate */
     //G_12M response 6M control rate
     SET_MTX_RESPFRM_RATE_92_B2(0x9090);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     //G_24M response 12M control rate
     SET_MTX_RESPFRM_RATE_94_B4(0x9292);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     /* set N mode ack/cts rate */
     //MCS1(LGI) response 6M control rate
     SET_MTX_RESPFRM_RATE_C1_E1(0x9090);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     //MCS3(LGI) response 12M control rate
     SET_MTX_RESPFRM_RATE_C3_E3(0x9292);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     //MCS1(SGI) response 6M control rate
     SET_MTX_RESPFRM_RATE_D1_F1(0x9090);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     //MCS3(SGI) response 12M control rate
     SET_MTX_RESPFRM_RATE_D3_F3(0x9292);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
 
     //-----------------------------------------------------------------------------------------------------------------------------------------
 
     //if(ret == TRUE) ret = MAC_REG_WRITE(0xca000800,0xffffffff);
     //if(ret == TRUE) ret = MAC_REG_WRITE(ADR_MIB_EN,0xffffffff);
 
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
 	MAC_REG_WRITE(ADR_MIB_EN,0xffffffff);
     //-----------------------------------------------------------------------------------------------------------------------------------------
     /* Set wmm parameter to EDCA Q4
@@ -832,22 +805,19 @@ static int _ssv6006_hal_init_mac(u8 *self_mac, bool fullInit)
     //The new queue is linked to irq number 18, the original queue is linked to irq number 19
     //Rate Report and BA trap to CPU through irq number 18, and others trap to CPU through 19
     //The priority of irq 18 is higher than irq 19
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     SET_TX_RX_TRAP_HW_ID_SELECT_ENABLE(1);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     SET_MTX_RATERPT_HWID(2);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     SET_BA_HW_ID(2);
-	LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
 	SET_BA_H_QUEUE_EN(1);
-    LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
-//exit:
-	//Load FW
+
+	/* origonal fw download */
     {
         extern bool platform_download_firmware(void);
-        if(platform_download_firmware() == FALSE)
+        if (platform_download_firmware() == FALSE)
             return -1;
     }
+
+
     LOG_PRINTF("%s()at line(%d)\n",__FUNCTION__,__LINE__);
     //MAC_REG_SET_BITS(ADR_WIFI_PHY_COMMON_ENABLE_REG, (1 << RG_PHY_MD_EN_SFT), RG_PHY_MD_EN_I_MSK);
     SET_RG_PHY_MD_EN(1);
@@ -1871,166 +1841,161 @@ extern struct ssv6xxx_usb_glue *usb_glue;
 
 int ssv6006_hal_download_fw(u8 *fw_bin, u32 fw_bin_len)
 {
-#define FW_START_SRAM_ADDR                  0x00000000
-#define FW_BLOCK_SIZE                       0x8000
-#define CHECKSUM_BLOCK_SIZE                 1024
-
-    int ret = 0;
-    u8   *fw_buffer = NULL;
-    u32   sram_addr = FW_START_SRAM_ADDR;
-    u32   block_count = 0;
-    u32   block_idx = 0;
-    u32   res_size;
     u8   *fw_data;
-
+    bool ret = FALSE;
+    u8   *fw_buffer = NULL;
+#ifdef ENABLE_FW_SELF_CHECK
     u32   checksum = FW_CHECKSUM_INIT;
-    u32   fw_checksum;
-    u32   retry_count = 3;
-    u32  *fw_data32;
-
-
-    // Allocate buffer firmware aligned with FW_BLOCK_SIZE and padding with 0xA5 in empty space.
-    fw_buffer = (u8 *)kzalloc(FW_BLOCK_SIZE, GFP_KERNEL);
-    if (fw_buffer == NULL) {
-		printk("Failed to allocate buffer for firmware.\n");
-        goto out;
+    u32   retry_count = 1;
+	u32  *fw_data32 = NULL;
+#else
+    int   writesize=0;
+    u32   retry_count = 1;
+#endif
+    int block_count = 0;
+    u32 res_size = 0;
+    u32 block_idx = 0;
+    u32 sram_addr = 0x00000000;	
+	u32 fw_clkcnt = 0;
+	u32 fw_checksum = 0;
+	
+    if((fw_bin==NULL)||(fw_bin_len==0))
+    {
+        LOG_PRINTF("%s():wrong input parameters\r\n",__FUNCTION__);
+        return -1;
     }
 
-    block_count = fw_bin_len / CHECKSUM_BLOCK_SIZE;
-    res_size = fw_bin_len % CHECKSUM_BLOCK_SIZE;
-	printk("block_count = %d,res_size = %d\n", block_count, res_size);
+  	fw_buffer = (u8 *)kzalloc(1024, GFP_KERNEL);
+   	if (fw_buffer == NULL) {
+		printk("Failed to allocate buffer for firmware.\n");
+		return -1;
+    }
+
+    block_count = fw_bin_len / 1024;
+    res_size = fw_bin_len % 1024;
+	
+	printk("block_count is 0x%x\n",block_count);
+	printk("res_size is 0x%x\n",res_size);
     {
-    	int word_count = (int)(block_count * CHECKSUM_BLOCK_SIZE / sizeof(u32));
+    	int word_count = (int)(block_count * 1024 / sizeof(u32));
         int i;
+		printk("word_count is 0x%x\n",word_count);
+		
         fw_data32 = (u32 *)fw_bin;
         for (i = 0; i < word_count; i++)
         	checksum += fw_data32[i];
 
+//		printk("checksum is 0x%x\n",checksum);
+
         if (res_size) {
-        	memset(fw_buffer, 0xA5, CHECKSUM_BLOCK_SIZE);
-            memcpy(fw_buffer, &fw_bin[block_count * CHECKSUM_BLOCK_SIZE], res_size);
+        	memset(fw_buffer, 0xA5, 1024);
+            memcpy(fw_buffer, &fw_bin[block_count * 1024], res_size);
 
             // Accumulate checksum for the incomplete block
-            word_count = (int)(CHECKSUM_BLOCK_SIZE / sizeof(u32));
+            word_count = (int)(1024 / sizeof(u32));
             fw_data32 = (u32 *)fw_buffer;
             for (i = 0; i < word_count; i++) {
             	checksum += fw_data32[i];
             }
         }
 	}
+	
+	// Calculate the final checksum.
+	checksum = ((checksum >> 24) + (checksum >> 16) + (checksum >> 8) + checksum) & 0x0FFF;
+	checksum = ((checksum << 16) & 0x0FFF0000);
+	printk("final checksum is 0x%x\n", checksum);
 
-    // Calculate the final checksum.
-    checksum = ((checksum >> 24) + (checksum >> 16) + (checksum >> 8) + checksum) & 0x0FF;
-    checksum <<= 16;
 
-    do {               
-    	// Disable MCU (USB ROM code must be alive for downloading FW, so USB doesn't do it)        
-		if (s_drv_cur->drv_info.fields.hw_type != DRV_INFO_FLAG_HW_TYPE_USB)
+	printk("start to download fw\n");
+
+    do {
+		// Disable MCU (USB ROM code must be alive for downloading FW, so USB doesn't do it)
+#if 0
+		if (!(interface == SSV_HWIF_INTERFACE_USB)) {
+		    ret = SSV_LOAD_FW_DISABLE_MCU(hci_ctrl);
+           if (ret == -1)
+               goto out;
+       } 
+#endif
+
+		// Write firmware to SRAM address 0
+        printk("Writing firmware to SSV6XXX sram addr 0\n");
+//        memset(fw_buffer, 0xA5, 1024);
+
+		for (block_idx = 0, fw_data = fw_bin, sram_addr = 0; 
+			block_idx < block_count; 
+			block_idx++, fw_data += 1024, sram_addr += 1024) 
 		{
-            ret = _ssv6006_load_fw_disable_mcu();
-            if (ret == -1) {
-				printk("disable_mcu fail!!!\n");
-	            goto out;
-        	}
-		}
-
-        // Write firmware to SRAM address 0
-        block_count = fw_bin_len / FW_BLOCK_SIZE;
-        res_size = fw_bin_len % FW_BLOCK_SIZE;
-
-		printk("Writing %d blocks to SSV6XXX...\n", block_count);
-        for (block_idx = 0, fw_data = (u8 *)fw_bin, sram_addr = 0;block_idx < block_count;
-        		block_idx++, fw_data += FW_BLOCK_SIZE, sram_addr += FW_BLOCK_SIZE) 
-		{
-
-        	memcpy(fw_buffer, fw_data, FW_BLOCK_SIZE);
-			ret = s_drv_cur->drv_ops.load_fw(usb_glue, sram_addr, 
-								(u8 *)fw_buffer, FW_BLOCK_SIZE);
-            if (ret!= 0)
+			memcpy(fw_buffer, fw_data, 1024);
+			ret = s_drv_cur->drv_ops.load_fw(usb_glue, sram_addr, (u8 *)fw_buffer, 1024);
+            if (ret != 0)
         	{
 				printk("fw download by control transfer fial!!\n");
 	        	break;
         	}
-       	}
-        
+		}
+		
 		if(res_size) {
-			memset(fw_buffer, 0xA5, FW_BLOCK_SIZE);
-            memcpy(fw_buffer, &fw_bin[block_count * FW_BLOCK_SIZE], res_size);
-            if ((ret = s_drv_cur->drv_ops.load_fw(usb_glue, sram_addr, (u8 *)fw_buffer,
-					((res_size/CHECKSUM_BLOCK_SIZE)+1)*CHECKSUM_BLOCK_SIZE)) != 0)
+			memset(fw_buffer, 0xA5, 1024);
+            memcpy(fw_buffer, &fw_bin[block_count * 1024], res_size);
+			ret = s_drv_cur->drv_ops.load_fw(usb_glue, sram_addr, (u8 *)fw_buffer, (((res_size/1024) + 1) * 1024));
+            if (ret != 0)
         	{
-				printk("fw download by control transfer fial!!\n");
-				break;
+				printk("res_size fw download by control transfer fial!!\n");
+	        	break;
         	}
-        }
+        }        
 
         if (ret == 0) {
             // Reset CPU for USB switching ROM to firmware
-            if (s_drv_cur->drv_info.fields.hw_type == DRV_INFO_FLAG_HW_TYPE_USB)
-			{
-                ret = ssv6006c_reset_cpu();
-	            if (ret == -1) {
-					printk("reset_mcu fail!!!\n");
-		            goto out;
-	        	}
-            }
-			
-			_ssv6006_set_sram_mode(SRAM_MODE_ILM_160K_DLM_32K);
-
-            
-        	block_count = fw_bin_len / CHECKSUM_BLOCK_SIZE;
-            res_size = fw_bin_len % CHECKSUM_BLOCK_SIZE;
-
-			if (res_size)
+            ret = ssv6006c_reset_cpu();
+            if (ret == -1) {
+				printk("reset cpu fail!\n");
+	        	break;
+        	}
+		
+            _ssv6006_set_sram_mode(SRAM_MODE_ILM_160K_DLM_32K);
+				
+            if(res_size)
             	block_count++;
 
-			printk("block_count = %d\n", block_count);
-			// Inform FW that how many blocks is downloaded such that FW can calculate the checksum.
-			MAC_REG_WRITE(FW_STATUS_REG, (block_count << 16));
-            // Release reset to let CPU run.
-            
-			_ssv6006_load_fw_enable_mcu();
 
-			printk("Firmware loaded\n");
+			// Inform FW that how many blocks is downloaded such that FW can calculate the checksum.
+			MAC_REG_WRITE(ADR_TX_SEG, (block_count << 16));
+			MAC_REG_READ(ADR_TX_SEG, fw_clkcnt);
+			printk("(block_count << 16) = 0x%x, reg = 0x%x\n", (block_count << 16), fw_clkcnt);
+
+            // Release reset to let CPU run.
+			_ssv6006_load_fw_enable_mcu();
+			
+			printk("Firmware loaded done\n");
+
             // Wait FW to calculate checksum.
             msleep(50);
+
             // Check checksum result and set to complement value if checksum is OK.
-			MAC_REG_READ(FW_STATUS_REG, fw_checksum);
-
-			printk("fw_checksum = 0x%x\n",fw_checksum);
-			
-			fw_checksum = fw_checksum & FW_STATUS_MASK;
+			MAC_REG_READ(ADR_TX_SEG, fw_checksum);
+            fw_checksum = fw_checksum & 0x0FFF0000;
             if (fw_checksum == checksum) {
-				MAC_REG_WRITE(FW_STATUS_REG, (~checksum & FW_STATUS_MASK));
-                ret = 0;
-				printk("Firmware check OK.\n");
+            	MAC_REG_WRITE(ADR_TX_SEG, ((~checksum & 0x0FFF0000) | (1 << 30)));
+				ret = 0;
+				printk("Firmware check OK.%04x = %04x\n", fw_checksum, checksum);
                 break;
-            } 
-			else 
-			{
-				ret = -1;
+           	} else {
 				printk("FW checksum error: %04x != %04x\n", fw_checksum, checksum);
-            }
-     	} else {
+                ret = -1;
+           	}
+      	} else {
+			printk("Firmware download failed. ret (%d)\n", ret);
             ret = -1;
-			printk("Firmware download failed. (%d)\n", ret);
-       	}
-	} while (--retry_count);
+        }
+  	} while (--retry_count);
 
-    if (ret)
-    	goto out;
-    
-//    hci_ctrl->redownload = 1;
-    
-    ret = 0;    
-
-out:
-
-    if (fw_buffer != NULL)
-        kfree(fw_buffer);
+	if (fw_buffer != NULL)
+		kfree(fw_buffer);
 
     return ret;
-}
+}	
 
 int ssv6006_hal_tx_loopback_done(u8 *dat)
 {
