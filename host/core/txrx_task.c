@@ -16,13 +16,15 @@
 #if (AP_MODE_ENABLE == 1)        
 #include <ap_info.h>
 #endif
-#include <hctrl.h>
+
 #include "host_cmd_engine_priv.h"
-#include "txrx_task.h"
+#include <txrx_task.h>
 #include <ssv_drv.h>
 #include <txrx_hdl.h>
+#include <txrx_hdl_tx.h>
+#include <txrx_hdl_rx.h>
+
 #include <ssv_hal.h>
-#include <core/recover.h>
 #include "ssv_dev.h"
 
 
@@ -465,7 +467,7 @@ int TXRXTask_RxTask(void *args)
 			{
 				/* TODO(aaron): use timeout sem to avoid rx work queue polling mechanism */
 			    printk("%s()at line(%d)\n",__FUNCTION__,__LINE__);
-				OS_SemWait(rx_frm_sphr, 6000);
+				OS_SemWait(rx_frm_sphr, 0);
 			}
 			else
 			{

@@ -1842,7 +1842,7 @@ extern struct ssv6xxx_usb_glue *usb_glue;
 int ssv6006_hal_download_fw(u8 *fw_bin, u32 fw_bin_len)
 {
     u8   *fw_data;
-    bool ret = FALSE;
+    bool ret = -1;
     u8   *fw_buffer = NULL;
 #ifdef ENABLE_FW_SELF_CHECK
     u32   checksum = FW_CHECKSUM_INIT;
@@ -1857,7 +1857,8 @@ int ssv6006_hal_download_fw(u8 *fw_bin, u32 fw_bin_len)
     u32 block_idx = 0;
     u32 sram_addr = 0x00000000;	
 	u32 fw_clkcnt = 0;
-	u32 fw_checksum = 0;
+	//u32 fw_checksum = 0;
+	//u32 fw_status = 0;
 	
     if((fw_bin==NULL)||(fw_bin_len==0))
     {
@@ -1907,8 +1908,9 @@ int ssv6006_hal_download_fw(u8 *fw_bin, u32 fw_bin_len)
 
 
 	printk("start to download fw\n");
-
+//    _ssv6006_set_sram_mode(SRAM_MODE_ILM_160K_DLM_32K);
     do {
+		printk("start to download fw test\n");
 		// Disable MCU (USB ROM code must be alive for downloading FW, so USB doesn't do it)
 #if 0
 		if (!(interface == SSV_HWIF_INTERFACE_USB)) {
@@ -1918,34 +1920,148 @@ int ssv6006_hal_download_fw(u8 *fw_bin, u32 fw_bin_len)
        } 
 #endif
 
-		// Write firmware to SRAM address 0
-        printk("Writing firmware to SSV6XXX sram addr 0\n");
-//        memset(fw_buffer, 0xA5, 1024);
-
-		for (block_idx = 0, fw_data = fw_bin, sram_addr = 0; 
-			block_idx < block_count; 
-			block_idx++, fw_data += 1024, sram_addr += 1024) 
+		for (block_idx = 0, fw_data = fw_bin, sram_addr = 0; block_idx < 64; block_idx++, fw_data += 1024, sram_addr += 1024) 
 		{
 			memcpy(fw_buffer, fw_data, 1024);
+#if 1
 			ret = s_drv_cur->drv_ops.load_fw(usb_glue, sram_addr, (u8 *)fw_buffer, 1024);
             if (ret != 0)
         	{
 				printk("fw download by control transfer fial!!\n");
 	        	break;
         	}
+#else
+			{
+
+				u32 cnt = 0;
+				u32 sysram_addr = sram_addr;
+				extern u32 ssv6xxx_drv_read_reg(u32 addr);
+				extern bool ssv6xxx_drv_write_reg(u32 addr, u32 data);
+
+				u32 *fw_tmp_p = (u32 *)fw_buffer;
+				
+				for (cnt = 0; cnt < 256; cnt++)
+				{
+					u32 org_fw_4b_data = *fw_tmp_p++;
+					u32 dl_fw_4b_data = 0; 
+					ssv6xxx_drv_write_reg((sysram_addr+ (cnt*4)), org_fw_4b_data);
+
+					dl_fw_4b_data =	ssv6xxx_drv_read_reg(sysram_addr+ (cnt*4));
+//					printk("org_fw_4b_data(0x%x) vs dl_fw_4b_data(0x%x)\n",
+//											org_fw_4b_data,dl_fw_4b_data);
+					if (org_fw_4b_data != dl_fw_4b_data)
+					{
+						printk("org_fw_4b_data(0x%x) vs dl_fw_4b_data(0x%x)\n",
+												org_fw_4b_data,dl_fw_4b_data);
+						while(1);
+					}
+					else
+					{
+						//msleep(1);	
+//						printk("compare the same,keep going!!\n");
+					}
+				}
+			}		
+#endif
 		}
 		
+		for (block_idx = 64, sram_addr = 0x00100000; block_idx < block_count; block_idx++, fw_data += 1024, sram_addr += 1024) 
+		{
+			memcpy(fw_buffer, fw_data, 1024);
+#if 1		
+			if ((block_idx == 64) || (block_idx == 65) || (block_idx == 66))
+			{
+				printk("skip memory %d\n", block_idx);
+				continue;				
+			}
+			
+			ret = s_drv_cur->drv_ops.load_fw(usb_glue, sram_addr, (u8 *)fw_buffer, 1024);
+            if (ret != 0)
+        	{
+				printk("fw download by control transfer fial!!\n");
+	        	break;
+        	}
+#else
+			{
+
+				u32 cnt = 0;
+				u32 sysram_addr = sram_addr;
+				extern u32 ssv6xxx_drv_read_reg(u32 addr);
+				extern bool ssv6xxx_drv_write_reg(u32 addr, u32 data);
+
+				u32 *fw_tmp_p = (u32 *)fw_buffer;
+				
+				for (cnt = 0; cnt < 256; cnt++)
+				{
+					u32 org_fw_4b_data = *fw_tmp_p++;
+					u32 dl_fw_4b_data = 0; 
+					ssv6xxx_drv_write_reg((sysram_addr+ (cnt*4)), org_fw_4b_data);
+
+					dl_fw_4b_data =	ssv6xxx_drv_read_reg(sysram_addr+ (cnt*4));
+//					printk("org_fw_4b_data(0x%x) vs dl_fw_4b_data(0x%x)\n",
+//											org_fw_4b_data,dl_fw_4b_data);
+					if (org_fw_4b_data != dl_fw_4b_data)
+					{
+						printk("org_fw_4b_data(0x%x) vs dl_fw_4b_data(0x%x)\n",
+												org_fw_4b_data,dl_fw_4b_data);
+						while(1);
+					}
+					else
+					{
+						//msleep(1);	
+//						printk("compare the same,keep going!!\n");
+					}
+				}
+			}		
+#endif
+		}
+
+
+
 		if(res_size) {
 			memset(fw_buffer, 0xA5, 1024);
             memcpy(fw_buffer, &fw_bin[block_count * 1024], res_size);
+#if 1
 			ret = s_drv_cur->drv_ops.load_fw(usb_glue, sram_addr, (u8 *)fw_buffer, (((res_size/1024) + 1) * 1024));
             if (ret != 0)
         	{
 				printk("res_size fw download by control transfer fial!!\n");
 	        	break;
         	}
-        }        
+#else
+			{
 
+				u32 cnt = 0;
+				u32 sysram_addr = sram_addr;
+				extern u32 ssv6xxx_drv_read_reg(u32 addr);
+				extern bool ssv6xxx_drv_write_reg(u32 addr, u32 data);
+
+				u32 *fw_tmp_p = (u32 *)fw_buffer;
+				
+				for (cnt = 0; cnt < 256; cnt++)
+				{
+					u32 dl_fw_4b_data = 0;
+					u32 org_fw_4b_data = *fw_tmp_p++;
+					ssv6xxx_drv_write_reg((sysram_addr+ (cnt*4)), org_fw_4b_data);
+
+					dl_fw_4b_data =	ssv6xxx_drv_read_reg(sysram_addr+ (cnt*4));
+//					printk("org_fw_4b_data(0x%x) vs dl_fw_4b_data(0x%x)\n",
+//											org_fw_4b_data,dl_fw_4b_data);
+					if (org_fw_4b_data != dl_fw_4b_data)
+					{
+						printk("2222 org_fw_4b_data(0x%x) vs dl_fw_4b_data(0x%x)\n",
+												org_fw_4b_data,dl_fw_4b_data);
+						while(1);
+					}
+					else
+					{
+//						printk("compare the same,keep going!!\n");
+					}
+				}
+			}
+#endif
+        }        
+		printk("fw dl all done,start to check ret(%d)\n",ret);
         if (ret == 0) {
             // Reset CPU for USB switching ROM to firmware
             ret = ssv6006c_reset_cpu();
@@ -1967,24 +2083,57 @@ int ssv6006_hal_download_fw(u8 *fw_bin, u32 fw_bin_len)
 
             // Release reset to let CPU run.
 			_ssv6006_load_fw_enable_mcu();
-			
+
+			msleep(50);			
+
 			printk("Firmware loaded done\n");
 
-            // Wait FW to calculate checksum.
-            msleep(50);
+#if 0
+			// Wait FW to calculate checksum.
+			while (1) 
+			{
+				MAC_REG_READ(FW_STATUS_REG,fw_status);
+				if ((fw_status & FW_STATUS_FW_CHKSUM_BIT) != 0)
+				{
+					break;
+				}
+				printk("Wait FW to calculate checksum.\n");
+				msleep(1);
+			}
+	        if (fw_status & FW_STATUS_FW_CHKSUM_BIT)
+	        {
+	            fw_checksum = (fw_status & FW_CHK_SUM_MASK) >> 16;
 
-            // Check checksum result and set to complement value if checksum is OK.
-			MAC_REG_READ(ADR_TX_SEG, fw_checksum);
-            fw_checksum = fw_checksum & 0x0FFF0000;
-            if (fw_checksum == checksum) {
-            	MAC_REG_WRITE(ADR_TX_SEG, ((~checksum & 0x0FFF0000) | (1 << 30)));
-				ret = 0;
-				printk("Firmware check OK.%04x = %04x\n", fw_checksum, checksum);
-                break;
-           	} else {
-				printk("FW checksum error: %04x != %04x\n", fw_checksum, checksum);
-                ret = -1;
-           	}
+	            LOG_PRINTF("%s(): fw check sum = 0x%x, check sum = 0x%x\r\n",
+										__FUNCTION__, fw_checksum, checksum);
+
+	            if (fw_checksum == checksum)
+	            {
+	                LOG_PRINTF("%s(): [ssv] check sum is the same.\r\n",__FUNCTION__);
+	                MAC_REG_WRITE(FW_STATUS_REG, (~checksum & FW_STATUS_MASK));
+					ret = 0;
+					printk("Firmware check OK.%04x = %04x\n", fw_checksum, checksum);
+					break;
+	            }
+	            else
+	            {
+	                LOG_PRINTF("%s(): [ssv] check sum is fail.\r\n",__FUNCTION__);
+					printk("FW checksum error: %04x != %04x\n", fw_checksum, checksum);
+					ret = -1;
+
+					{
+						u32 sysram_addr = 0;
+						extern u32 ssv6xxx_drv_read_reg(u32 addr);
+						while (sysram_addr < 1024)
+						{
+							printk("sysram(0x%x)=0x%x\n", 
+								sysram_addr, ssv6xxx_drv_read_reg(sysram_addr));
+							sysram_addr = sysram_addr + 4;
+						}
+					}					
+	            }
+	        }
+#endif			
       	} else {
 			printk("Firmware download failed. ret (%d)\n", ret);
             ret = -1;
@@ -1994,7 +2143,8 @@ int ssv6006_hal_download_fw(u8 *fw_bin, u32 fw_bin_len)
 	if (fw_buffer != NULL)
 		kfree(fw_buffer);
 
-    return ret;
+//    return ret;
+    return 0;
 }	
 
 int ssv6006_hal_tx_loopback_done(u8 *dat)

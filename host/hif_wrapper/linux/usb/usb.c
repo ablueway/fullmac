@@ -556,6 +556,7 @@ static int ssv_usb_probe(struct usb_interface *interface,
 	usb_glue->interface = interface;
 	usb_glue->dev_ready = true;
 
+		
 	/* Tell PM core that we don't need the card to be powered now */ 
 //	p_hif_data = &usb_glue->hif_data;
 	memset(p_hif_data, 0, sizeof(struct ssv_hif_data));
@@ -635,8 +636,9 @@ static int ssv_usb_probe(struct usb_interface *interface,
 
 	ssv6xxx_usb_get_chip_id(usb_glue);
 
+	p_hif_data->log_level = 0x1;
+
 	schedule_work(&usb_glue->dev_init);	 
-	
 	return 0;
 
 error:

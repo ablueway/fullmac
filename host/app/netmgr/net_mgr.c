@@ -290,6 +290,8 @@ void ssv_netmgr_init_netdev(bool default_cfg)
     netmgr_wifi_link_register_cb(netdev_link_up_cb, netdev_link_down_cb);
 }
 
+extern u8 g_total_task_cnt;
+extern struct task_struct *g_os_task_tbl[10];
 
 void netmgr_task_init(void)
 {
@@ -310,6 +312,8 @@ void netmgr_task_init(void)
         LOG_PRINTF("OS_TaskCreate faild\r\n");
         return;
     }
+	
+	wake_up_process(g_os_task_tbl[g_total_task_cnt-1]);
 }
 
 void netmgr_wifi_reg_cbs(void)

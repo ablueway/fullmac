@@ -25,7 +25,7 @@
 /*TODO(aaron): need to know how many task does the redbull host needed ? */
 u8 g_total_task_cnt = 0;
 #define MAX_OS_TASK_NUM 	(10)
-static struct task_struct *g_os_task_tbl[MAX_OS_TASK_NUM] = {NULL};
+struct task_struct *g_os_task_tbl[MAX_OS_TASK_NUM] = {NULL};
 
 volatile u8 gOsFromISR;
 //static u8 os_init_flag = 0;
@@ -95,10 +95,11 @@ OS_APIs s32 OS_TaskCreate(OsTask task, const char *name, u32 stackSize,
 		printk("kernel thread create fail ! task_num(%d)\n", g_total_task_cnt);
 		return OS_FAILED;
 	}
-#if 1
+#if 0
 	wake_up_process(g_os_task_tbl[g_total_task_cnt]);
 #endif
 	g_total_task_cnt++;
+
 	return OS_SUCCESS;
 }
 
@@ -208,9 +209,9 @@ OS_APIs bool OS_SemWait(OsSemaphore Sem , u16 timeout_ticks)
 	}
 	else if (timeout_ticks == 0)
 	{
-		return down_interruptible(Sem);
-		//down(Sem);
-		//return OS_SUCCESS;
+		//return down_interruptible(Sem);
+		down(Sem);
+		return OS_SUCCESS;
 	}
 	return OS_FAILED;
 }

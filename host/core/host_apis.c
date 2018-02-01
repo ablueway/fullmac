@@ -21,6 +21,10 @@
 #include <ssv_timer.h>
 #include <dev.h>
 #include <txrx_hdl.h>
+#include <txrx_hdl_tx.h>
+#include <txrx_hdl_rx.h>
+
+
 #include <cmd_def.h>
 #include <ssv_dev.h>
 #include <ssv_hal.h>
@@ -87,24 +91,6 @@ void sta_mode_off(u8 vif_idx);
 void ap_mode_off(u8 vif_idx);
 void sconfig_mode_off(u8 vif_idx);
 extern struct Host_cfg g_host_cfg;
-
-
-struct qos_ctrl_st {
-    u16                 tid:4;
-    u16                 bit4:1;
-    u16                 ack_policy:2;
-    u16                 rsvd:1;
-    u16                 bit8_15:8;
-};
-
-struct ht_ctrl_st {
-	u32 				ht;
-};
-
-
-struct a4_ctrl_st {
-	ETHER_ADDR			a4;
-};
 
 
 vif_state get_current_vif_state(void)

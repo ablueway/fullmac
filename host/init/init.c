@@ -596,6 +596,7 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
     ssv6xxx_wifi_cfg();
 #endif
 	//OS_StartScheduler();
-
+	
+    LOG_PRINTF("%s at(%d)\n", __FUNCTION__, __LINE__);
     return res;
 }

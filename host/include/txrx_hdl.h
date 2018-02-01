@@ -12,30 +12,48 @@
 
 struct wifi_flt
 {
-    u8 fc_b7b2;
-    u8 b7b2mask;
-    data_handler cb_fn;
+	u8 fc_b7b2;
+	u8 b7b2mask;
+	data_handler cb_fn;
 };
 
 struct eth_flt
 {
-    u16 ethtype;
-    data_handler cb_fn;    
+	u16 ethtype;
+	data_handler cb_fn;    
 };
 
-bool TxHdl_prepare_wifi_txreq(u8 vif_idx, void *frame, u32 len, bool f80211, u32 priority, u8 tx_dscrp_flag);
-bool TxHdl_FrameProc(void *frame, bool apFrame, u32 priority, u32 flags, ssv_vif* vif);
-s32 TxHdl_FlushFrame(void);
+struct qos_ctrl_st {
+	u16 tid:4;
+	u16 bit4:1;
+	u16 ack_policy:2;
+	u16 rsvd:1;
+	u16 bit8_15:8;
+};
 
-s32 TxRxHdl_Init(void);
-s32 RxHdl_FrameProc(void* frame);
-s32 RxHdl_SetWifiRxFlt(struct wifi_flt *flt, ssv6xxx_cb_action act);
-s32 RxHdl_SetEthRxFlt(struct eth_flt *flt, ssv6xxx_cb_action act);
-void ieee80211_release_reorder_frames(struct rx_ba_session_desc *tid_agg_rx,
-	u16 head_seq_num);
+struct ht_ctrl_st {
+	u32 ht;
+};
+
+
+struct a4_ctrl_st {
+	ETHER_ADDR a4;
+};
+
+
+#define SEQ_MODULO 0x1000
+#define SEQ_MASK   0xfff
+
+void ieee80211_release_reorder_frame(struct rx_ba_session_desc *tid_agg_rx, int index);
+void ieee80211_release_reorder_frames(struct rx_ba_session_desc *tid_agg_rx, u16 head_seq_num);
+void ieee80211_sta_reorder_release(struct rx_ba_session_desc *tid_agg_rx);
+void ieee80211_rx_reorder_ampdu(void *frame);
 void ieee80211_delete_ampdu_rx(u8 wsid);
 void ieee80211_delete_all_ampdu_rx(void);
+void timer_sta_reorder_release(void* data1, void* data2);
 void ieee80211_addba_handler(void *data);
 
+s32 TxRxHdl_Init(void);
 
-#endif //_TXRX_HDL_H
+
+#endif
