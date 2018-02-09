@@ -153,6 +153,13 @@ typedef struct DeviceInfo{
     u32 fw_timer_interrupt;
 } DeviceInfo_st;
 
+struct dev_info_wrapper
+{
+	struct DeviceInfo *g_dev_info;
+};
+
+
+
 extern DeviceInfo_st *gDeviceInfo;
 
 struct rcs_info

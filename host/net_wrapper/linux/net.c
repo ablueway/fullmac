@@ -4,8 +4,13 @@
 *  All Rights Reserved
 */
 #include "os.h"
+
+#ifdef __linux__
 #include <linux/byteorder/generic.h>
-//#include <net/cfg80211.h>
+#include <net/cfg80211.h>
+#endif
+#include <linux/byteorder/generic.h>
+
 
 #include <host_apis.h>
 #include <net_mgr.h>
@@ -506,12 +511,12 @@ static const struct net_device_ops net_netdev_ops = {
 	.ndo_start_xmit = ssv_netdev_start_xmit,	
 };
 
-int net_netdev_ops_attach(ssv_vif *ifp, bool rtnl_locked)
+int net_netdev_ops_attach(ssv_vif *vif, bool rtnl_locked)
 {
 	s32 err;
-	NET_DEV *ndev = ifp->net_dev;;
+	NET_DEV *ndev = vif->net_dev;;
 
-	printk("Enter, bsscfgidx=%d mac=%pM\n", ifp->bsscfgidx, ifp->self_mac);
+	printk("Enter, bsscfgidx=%d mac=%pM\n", vif->bsscfgidx, vif->self_mac);
 
 	/* set appropriate operations */
 	ndev->netdev_ops = &net_netdev_ops;
@@ -523,7 +528,7 @@ int net_netdev_ops_attach(ssv_vif *ifp, bool rtnl_locked)
 //	ndev->wireless_handlers = 
 
 	/* set the mac address */
-	memcpy(ndev->dev_addr, ifp->self_mac, ETH_ALEN);
+	memcpy(ndev->dev_addr, vif->self_mac, ETH_ALEN);
 
 	if (rtnl_locked)
 		err = register_netdevice(ndev);
@@ -565,12 +570,15 @@ int net_creat_if(s32 bsscfgidx, s32 ifidx, const char *name, u8 *mac_addr)
 
 	printk("allocate netdev interface\n");
 	/* Allocate netdev, including space for private structure */
-	ndev = alloc_netdev(sizeof(struct DeviceInfo *), name, ether_setup);
+	ndev = alloc_netdev(sizeof(struct DeviceInfo), name, ether_setup);
 	if (!ndev)
 		return -1;
 
 	ndev->destructor = net_free_netdev;
-	g_dev_info = netdev_priv(ndev);	
+
+	/* record the g_dev_info to global device info object pointer */
+	gDeviceInfo = netdev_priv(ndev);	
+	
 	/* record the global device info object pointer*/
 	g_dev_info = gDeviceInfo;
 
@@ -588,16 +596,16 @@ int net_creat_if(s32 bsscfgidx, s32 ifidx, const char *name, u8 *mac_addr)
 	return 0;
 }
 
+extern struct wiphy *net_cfg80211_init(size_t priv_data_len);
+extern int net_cfg80211_register(struct wiphy *wiphy);
 
 int net_init(void *config)
 {
 	net_creat_if(0, 0, "wlan%d", NULL);	
 
-	net_cfg80211_init(size_t priv_data_len);
+	net_cfg80211_register(net_cfg80211_init(sizeof(struct dev_info_wrapper)));
 
-	net_cfg80211_register(struct wiphy *wiphy);
-
-	int net_netdev_ops_attach(ssv_vif *ifp, bool rtnl_locked);
+	net_netdev_ops_attach(&gDeviceInfo->vif[0], FALSE);
 
 	return 0;
 }

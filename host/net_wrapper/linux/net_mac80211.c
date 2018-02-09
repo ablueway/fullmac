@@ -14,6 +14,7 @@
 #include <net/cfg80211.h>
 
 #include <linux/rtnetlink.h>
+#include "dev.h"
 
 #define NUM_NL80211_BANDS	3
 
@@ -241,6 +242,7 @@ struct wiphy *net_cfg80211_init(size_t priv_data_len)
 {
 	int priv_size;
 	struct wiphy *wiphy;
+	struct dev_info_wrapper *p_dev_info_wrap;
 
 	/* Ensure 32-byte alignment of our private data and hw private data.
 	 * We use the wiphy priv data for both our ieee80211_local and for
@@ -251,7 +253,7 @@ struct wiphy *net_cfg80211_init(size_t priv_data_len)
 	 * +----------------------------+
 	 * | struct wiphy	    	 	|
 	 * +----------------------------+
-	 * | driver's private data(TBD) |
+	 * | struct dev_info_wrapper 	|
 	 * +----------------------------+
 	 *
 	 */
@@ -282,7 +284,9 @@ struct wiphy *net_cfg80211_init(size_t priv_data_len)
 	wiphy->bss_priv_size = sizeof(struct ieee80211_bss);
 
 	/* TODO(aaron): need to store cfg_priv data, we need record wiphy object */
-	//cfg_priv = wiphy_priv(wiphy);
+	p_dev_info_wrap = (struct dev_info_wrapper *)wiphy_priv(wiphy);
+	p_dev_info_wrap->g_dev_info = gDeviceInfo;
+
 	//cfg_priv.wiphy = wiphy;
 
 	wiphy->ht_capa_mod_mask = &net_80211_ht_capa_mod_mask;

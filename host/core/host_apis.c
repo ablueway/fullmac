@@ -619,12 +619,15 @@ H_APIs ssv6xxx_result ssv6xxx_wifi_init(void)
     u32 i,j;
 
     res = CmdEng_Init();
-    gDeviceInfo = (DeviceInfo_st *)MALLOC(sizeof(DeviceInfo_st));
+
+#if 0
+	gDeviceInfo = (DeviceInfo_st *)MALLOC(sizeof(DeviceInfo_st));
     if (gDeviceInfo == NULL)
     {
         res = SSV6XXX_NO_MEM;
         goto END;
     }
+#endif
 
     MEMSET((void *)gDeviceInfo, 0 , sizeof(DeviceInfo_st));
     gDeviceInfo->vif[0].hw_mode = SSV6XXX_HWM_INVALID;
