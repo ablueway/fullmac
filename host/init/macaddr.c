@@ -72,8 +72,9 @@ int ssv6xxx_get_cust_mac(u8 *mac)
         }
     }
 #endif//CONFIG_RANDOM_MAC ==1
+#if(CONFIG_EFUSE_MAC ==1)
 done:
-
+#endif
     LOG_PRINTF("[Info ] use \"%s\" to get mac address \r\n",mac_method);
 	LOG_PRINTF("MAC= %x:%x:%x:%x:%x:%x\r\n",mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
     return 0;

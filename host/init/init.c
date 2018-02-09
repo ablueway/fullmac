@@ -536,7 +536,7 @@ int ssv6xxx_dev_init(ssv6xxx_hw_mode hmode)
        g_host_cfg.pool_sec_size = POOL_SEC_SIZE(16) SSV_TMR_MAX(24) */
 	ASSERT(msg_evt_init(MAC_EVENT_COUNT) == OS_SUCCESS);
 
-#if (CONFIG_USE_LWIP_PBUF == 0)    
+#if (CONFIG_USE_LWIP_PBUF == 0)  
 	ASSERT(PBUF_Init(POOL_SIZE) == OS_SUCCESS);
 #endif
 

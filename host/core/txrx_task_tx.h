@@ -13,7 +13,7 @@
 typedef struct frameList
 {
     struct ssv_llist  _list;
-    void *frame; //store the address of cmd
+    void *frame; //store the address of cmd/pkt
 } FrmL;
 
 

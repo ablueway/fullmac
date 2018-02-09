@@ -56,10 +56,10 @@ typedef int (*reg_fn)(eth_input_fn);
 typedef void (*netdev_link_callback_t)(void *dat);
 #define netstack_inet_addr(cp)         netstack_ipaddr_addr(cp)
 
-// Transfer L2 packet to netstack
+// Transfer L2 packet to L3
 int netstack_input(void *data, u32 len, u8 vif_idx);
 
-// Transfer netstack packet to L2
+// Transfer L3 packet to L2
 int netstack_output(void* net_interface, void *data, u32 len);
 
 //init netstack

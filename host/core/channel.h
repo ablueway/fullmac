@@ -3,12 +3,12 @@
 *
 *  All Rights Reserved
 */
-
-
 #ifndef _CHANNEL_H_
 #define _CHANNEL_H_
 #include <ssv_types.h>
-#include <common/defs.h>
+//#include <defs.h>
+#include <ssv_common.h>
+
 
 /**
  * struct ieee80211_channel - channel definition
@@ -32,7 +32,9 @@
  * @orig_mpwr: internal use
  */
 typedef struct ieee80211_channel {
-	enum ieee80211_band band;
+	/* TODO(aaron): replace this struct wioth u8 */
+	//enum ieee80211_band band;
+	u8 band;
     u16 center_freq;
     u16 hw_value;
     u32 flags;

@@ -59,7 +59,7 @@ int TXRXTask_TxTask(void *args)
     s8 i = 0, prc_count = 0;
     bool flush_frm = false;
     u32 aggr_n=0,aggr_len=0;
-    void* aggr_buf=NULL;
+    void *aggr_buf=NULL;
     u32 sleep_tick=0;
 
 	while (!kthread_should_stop())
@@ -75,17 +75,14 @@ int TXRXTask_TxTask(void *args)
 	                tFrame = outFrm->frame;
 	                if (tFrame)
 					{
-#if (__SSV_UNIX_SIM__ == 0)
 	                    while (ssv6xxx_drv_tx_resource_enough(OS_FRAME_GET_DATA_LEN(tFrame)) != TRUE)
 						{
 	                        if (g_host_cfg.tx_sleep)
 	                        {
-	                            //LOG_PRINTF("+\r\n");
 	                            OS_TickDelay(g_host_cfg.tx_sleep_tick);
 	                        }
 						};
-#endif
-	                    //LOG_PRINTF("%s:  Send tx frame %08x with FrmQ %08X!!\r\n", __FUNCTION__, tFrame, outFrm);
+
 	                    OS_MutexLock(tx_mtx);
 	                    flush_frm = (tx_flush_data_frm_num == 0)?false:true;
 	                    tx_data_frm_num --;
@@ -184,7 +181,6 @@ TX_RESEND:
 	                    LOG_PRINTF("%s: ssv6xxx_drv_send() AGGRT data failed !!\r\n", __FUNCTION__);
 	                }
 	                OS_MemSET(aggr_buf,0,MAX_HCI_AGGR_SIZE);
-	                //LOG_PRINTF("AGGT timeout,aggr_n=%d, len=%d\r\n",aggr_n,aggr_len);
 	                aggr_n=aggr_len=0;
 	                sleep_tick=0;
 	            }

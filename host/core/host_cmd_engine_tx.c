@@ -98,6 +98,7 @@ void CmdEng_TxHdlCmd(void *frame)
             os_frame_free(frame);
             return;
         }
+#if (AP_MODE_ENABLE == 1)		
         else if (hCmd->h_cmd == SSV6XXX_HOST_CMD_SET_AP_CFG)
         {
             struct apmode_setting * ap_mod = NULL;
@@ -108,7 +109,7 @@ void CmdEng_TxHdlCmd(void *frame)
             return;
 
         }
-
+#endif
     }
 #if (AP_MODE_ENABLE == 1)        
 #if (AUTO_BEACON != 0)

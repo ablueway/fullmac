@@ -38,8 +38,8 @@ void customer_extra_setting(void);
 /*******************************************************************************
 *								Macro										   *
 *******************************************************************************/
-#define JOIN_DEFAULT_SSID    "Default_ap" //"china"
-#define JOIN_DEFAULT_PSK     "12345678" //"12345678"
+#define JOIN_DEFAULT_SSID    "asus-Ian"//"Default_ap" //"china"
+#define JOIN_DEFAULT_PSK     "123456789" //"12345678"
 
 #define IS_HT_SUPPORT (1)
 #define MAC_EVENT_COUNT (g_host_cfg.pool_size+g_host_cfg.pool_sec_size+SSV_TMR_MAX)	

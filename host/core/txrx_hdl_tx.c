@@ -31,7 +31,6 @@ bool TxHdl_FrameProc(void *frame, bool apFrame, u32 priority, u32 flags, ssv_vif
 
 	do
 	{
-
 #if( BEACON_DBG == 0)
 #if (AP_MODE_ENABLE == 1)
 		if (SSV6XXX_HWM_AP == vif->hw_mode)

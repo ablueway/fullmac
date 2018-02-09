@@ -12,6 +12,7 @@
 #include <linux/netdevice.h>
 #include <linux/wireless.h>
 
+#if 0
 struct netdev
 {
     char name[26];
@@ -23,10 +24,11 @@ struct netdev
     unsigned char hwmac[6];        
     bool add_state;
 };
+#endif
 
 //typedef struct net_device *NET_DEV;
-typedef struct netdev NET_DEV;
-//typedef struct wireless_dev	*WIRELESS_DEV;
+typedef struct net_device NET_DEV;
+typedef struct wireless_dev	WIRELESS_DEV;
 
 #define NETDEV_IF_DOWN      	(0x00U)
 #define NETDEV_IF_UP        	(0x01U)

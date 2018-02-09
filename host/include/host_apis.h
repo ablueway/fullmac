@@ -22,8 +22,13 @@
 //#include <ssv_ether.h>
 #include "net_wrapper.h"
 #include <ssv_hal.h>
+#include <ieee80211.h>
+
 
 #define SSV6XXX_APLIST_PAGE_COUNT  10
+
+#define INI_CNT 20
+#define SSV6200_RX_HIGHEST_RATE             72
 
 enum TX_DSCRP_CONF_TYPE {
 	TX_DSCRP_SET_EXTRA_INFO    = BIT(0),
@@ -56,13 +61,16 @@ enum AMPDU_OPT
 };
 
 
-//#define IS_TX_DSCRP_SET_EXTRA_INFO(x)        ((x) & (1<<TX_DSCRP_SET_EXTRA_INFO) )
-//#define IS_TX_DSCRP_SET_BC_QUE(x)            ((x) & (1<<TX_DSCRP_SET_BC_QUE)   )
+typedef struct icomm_hw_info_st
+{
+    bool ht_supported;
+    u8 ampdu_factor;
+    u8 ampdu_density;
+    u16 ht_capability;
+    struct ieee80211_mcs_info mcs;
+}icomm_hw_info;
 
-
-//#define SET_TX_DSCRP_SET_EXTRA_INFO(x, _tf)     (x) = (((x) & ~(1<<TX_DSCRP_SET_EXTRA_INFO))	| ((_tf)<<TX_DSCRP_SET_EXTRA_INFO) )
-//#define SET_TX_DSCRP_SET_BC_QUE(x, _tf)      	(x) = (((x) & ~(1<<TX_DSCRP_SET_BC_QUE))	| ((_tf)<<TX_DSCRP_SET_BC_QUE)   )
-
+ 
 #if 1
 //-----------------------------------------------------------
 //For Host AP API
@@ -403,69 +411,13 @@ H_APIs s32 ssv6xxx_wifi_send_ethernet(u8 vif_idx, void *frame, s32 len, enum ssv
 
 //------------------------------------Receive-------------------------------------
 
-// struct cfg_host_rxpkt {
-//
-// 	 /* The definition of WORD_1: */
-// 	u32             len:16;
-// 	u32             c_type:3;
-//     u32             f80211:1;
-// 	u32             qos:1;          /* 0: without qos control field, 1: with qos control field */
-//     u32             ht:1;           /* 0: without ht control field, 1: with ht control field */
-//     u32             use_4addr:1;
-// 	u32             l3cs_err:1;
-//     u32             l4cs_err:1;
-//     u32             align2:1;
-//     u32             RSVD_0:2;
-// 	u32             psm:1;
-//     u32             stype_b5b4:2;
-//     u32             extra_info:1;
-//
-//     /* The definition of WORD_2: */
-//     u32             fCmd;
-//
-//     /* The definition of WORD_3: */
-//     u32             hdr_offset:8;
-//     u32             frag:1;
-//     u32             unicast:1;
-//     u32             hdr_len:6;
-//     u32             RxResult:8;
-//     u32             wildcard_bssid:1;
-//     u32             RSVD_1:1;
-//     u32             reason:6;
-//
-//     /* The definition of WORD_4: */
-//     u32             payload_offset:8;
-//     u32             next_frag_pid:7;
-//     u32             RSVD_2:1;
-//     u32             fCmdIdx:3;
-//     u32             wsid:4;
-// 	u32				RSVD_3:3;
-// 	u32				drate_idx:6;
-//
-// 	/* The definition of WORD_5: */
-// 	u32 			seq_num:16;
-// 	u32				tid:16;
-//
-// 	/* The definition of WORD_6: */
-// 	u32				pkt_type:8;
-// 	u32				RCPI:8;
-// 	u32				SNR:8;
-// 	u32				RSVD:8;
-//
-//
-//
-// };
-//
-
+ 
 
 typedef enum{
 	SSV6XXX_DATA_ACPT		= 0,	//Accept
 	SSV6XXX_DATA_CONT		= 1,	//Pass data
 	SSV6XXX_DATA_QUEUED		= 2,	//Data Queued
 }ssv6xxx_data_result;
-
-
-
 
 typedef ssv6xxx_data_result (*data_handler)(void *data, u32 len, u8 vif_idx);
 typedef void (*evt_handler)(u32 nEvtId, void *data, s32 len);

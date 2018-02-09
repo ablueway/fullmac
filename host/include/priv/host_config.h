@@ -205,8 +205,8 @@
 #define CONFIG_PLATFORM_CHECK   1
 
 // ------------------------- mac address  ------------------------------
-#define CONFIG_EFUSE_MAC            1
-#define	CONFIG_RANDOM_MAC           1
+#define CONFIG_EFUSE_MAC            0
+#define	CONFIG_RANDOM_MAC           0
 
 // ------------------------- Deafult channel in STA mode ---------------------------
 #define STA_DEFAULT_CHANNEL 6

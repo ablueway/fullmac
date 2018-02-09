@@ -1,0 +1,250 @@
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_add_iface’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:30:2: error: implicit declaration of function ‘ieee80211_if_add’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:35:3: error: implicit declaration of function ‘IEEE80211_WDEV_TO_SUB_IF’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:35:9: error: assignment makes pointer from integer without a cast [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:36:8: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_del_iface’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:44:2: error: implicit declaration of function ‘ieee80211_if_remove’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_change_iface’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:55:9: error: implicit declaration of function ‘IEEE80211_DEV_TO_SUB_IF’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:55:40: error: initialization makes pointer from integer without a cast [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:58:2: error: implicit declaration of function ‘ieee80211_if_change_type’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:64:3: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:65:3: error: implicit declaration of function ‘ieee80211_check_fast_rx_iface’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:68:8: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:71:11: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:72:40: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:74:26: error: ‘NL80211_EXT_FEATURE_MU_MIMO_AIR_SNIFFER’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:74:26: note: each undeclared identifier is reported only once for each function it appears in
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:76:3: error: implicit declaration of function ‘rtnl_dereference’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:76:41: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:78:7: error: implicit declaration of function ‘wiphy_ext_feature_isset’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:79:4: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:79:4: error: ‘struct vif_params’ has no member named ‘vht_mumimo_groups’
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:79:4: error: ‘WLAN_MEMBERSHIP_LEN’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:81:4: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:81:4: error: ‘struct vif_params’ has no member named ‘vht_mumimo_groups’
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:81:4: error: ‘WLAN_USER_POSITION_LEN’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:84:17: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:85:4: error: implicit declaration of function ‘ieee80211_bss_info_change_notify’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:86:9: error: ‘BSS_CHANGED_MU_GROUPS’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:88:4: error: implicit declaration of function ‘ether_addr_copy’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:88:33: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:95:3: error: implicit declaration of function ‘ieee80211_sdata_running’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:108:33: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:111:4: error: implicit declaration of function ‘ieee80211_adjust_monitor_flags’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:112:9: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:115:4: error: implicit declaration of function ‘ieee80211_configure_filter’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:122:9: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_add_station’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:141:9: error: assignment makes pointer from integer without a cast [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:143:12: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:144:12: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:147:9: error: assignment makes pointer from integer without a cast [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:149:2: error: implicit declaration of function ‘ether_addr_equal’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:149:33: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:152:2: error: implicit declaration of function ‘is_multicast_ether_addr’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:155:2: error: implicit declaration of function ‘sta_info_alloc’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:155:6: error: assignment makes pointer from integer without a cast [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:160:6: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:162:2: error: implicit declaration of function ‘sta_apply_parameters’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:164:3: error: implicit declaration of function ‘sta_info_free’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:173:2: error: implicit declaration of function ‘test_sta_flag’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:173:26: error: ‘WLAN_STA_TDLS_PEER’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:174:25: error: ‘WLAN_STA_ASSOC’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:175:3: error: implicit declaration of function ‘rate_control_rate_init’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:177:23: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:178:8: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:180:2: error: implicit declaration of function ‘sta_info_insert_rcu’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:187:3: error: implicit declaration of function ‘ieee80211_send_layer2_update’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: At top level:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:195:13: error: ‘struct station_del_parameters’ declared inside parameter list [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:195:13: error: its scope is only this definition or declaration, which is probably not what you want [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_del_station’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:199:8: error: assignment makes pointer from integer without a cast [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:201:12: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:202:3: error: implicit declaration of function ‘sta_info_destroy_addr_bss’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:202:49: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:204:2: error: implicit declaration of function ‘sta_info_flush’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_change_station’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:212:40: error: initialization makes pointer from integer without a cast [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:219:19: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:221:2: error: implicit declaration of function ‘sta_info_get_bss’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:221:6: error: assignment makes pointer from integer without a cast [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:227:15: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:229:12: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:238:27: error: ‘WLAN_STA_TDLS_PEER’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:242:26: error: ‘WLAN_STA_AUTHORIZED’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:249:26: error: ‘WLAN_STA_ASSOC’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:252:14: error: ‘CFG80211_STA_AP_CLIENT_UNASSOC’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:263:41: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:267:13: error: assignment makes pointer from integer without a cast [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:270:17: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:275:4: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:275:4: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:277:4: error: implicit declaration of function ‘__ieee80211_check_fast_rx_iface’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:280:10: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:281:10: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:282:4: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:286:6: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:287:3: error: implicit declaration of function ‘ieee80211_check_fast_xmit’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:289:10: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:289:25: error: ‘IEEE80211_STA_AUTHORIZED’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:292:20: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:294:20: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:304:21: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:306:12: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:307:12: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:308:9: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:308:33: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:310:6: error: implicit declaration of function ‘sta_info_tx_streams’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:311:3: error: implicit declaration of function ‘ht_dbg’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:311:13: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:313:13: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:314:3: error: implicit declaration of function ‘ieee80211_send_smps_action’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:314:33: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:315:7: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:316:7: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:317:7: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:320:11: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:322:3: error: implicit declaration of function ‘ieee80211_recalc_ps’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:323:3: error: implicit declaration of function ‘ieee80211_recalc_ps_vif’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:328:21: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_get_station’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:335:40: error: initialization makes pointer from integer without a cast [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:336:39: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:340:19: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:342:6: error: assignment makes pointer from integer without a cast [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:345:3: error: implicit declaration of function ‘sta_set_sinfo’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:348:21: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_scan’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:358:8: error: assignment makes pointer from integer without a cast [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:360:2: error: implicit declaration of function ‘ieee80211_vif_type_p2p’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:360:39: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:368:12: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:383:12: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:389:5: error: "LINUX_VERSION_CODE" is not defined [-Werror=undef]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:389:27: error: "KERNEL_VERSION" is not defined [-Werror=undef]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:389:41: error: missing binary operator before token "("
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:396:2: error: implicit declaration of function ‘ieee80211_request_scan’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_abort_scan’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:401:2: error: implicit declaration of function ‘ieee80211_scan_cancel’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_sched_scan_start’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:409:40: error: initialization makes pointer from integer without a cast [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:411:12: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:414:2: error: implicit declaration of function ‘ieee80211_request_sched_scan_start’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_sched_scan_stop’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:422:12: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:425:2: error: implicit declaration of function ‘ieee80211_request_sched_scan_stop’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_auth’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:431:2: error: implicit declaration of function ‘ieee80211_mgd_auth’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_assoc’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:437:2: error: implicit declaration of function ‘ieee80211_mgd_assoc’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_deauth’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:443:2: error: implicit declaration of function ‘ieee80211_mgd_deauth’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_disassoc’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:449:2: error: implicit declaration of function ‘ieee80211_mgd_disassoc’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_join_ibss’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:455:2: error: implicit declaration of function ‘ieee80211_ibss_join’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_leave_ibss’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:460:2: error: implicit declaration of function ‘ieee80211_ibss_leave’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_set_wiphy_params’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:469:3: error: implicit declaration of function ‘ieee80211_check_fast_xmit_all’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:471:3: error: implicit declaration of function ‘drv_set_frag_threshold’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:480:17: error: ‘WIPHY_PARAM_DYN_ACK’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:485:3: error: implicit declaration of function ‘drv_set_coverage_class’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:492:3: error: implicit declaration of function ‘drv_set_rts_threshold’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:499:28: error: ‘IEEE80211_MAX_TX_RETRY’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:501:8: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:506:8: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:510:3: error: implicit declaration of function ‘ieee80211_hw_config’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:510:30: error: ‘IEEE80211_CONF_CHANGE_RETRY_LIMITS’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_cfg_get_channel’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:520:40: error: initialization makes pointer from integer without a cast [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:526:17: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:526:17: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:526:17: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:526:17: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:526:17: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:528:19: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:530:18: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:531:11: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:531:32: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:532:11: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:533:12: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:534:20: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:536:20: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘__ieee80211_channel_switch’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:548:40: error: initialization makes pointer from integer without a cast [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:549:39: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:550:34: error: storage size of ‘ch_switch’ isn’t known
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:556:2: error: implicit declaration of function ‘sdata_assert_lock’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:557:2: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:559:24: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:559:44: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:562:11: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:566:18: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:570:11: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:573:19: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:574:9: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:574:9: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:581:12: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:581:12: error: initialization from incompatible pointer type [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:581:12: error: invalid use of undefined type ‘struct ieee80211_chanctx’
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:589:2: error: implicit declaration of function ‘drv_pre_channel_switch’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:593:2: error: implicit declaration of function ‘ieee80211_vif_reserve_chanctx’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:594:17: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:600:2: error: implicit declaration of function ‘ieee80211_check_combinations’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:600:57: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:602:3: error: implicit declaration of function ‘ieee80211_vif_unreserve_chanctx’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:606:2: error: implicit declaration of function ‘ieee80211_set_csa_beacon’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:612:7: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:613:7: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:614:7: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:616:11: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:617:3: error: implicit declaration of function ‘ieee80211_stop_vif_queues’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:618:8: error: ‘IEEE80211_QUEUE_STOP_REASON_CSA’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:620:2: error: implicit declaration of function ‘cfg80211_ch_switch_started_notify’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:620:41: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:620:54: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:625:3: error: implicit declaration of function ‘drv_channel_switch_beacon’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:628:3: error: implicit declaration of function ‘ieee80211_csa_finalize’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:632:21: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:550:34: error: unused variable ‘ch_switch’ [-Werror=unused-variable]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘ieee80211_channel_switch’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:639:40: error: initialization makes pointer from integer without a cast [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:640:39: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:643:19: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:645:21: error: dereferencing pointer to incomplete type
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: At top level:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:652:2: error: initialization from incompatible pointer type [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:652:2: error: (near initialization for ‘net_80211_config_ops.add_virtual_intf’) [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:656:2: error: initialization from incompatible pointer type [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:656:2: error: (near initialization for ‘net_80211_config_ops.add_station’) [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:657:2: error: initialization from incompatible pointer type [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:657:2: error: (near initialization for ‘net_80211_config_ops.del_station’) [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:658:2: error: initialization from incompatible pointer type [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:658:2: error: (near initialization for ‘net_80211_config_ops.change_station’) [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:659:2: error: initialization from incompatible pointer type [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:659:2: error: (near initialization for ‘net_80211_config_ops.get_station’) [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:662:2: error: unknown field ‘abort_scan’ specified in initializer
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:662:2: error: initialization from incompatible pointer type [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:662:2: error: (near initialization for ‘net_80211_config_ops.auth’) [-Werror]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘net_cfg80211_init’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:774:7: error: ‘NL80211_FEATURE_MAC_ON_CREATE’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:780:32: error: invalid application of ‘sizeof’ to incomplete type ‘struct ieee80211_bss’ 
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:740:21: error: unused variable ‘g_dev_info’ [-Werror=unused-variable]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c: In function ‘net_cfg80211_register’:
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:845:24: error: ‘NUM_NL80211_BANDS’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:874:3: error: ‘hw’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:929:5: error: "LINUX_VERSION_CODE" is not defined [-Werror=undef]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:929:27: error: "KERNEL_VERSION" is not defined [-Werror=undef]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:929:41: error: missing binary operator before token "("
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:937:2: error: implicit declaration of function ‘rtnl_lock’ [-Werror=implicit-function-declaration]
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:941:29: error: ‘local’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:941:46: error: ‘NET_NAME_ENUM’ undeclared (first use in this function)
+/home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.c:946:2: error: implicit declaration of function ‘rtnl_unlock’ [-Werror=implicit-function-declaration]
+cc1: all warnings being treated as errors
+make[2]: *** [scripts/Makefile.build:309: /home/aaron/linux/fullmac/host/./net_wrapper/linux/net_mac80211.o] Error 1
+make[1]: *** [Makefile:1261: _module_/home/aaron/linux/fullmac/host] Error 2
+make: *** [/home/aaron/linux/fullmac/host/build/build_target_rule.mk:8: all] Error 2

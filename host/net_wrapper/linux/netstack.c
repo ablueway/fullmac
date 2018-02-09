@@ -18,7 +18,7 @@ void netdev_status_change_cb(struct netif *netif)
  * [in] len: length of real 802.3 packet
  * Transfer incoming wifi data to be processed by netstack 
  */
-int netstack_input(void *data, u32 len)
+int netstack_input(void *data, u32 len, u8 vif_idx)
 {    
     return -1;
 }

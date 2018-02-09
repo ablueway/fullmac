@@ -6,7 +6,9 @@
 #include <linux/init.h>
 #include <linux/debugfs.h>
 #include <linux/module.h>
-
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
 
 #define ICOMM_DEBUG_FS_NAME			"icomm_debug"
 #define ICOMM_CMD_CLI_FILE_NAME		"cmd_cli"
@@ -17,6 +19,37 @@ char ker_buf[KER_BUF_LEN];
 struct dentry *debugfs_root_folder;
 
 
+#if 0
+void cmd_iw(s32 argc, char *argv[])
+{
+	if (argc<2)
+		return;
+
+    if (strcmp(argv[1], "scan")==0) {
+        if (argc >= 2)
+		    _cmd_wifi_scan(argc - 2, &argv[2]);
+        else
+            LOG_PRINTF("Invalid arguments.\n");
+	} else if (strcmp(argv[1], "join")==0) {
+        if (argc >= 3)
+            _cmd_wifi_join(argc - 2, &argv[2]);
+        else
+            LOG_PRINTF("Invalid arguments.\n");
+    } else if (strcmp(argv[1], "leave")==0) {
+        if (argc<4)
+            _cmd_wifi_leave(argc - 2, &argv[2]);
+        else
+            LOG_PRINTF("Invalid arguments.\n");
+    } else if (strcmp(argv[1], "list")==0) {
+        if (argc == 2)
+        {
+            _cmd_wifi_list(argc - 2, &argv[2]);
+        }
+        else
+	        LOG_PRINTF("Invalid arguments.\n");
+	}
+}
+#endif
 /* read file operation */
 static ssize_t icomm_read(struct file *fp, char __user *user_buffer,
                                 size_t count, loff_t *position)
@@ -24,14 +57,31 @@ static ssize_t icomm_read(struct file *fp, char __user *user_buffer,
      return simple_read_from_buffer(user_buffer, count, position, ker_buf, KER_BUF_LEN);
 }
  
-static ssize_t icomm_write(struct file *fp, const char __user *user_buffer,
-                                size_t count, loff_t *position)
+static ssize_t icomm_write(struct file *fp, const char __user *buf, size_t size, loff_t *position)
 {
-		if (count > KER_BUF_LEN) 
-		{
-		    return -EINVAL;
-		}  
-        return simple_write_to_buffer(ker_buf, KER_BUF_LEN, position, user_buffer, count);
+
+	char info[255];  
+//	int port=0,value=0;  
+	memset(info, 0x0, 255);  
+	copy_from_user(info, buf, size);
+
+	printk("user input: %s\n",info);  
+
+	if (info[0]== 'j') {
+		printk("join: cmd\n");	
+		_cmd_wifi_join(argc - 2, &argv[2]);
+	} 
+	else if(info[0] == 'l') {  
+		printk("leave: cmd\n");
+        _cmd_wifi_leave(argc - 2, &argv[2]);
+	}  
+	else if(info[0] == 's') 
+	{
+		printk("scan: cmd\n");
+		_cmd_wifi_scan(1, &info[2]);
+	}
+	
+	return size;//simple_write_to_buffer(ker_buf, KER_BUF_LEN, position, user_buffer, count);
 }
 
 static const struct file_operations icomm_debugfs_cli_ops = {

@@ -28,6 +28,8 @@ typedef enum{
 	AP_STATE_PAUSE			
 }ap_state;
 
+
+#if 0
 enum nl80211_channel_type {
 	NL80211_CHAN_NO_HT,
 	NL80211_CHAN_HT20,
@@ -35,17 +37,30 @@ enum nl80211_channel_type {
 	NL80211_CHAN_HT40PLUS
 };
 
-//custom temperture setting
-#ifndef EAPOL_ETHER_TYPPE
-#define EAPOL_ETHER_TYPPE	0x888E
-#endif
-
 enum ieee80211_band {
 IEEE80211_BAND_2GHZ ,
 IEEE80211_BAND_5GHZ ,
 /* keep last */
 IEEE80211_NUM_BANDS
 };
+#endif
+
+#define NL80211_CHAN_NO_HT 		0
+#define NL80211_CHAN_HT20 		1
+#define NL80211_CHAN_HT40MINUS	2
+#define NL80211_CHAN_HT40PLUS	3
+
+#define IEEE80211_BAND_2GHZ 	0
+#define IEEE80211_BAND_5GHZ 	1
+#define IEEE80211_NUM_BANDS		2
+
+
+
+//custom temperture setting
+#ifndef EAPOL_ETHER_TYPPE
+#define EAPOL_ETHER_TYPPE	0x888E
+#endif
+
 
 typedef enum {
 	LONG_PREAMBLE = 0,

@@ -78,6 +78,7 @@ STRUCT_PACKED struct ieee80211_rate {
  *	core code when registering the wiphy.
  * @IEEE80211_RATE_ERP_G: This is an ERP rate in 802.11g mode.
  */
+#ifndef __linux__ 
 enum ieee80211_rate_flags {
 	IEEE80211_RATE_FLAGS_NONE				= 0,
 	IEEE80211_RATE_FLAGS_MANDATORY_A		= 1<<1, //----------------------------------------------------->AP_MODE_TO_HW_RATE_FLAGS_MANDATORY_SHIFT
@@ -106,7 +107,7 @@ enum ieee80211_rate_num {
 	IEEE80211_RATE_NUM_48M	= 96,
 	IEEE80211_RATE_NUM_54M	= 108,
 };
-
+#endif
 struct ssv6xxx_host_ap_config {
 
 	char ssid[IEEE80211_MAX_SSID_LEN + 1];

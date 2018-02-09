@@ -30,6 +30,8 @@ KERN_SRCS += ./app/netmgr/net_mgr.c
 ################################################################################
 # Define Include CORE Source File Rule						   	   		       #	
 ################################################################################
+KERN_SRCS += ./core/host_apis_sta.c
+#KERN_SRCS += ./core/host_apis_ap.c
 KERN_SRCS += ./core/host_apis.c
 KERN_SRCS += ./core/mlme.c
 KERN_SRCS += ./core/channel.c
@@ -91,6 +93,8 @@ KERN_SRCS += ./lib/ssv_msg.c
 # Define Include NET WRAPPER Source File Rule						   	       #	
 ################################################################################
 KERN_SRCS += ./net_wrapper/linux/net.c
+KERN_SRCS += ./net_wrapper/linux/net_mac80211.c
+#KERN_SRCS += ./net_wrapper/linux/net_brcom.c
 
 ################################################################################
 # Define Include OS WRAPPER Source File Rule						   	       #	

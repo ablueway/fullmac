@@ -82,19 +82,21 @@ typedef struct StaInfo{
 typedef struct ssv_vif_st {
     ssv6xxx_hw_mode hw_mode;
     u8 self_mac[ETH_ALEN];
-    u8 idx;
-    //u8 channel;
+	
+    u8 idx;							/* mac idx */
+
     union{
-        struct ApInfo *APInfo; // AP mode used
-        struct StaInfo *StaInfo; //STA mode used
+        struct ApInfo *APInfo; 		// AP mode used
+        struct StaInfo *StaInfo; 	//STA mode used
     } m_info;
 
 	/* TODO(aaron): to check it */
-	NET_DEV net_dev;
+	NET_DEV *net_dev;
+	OsSpinlock netif_stop_lock;
 	s8 ifidx;
 	s8 bsscfgidx;
 	u8 netif_stop_reason;
-	OsSpinlock netif_stop_lock;	
+	u8 vif_cnt;
 } ssv_vif;
 
 typedef struct DeviceInfo{

@@ -8,15 +8,15 @@ EXTRA_CFLAGS += -I$(KBUILD_TOP)/include/priv
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/include/priv/hw
 
 
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/ap
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/ap/common
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/ap/crypto
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/ap
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/ap/common
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/ap/crypto
 
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/app/cli
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/app/cli/cmds
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/app/netmgr
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/app/netmgr/SmartConfig
-EXTRA_CFLAGS += -I$(KBUILD_TOP)/app/netmgr/SmartConfig/iComm/core
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/app/netmgr/SmartConfig
+#EXTRA_CFLAGS += -I$(KBUILD_TOP)/app/netmgr/SmartConfig/iComm/core
 
 EXTRA_CFLAGS += -I$(KBUILD_TOP)/core
 

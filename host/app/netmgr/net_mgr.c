@@ -219,6 +219,9 @@ void netmgr_wifi_link_register_cb(netdev_link_callback_t link_up_cb, netdev_link
 
 void ssv_netmgr_add_netdev(u8 vif_idx, bool init_up)
 {
+#ifdef __linux__
+
+#else
     if (g_netifdev[vif_idx].add_state == FALSE)
     {
 		LOG_PRINTF("ssv_netmgr_add_netdev vif=%d,init_up=%d\r\n", vif_idx,init_up);
@@ -230,6 +233,7 @@ void ssv_netmgr_add_netdev(u8 vif_idx, bool init_up)
 		netdev_init(&g_netifdev[vif_idx], TRUE, init_up);
 		g_netifdev[vif_idx].add_state = TRUE;
     }
+#endif	
 }
 
 void ssv_netmgr_init_netdev(bool default_cfg)
@@ -245,7 +249,7 @@ void ssv_netmgr_init_netdev(bool default_cfg)
         {
             netmgr_cfg_default(&g_netmgr_config[vif_idx]);
         }
-        MEMSET((void *)&g_netifdev[vif_idx], 0, sizeof(struct netdev));
+        MEMSET((void *)&g_netifdev[vif_idx], 0, sizeof(NET_DEV));
     }
     ssv6xxx_wifi_reg_rx_cb((data_handler)netstack_input);
 
@@ -510,11 +514,14 @@ int netmgr_ipinfo_set(u8 vif_idx, ipinfo *info, bool auto_dhcpd_info)
     {
         //if(MEMCMP(ifname, if_name[vif_idx], sizeof(WLAN_IFNAME)) == 0)
         {
+#ifdef __linux__
+#else
             LOG_PRINTF("update default config\r\n");
             g_netifdev[vif_idx].ipaddr = g_netmgr_config[vif_idx].ipaddr = info->ipv4;
             g_netifdev[vif_idx].netmask = g_netmgr_config[vif_idx].netmask = info->netmask;
             g_netifdev[vif_idx].gw = g_netmgr_config[vif_idx].gw = info->gateway;
             //break;
+#endif
         }    
     }
     /* auto dhcpd set*/
@@ -550,6 +557,8 @@ static int netmgr_dhcpd_start(bool enable, u8 vif_idx)
     int ret = NS_OK;
     LOG_DEBUGF(LOG_L4_NETMGR, ("netmgr_dhcpd_start %d vif=%d!!\r\n",enable,vif_idx));
 
+#ifdef __linux__
+#else
     if (enable)
     {        
         ret = netdev_setipv4info(g_netifdev[vif_idx].name, 
@@ -574,7 +583,7 @@ static int netmgr_dhcpd_start(bool enable, u8 vif_idx)
         ret = netstack_udhcpd_stop();
         g_netmgr_config[vif_idx].s_dhcpd_status = false;
     }
-
+#endif
     return ret;
 }
 
@@ -582,8 +591,10 @@ static int netmgr_dhcpc_start(bool enable, u8 vif_idx)
 {
     int ret = NS_OK;
     LOG_DEBUGF(LOG_L4_NETMGR, ("netmgr_dhcpc_start %d !!\r\n",enable));
+#ifdef __linux__
 
-    if (enable)
+#else
+	if (enable)
     {
         ret = netdev_setipv4info(g_netifdev[vif_idx].name, 0, 0, 0);
         dhcpc_wrapper_set(g_netifdev[vif_idx].name, true);
@@ -601,8 +612,8 @@ static int netmgr_dhcpc_start(bool enable, u8 vif_idx)
                                  g_netifdev[vif_idx].netmask);
         g_netmgr_config[vif_idx].s_dhcpc_status = false;
     }
-
-    return 0;
+#endif
+    return ret;
 }
 
 
@@ -1743,7 +1754,7 @@ char CharToHex(char bChar)
 int netmgr_wifi_join(wifi_sta_join_cfg *join_cfg)
 {
     s32    size = 0;
-    struct ssv6xxx_ieee80211_bss       *ap_info_bss = NULL;
+    struct ssv6xxx_ieee80211_bss *ap_info_bss = NULL;
     struct cfg_join_request *JoinReq = NULL;
 
     wifi_sec_type    sec_type = WIFI_SEC_NONE;
@@ -2110,11 +2121,6 @@ int netmgr_wifi_control(wifi_mode mode, wifi_ap_cfg *ap_cfg, wifi_sta_cfg *sta_c
 			sta_setting.mode = mode;
             sta_setting.sta_cfg =sta_cfg;
 
-            LOG_PRINTF("sta_setting.mode=%d\r\n",sta_setting.mode);
-            LOG_PRINTF("sta_setting.sta_cfg.status(%d)\r\n", sta_setting.sta_cfg->status);
-            LOG_PRINTF("sta_setting.sta_cfg->vif_idx(%d)\r\n", sta_setting.sta_cfg->vif_idx);			
-            LOG_PRINTF("Nmgr ctl STA vif=%d\r\n",sta_cfg->vif_idx);
-
             _ssv6xxx_wifi_send_cmd((void *)&sta_setting, sizeof(struct stamode_setting), SSV6XXX_HOST_CMD_SET_STA_CFG);
 
             OS_SemWait(ap_sta_on_off_sphr,0);
@@ -2143,6 +2149,7 @@ int netmgr_wifi_control(wifi_mode mode, wifi_ap_cfg *ap_cfg, wifi_sta_cfg *sta_c
             }
         }
     }
+#if (AP_MODE_ENABLE == 1)	
     else if(mode == SSV6XXX_HWM_AP)
     {
         if (ap_cfg)
@@ -2180,7 +2187,7 @@ int netmgr_wifi_control(wifi_mode mode, wifi_ap_cfg *ap_cfg, wifi_sta_cfg *sta_c
                 _ssv6xxx_wifi_send_cmd((void *)&ap_setting, sizeof(struct apmode_setting), SSV6XXX_HOST_CMD_SET_AP_CFG);
                 OS_SemWait(ap_sta_on_off_sphr,0);
             }
-            //ret = ssv6xxx_wifi_ap(ap_cfg);
+
             LOG_PRINTF("AP vif=%d link up, dhcpd=%d\r\n",ap_cfg->vif_idx,g_netmgr_config[ap_cfg->vif_idx].s_dhcpd_enable);            
             ssv_netmgr_add_netdev(ap_cfg->vif_idx,FALSE);
             if ((ret == (int)SSV6XXX_SUCCESS) && g_netmgr_config[ap_cfg->vif_idx].s_dhcpd_enable)
@@ -2205,6 +2212,7 @@ int netmgr_wifi_control(wifi_mode mode, wifi_ap_cfg *ap_cfg, wifi_sta_cfg *sta_c
             }
         }
     }
+#endif	
     else
     {
         // not support
