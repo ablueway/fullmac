@@ -5,8 +5,6 @@
 */
 #ifdef __linux__
 #include <linux/kernel.h>
-//#include <linux/semaphore.h>
-//#include <linux/mutex.h>
 #endif
 
 #include <pbuf.h>
@@ -32,11 +30,6 @@
 #include "ap_config.h"
 
 
-/* TODO: aaron */
-#if 0 //(CONFIG_SIM_PLATFORM == 1)
-#include  <wsimp/wsimp_lib.h>
-#endif
-
 #if (AP_MODE_ENABLE == 1)
 #include <ap_tx.h>
 #include <ap_info.h>
@@ -56,11 +49,12 @@
 
 #if (AP_MODE_ENABLE == 1)
 extern void reset_ap_info(void);
+extern s32 send_deauth_and_remove_sta(u8 *hwaddr);
+extern tx_result ssv6xxx_data_could_be_send(struct cfg_host_txreq0 *host_txreq0, 
+													bool bAPFrame, u32 TxFlags);
 #endif
 
-#if (AP_MODE_ENABLE == 1)
-extern s32 send_deauth_and_remove_sta(u8 *hwaddr);
-#endif
+
 extern bool freq_40MHZ_legal(u32 center_freq,const struct ieee80211_regdomain *regd);
 extern ssv6xxx_result check_efuse_chip_id(void);
 extern int ssv6xxx_start(ssv_vif *vif);
@@ -70,19 +64,57 @@ extern int ssv_hal_remove_interface(u8 itf_idx);
 //Mac address
 extern u8 config_mac[];
 extern u8 g_max_num_of_ap_list;
+extern struct Host_cfg g_host_cfg;
+extern void check_watchdog_timer(void *data1, void *data2);
+extern struct task_info_st g_host_task_info[];
+extern void recovery_pause_resume(bool resume);
+extern void CmdEng_TxHdlData(void *frame);
+extern int ssv6xxx_get_cust_mac(u8 *mac);
+extern struct rx_ba_session_desc g_ba_rx_session_desc[RX_AGG_RX_BA_MAX_STATION][RX_AGG_RX_BA_MAX_SESSIONS];
+extern ssv6xxx_result CmdEng_Init(void);
+extern ssv6xxx_result TXRXTask_SetOpMode(ModeType mode);
+extern ssv6xxx_result CmdEng_SetOpMode(ModeType mode);
+extern void ssv6xxx_config_init_rates(struct ssv6xxx_host_ap_config *pConfig);
+extern u16 g_acs_channel_mask;
+extern u32 g_acs_5g_channel_mask;
+extern u32 g_hw_enable;
+extern void check_watchdog_timer(void *data1, void *data2);
+extern struct task_info_st g_host_task_info[];
+
+
+
+
 
 HOST_API_STATE active_host_api = HOST_API_ACTIVE;
 static u32 sg_host_cmd_seq_no;
-#define INI_CNT 20
-
 
 OsMutex	g_host_api_mutex = NULL;
 OsSemaphore ap_sta_on_off_sphr = NULL;
 OsSemaphore scanning_sphr = NULL;
 
+u8 ts_bk=0;
+u8 tr_bk=0;
+bool tx_duty_en=0;
+
+
+
+#define INI_CNT 20
+#define SSV6200_RX_HIGHEST_RATE             72
+
+typedef struct icomm_hw_info_st
+{
+    bool ht_supported;
+    u8 ampdu_factor;
+    u8 ampdu_density;
+    u16 ht_capability;
+    struct ieee80211_mcs_info mcs;
+}icomm_hw_info;
+
+
 
 #if (AP_MODE_ENABLE == 1)  
-static s32 _ssv6xxx_wifi_auto_channel_selection(u16 channel_mask, u32 channel_5g_mask,u8 vif_idx);
+static s32 _ssv6xxx_wifi_auto_channel_selection(u16 channel_mask, 
+								u32 channel_5g_mask,u8 vif_idx);
 #endif
 
 s32 os_hcmd_msg_send(void* msg, void *pBuffer);
@@ -90,7 +122,16 @@ void ap_sta_mode_off(void);
 void sta_mode_off(u8 vif_idx);
 void ap_mode_off(u8 vif_idx);
 void sconfig_mode_off(u8 vif_idx);
-extern struct Host_cfg g_host_cfg;
+s32 _ssv6xxx_wifi_ioctl_Ext(u32 cmd_id, void *data, 
+	u32 len, bool blocking, const bool mutexLock);
+static bool _ssv6xxx_wakeup_wifi(void);
+s32 _ssv6xxx_set_rate_mask(u16 mask, bool FromAPI);
+void  _ssv6xxx_wifi_set_rc_values(bool FromAPI);
+s32 _ssv6xxx_set_ampdu_param(u8 opt, u8 value, u8 vif_idx, bool FromAPI);
+
+
+
+
 
 
 vif_state get_current_vif_state(void)
@@ -162,8 +203,6 @@ struct StaInfo *_alloc_sta_info(void)
 
 }
 
-s32 _ssv6xxx_wifi_ioctl_Ext(u32 cmd_id, void *data, u32 len, bool blocking,const bool mutexLock);
-static bool _ssv6xxx_wakeup_wifi(void);
 s32 _ssv6xxx_send_msg_to_hcmd_eng(void *data)
 {
 	s32 ret = SSV6XXX_SUCCESS;
@@ -394,9 +433,6 @@ s32 _ssv6xxx_wifi_pwr_saving(struct cfg_ps_request* wowreq,const bool mutexLock)
 
 
 }
-extern void check_watchdog_timer(void *data1, void *data2);
-extern struct task_info_st g_host_task_info[];
-extern void recovery_pause_resume(bool resume);
 
 H_APIs s32 ssv6xxx_wifi_pwr_saving(struct cfg_ps_request* wowreq, bool on)
 {
@@ -456,6 +492,7 @@ H_APIs s32 ssv6xxx_wifi_pwr_saving(struct cfg_ps_request* wowreq, bool on)
 
     return ret;
 }
+
 /**
  * H_APIs s32 ssv6xxx_wifi_scan() - Scan Request from host to wifi controller
  *                                               to collect nearby APs.
@@ -465,7 +502,6 @@ H_APIs s32 ssv6xxx_wifi_pwr_saving(struct cfg_ps_request* wowreq, bool on)
  * This API also can issue passive scan request and monitor bradocast
  * beacon from nearby APs siliently.
  */
-
 s32 _ssv6xxx_wifi_scan(struct cfg_scan_request *csreq,const bool mutexLock)
 {
 //	struct cfg_host_cmd *host_cmd = NULL;
@@ -523,15 +559,6 @@ s32 _ssv6xxx_wifi_scan(struct cfg_scan_request *csreq,const bool mutexLock)
 
 }
 
-#define SSV6200_RX_HIGHEST_RATE             72
-typedef struct icomm_hw_info_st
-{
-    bool ht_supported;
-    u8 ampdu_factor;
-    u8 ampdu_density;
-    u16 ht_capability;
-    struct ieee80211_mcs_info mcs;
-}icomm_hw_info;
 
 H_APIs void get_icomm_hw_info (icomm_hw_info *hw_info)
 {
@@ -802,11 +829,6 @@ H_APIs s32 ssv6xxx_wifi_leave(struct cfg_leave_request *clreq)
 }
 
 
-#if (AP_MODE_ENABLE == 1)
-extern tx_result ssv6xxx_data_could_be_send(struct cfg_host_txreq0 *host_txreq0, bool bAPFrame, u32 TxFlags);
-#endif
-
-extern void CmdEng_TxHdlData(void *frame);
 static inline s32 _ssv6xxx_wifi_send_ethernet(u8 vif_idx, void *frame, s32 len, 
 	enum ssv6xxx_data_priority priority, u8 tx_dscrp_flag,const bool mutexLock)
 {
@@ -861,44 +883,6 @@ H_APIs s32 ssv6xxx_wifi_send_ethernet(u8 vif_idx,void *frame, s32 len, enum ssv6
 	return _ssv6xxx_wifi_send_ethernet(vif_idx, frame, len, priority, FALSE, TRUE);
 }
 
-#if 0
-static inline s32 _ssv6xxx_wifi_send_80211(void *frame, s32 len, u8 tx_dscrp_flag, const bool mutexLock  )
-{
-
-	ssv6xxx_result ret = SSV6XXX_SUCCESS;
-
-    //Detect host API status
-    if(mutexLock)
-        OS_MutexLock(g_host_api_mutex);
-
-    do {
-        if(active_host_api == HOST_API_DEACTIVE)
-        {
-	        ret=SSV6XXX_FAILED;
-            break;
-        }
-
-    	if(ssv6xxx_prepare_wifi_txreq(frame, len, TRUE, 0, tx_dscrp_flag)==FALSE)
-    	{
-    		LOG_TRACE("tx req fail. release frame.\n");
-    		os_frame_free(frame);
-    		return SSV6XXX_FAILED;
-    	}
-    	ret = _ssv6xxx_send_msg_to_hcmd_eng(frame);
-
-    }while(0);
-
-    if(mutexLock)
-        OS_MutexUnLock(g_host_api_mutex);
-
-	return ret;
-
-}
-H_APIs s32 ssv6xxx_wifi_send_80211(void *frame, s32 len)
-{
-	return _ssv6xxx_wifi_send_80211(frame, len, FALSE, TRUE);
-}
-#endif
 
 
 //----------------------------------------------
@@ -1091,9 +1075,6 @@ H_APIs ssv6xxx_result ssv6xxx_wifi_unreg_evt_cb(evt_handler evtcb)
 }
 
 
-extern int ssv6xxx_get_cust_mac(u8 *mac);
-extern struct rx_ba_session_desc g_ba_rx_session_desc[RX_AGG_RX_BA_MAX_STATION][RX_AGG_RX_BA_MAX_SESSIONS];
-extern ssv6xxx_result CmdEng_Init(void);
 
 H_APIs ssv6xxx_result ssv6xxx_wifi_init(void)
 {
@@ -1289,17 +1270,7 @@ H_APIs s32 ssv6xxx_wifi_ioctl_Ext(u32 cmd_id, void *data, u32 len, bool blocking
 {
     return _ssv6xxx_wifi_ioctl_Ext(cmd_id,data,len,blocking,TRUE);
 }
-extern ssv6xxx_result TXRXTask_SetOpMode(ModeType mode);
-extern ssv6xxx_result CmdEng_SetOpMode(ModeType mode);
-extern void ssv6xxx_config_init_rates(struct ssv6xxx_host_ap_config *pConfig);
-extern u16 g_acs_channel_mask;
-extern u32 g_acs_5g_channel_mask;
 
-s32 _ssv6xxx_set_rate_mask(u16 mask, bool FromAPI);
-void  _ssv6xxx_wifi_set_rc_values(bool FromAPI);
-s32 _ssv6xxx_set_ampdu_param(u8 opt, u8 value, u8 vif_idx, bool FromAPI);
-u8 ts_bk=0;
-u8 tr_bk=0;
 ssv_vif* _get_ava_vif(void)
 {
     if(gDeviceInfo->vif[0].hw_mode == SSV6XXX_HWM_INVALID)
@@ -2048,24 +2019,19 @@ ssv6xxx_result _ssv6xxx_wifi_station(u8 hw_mode,Sta_setting *sta_station,const b
             }
             {
                 u8 retry_ini=INI_CNT;
-        		printk("%s() at line(%d)\n",__FUNCTION__,__LINE__);
+
                 ssv6xxx_wifi_update_available_channel();
-        		printk("%s() at line(%d)\n",__FUNCTION__,__LINE__);
-                while ((SSV6XXX_SUCCESS != (ret= sta_mode_on(hw_mode,sta_station->vif_idx))) && (retry_ini > 0))
+                while ((SSV6XXX_SUCCESS != (ret = sta_mode_on(hw_mode,sta_station->vif_idx))) && (retry_ini > 0))
                 {
                     retry_ini--;
 					platform_dev_init();
                 }
             }
-			printk("%s() at line(%d)\n",__FUNCTION__,__LINE__);
 		}
         else //station off
         {
-	    	LOG_PRINTF("%s() at line(%d)\n",__FUNCTION__,__LINE__);        
             if(hw_mode == SSV6XXX_HWM_STA)
                 sta_mode_off(sta_station->vif_idx);
-
-	    	LOG_PRINTF("%s() at line(%d)\n",__FUNCTION__,__LINE__);        
 
             if(hw_mode == SSV6XXX_HWM_SCONFIG)
                 sconfig_mode_off(sta_station->vif_idx);
@@ -2073,10 +2039,8 @@ ssv6xxx_result _ssv6xxx_wifi_station(u8 hw_mode,Sta_setting *sta_station,const b
         }
     } while(0);
 
-	LOG_PRINTF("%s() at line(%d)\n",__FUNCTION__,__LINE__);        
     if (mutexLock)
         OS_MutexUnLock(g_host_api_mutex);
-
 
 	LOG_PRINTF("%s() at line(%d),ret(%d)\n",__FUNCTION__,__LINE__,ret);        
     return ret;
@@ -2088,7 +2052,7 @@ Description: Setting station on or off
 1. station on : The current status must be mode off (ap mode or station mode off)
 2. station off : The current status must be Station on
 *********************************************************/
-H_APIs ssv6xxx_result ssv6xxx_wifi_station(u8 hw_mode,Sta_setting *sta_station)
+H_APIs ssv6xxx_result ssv6xxx_wifi_station(u8 hw_mode, Sta_setting *sta_station)
 {
     return _ssv6xxx_wifi_station(hw_mode,sta_station,TRUE);
 
@@ -3029,10 +2993,8 @@ H_APIs ssv6xxx_result ssv6xxx_wifi_unreg_promiscuous_rx_cb(promiscuous_data_hand
 {
 	return _ssv6xxx_wifi_unreg_promiscuous_rx_cb(promiscuous_cb,TRUE);
 }
-extern u32 g_hw_enable;
-extern void check_watchdog_timer(void *data1, void *data2);
-extern struct task_info_st g_host_task_info[];
-ssv6xxx_result _ssv6xxx_wifi_ap_pause(bool pause,const bool mutexLock)
+
+ssv6xxx_result  _ssv6xxx_wifi_ap_pause(bool pause,const bool mutexLock)
 {
 #if (AP_MODE_ENABLE == 1)    
 //    ssv6xxx_result ret = SSV6XXX_SUCCESS;
@@ -3277,7 +3239,7 @@ H_APIs s32 ssv6xxx_wifi_get_mac(u8 *mac,u8 vif_idx)
     return 0;
 }
 
-bool tx_duty_en=0;
+
 void txduty_t_handler(void* data1, void* data2)
 {    
     s32 res;
@@ -3970,6 +3932,7 @@ H_APIs bool ssv6xxx_wifi_set_eco_mode(void)
     }
 
 }
+
 //For instance ,hwaddr:a[0]~a[5]=60:11:22:33:44:55
 H_APIs s32 ssv6xxx_wifi_ap_del_sta(u8 *hwaddr)
 {

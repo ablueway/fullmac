@@ -20,6 +20,7 @@
 #if (AP_MODE_ENABLE == 1)        
 #include <ap/ap.h>
 #endif
+
 #include <pbuf.h>
 #include <msgevt.h>
 #include <cmd_def.h>
@@ -36,8 +37,19 @@
 #include "host_cmd_engine_priv.h"
 #include "host_cmd_engine_sm.h"
 
-#define FREE_FRM_NUM 5
+
 extern struct task_info_st g_host_task_info[];
+extern void os_timer_init(os_timer_st *timer);
+extern void CmdEng_RxHdlEvent(struct cfg_host_event *pHostEvt);
+extern void CmdEng_TxHdlCmd(struct cfg_host_cmd *pPktInfo);
+extern s32 AP_Start(void);
+extern s32 AP_Stop(void);
+
+extern u32 g_RunTaskCount;
+
+
+#define FREE_FRM_NUM 5
+#define STATE_MACHINE_DATA struct HostCmdEngInfo
 
 struct CmdEng_st
 {
@@ -46,43 +58,13 @@ struct CmdEng_st
     bool BlkCmdIn;
 };
 
-
 HostCmdEngInfo_st *gHCmdEngInfo;
-#define STATE_MACHINE_DATA struct HostCmdEngInfo
-
-
-
-
-extern void os_timer_init(os_timer_st *timer);
 
 
 
 
 
 
-//-------------------------------------------------------------
-extern void CmdEng_RxHdlEvent(struct cfg_host_event *pHostEvt);
-extern void CmdEng_TxHdlCmd(struct cfg_host_cmd *pPktInfo);
-
-
-
-
-
-
-/*
-void pendingcmd_expired_handler(void* data1, void* data2)
-{
-    HostCmdEngInfo_st *info = (HostCmdEngInfo_st *)data1;
-    OS_MutexLock(info->CmdEng_mtx);
-    if(info->debug != false)
-        LOG_DEBUG("[CmdEng]: pending cmd %d timeout!! \n", info->pending_cmd_seqno);
-
-    info->pending_cmd_seqno = 0;
-    info->blockcmd_in_q = false;
-    OS_MutexUnLock(info->CmdEng_mtx);
-}
-*/
-//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 void CmdEng_HandleQueue(void *frame)
@@ -179,14 +161,12 @@ ssv6xxx_result CmdEng_GetStatus(void *stp)
 
 
 //---------------------------------------------------------------------------------------------
-extern s32 AP_Start(void);
-extern s32 AP_Stop( void );
 #ifdef __linux__
 int CmdEng_Task(void *data)
 {
 	MsgEvent *MsgEv;
 	s32 res;
-	extern u32 g_RunTaskCount;
+
     CFG_HOST_RXPKT *rxpkt= NULL;
     u32 msgData = 0;
 	LOG_TRACE("%s() Task started.\r\n", __FUNCTION__);
@@ -281,6 +261,7 @@ int CmdEng_Task(void *data)
 	return 0;
 }
 #else
+
 void CmdEng_Task(void *args)
 {
 	MsgEvent *MsgEv;
@@ -500,6 +481,7 @@ s32 CmdEng_Init(void)
     OS_MutexInit(&(gHCmdEngInfo->CmdEng_mtx));
     list_q_init(&gHCmdEngInfo->pending_cmds);
     list_q_init(&gHCmdEngInfo->free_FrmQ);
+
     gHCmdEngInfo->curr_mode = MT_STOP;// 0
     gHCmdEngInfo->blockcmd_in_q = false;
     gHCmdEngInfo->pending_cmd_seqno = 0;
