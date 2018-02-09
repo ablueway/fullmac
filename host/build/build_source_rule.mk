@@ -39,10 +39,12 @@ KERN_SRCS += ./core/txrx_hdl_rx.c
 KERN_SRCS += ./core/txrx_task.c
 KERN_SRCS += ./core/Regulatory.c
 KERN_SRCS += ./core/host_cmd_engine.c
-KERN_SRCS += ./core/recover.c
-KERN_SRCS += ./core/txrx_task.c
 KERN_SRCS += ./core/host_cmd_engine_rx.c
 KERN_SRCS += ./core/host_cmd_engine_tx.c
+KERN_SRCS += ./core/recover.c
+KERN_SRCS += ./core/txrx_task.c
+KERN_SRCS += ./core/txrx_task_tx.c
+KERN_SRCS += ./core/txrx_task_rx.c
 
 ################################################################################
 # Define Include HAL Source File Rule						   	   		       #	

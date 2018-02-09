@@ -144,7 +144,7 @@ low_level_init(struct netif *netif)
 static err_t
 low_level_output(struct netif *netif, struct pbuf *p)
 {
-    return netstack_output((void*) netif, (void *)p, 0);
+    return netstack_output((void *)netif, (void *)p, 0);
 }
 
 

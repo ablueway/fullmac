@@ -174,12 +174,12 @@ bool TxHdl_prepare_wifi_txreq(u8 vif_idx ,void *frame, u32 len, bool f80211, u32
         ht_ctrl = (u32 *)(&gDeviceInfo->ht_ctrl);
     }
 
-    #if(SW_8023TO80211==1)
-    if(0!=ssv_hal_tx_8023to80211(frame,OS_FRAME_GET_DATA_LEN(frame),priority,qos_ctrl,ht_ctrl,addr4,f80211,security))
-    {
-        return FALSE;
-    }
-    #endif
+#if(SW_8023TO80211==1)
+	if(0!=ssv_hal_tx_8023to80211(frame,OS_FRAME_GET_DATA_LEN(frame),priority,qos_ctrl,ht_ctrl,addr4,f80211,security))
+	{
+	    return FALSE;
+	}
+#endif
 
     _frame=(void *)ssv_hal_fill_txreq0(frame,len,priority,qos_ctrl,ht_ctrl,addr4,f80211,security,tx_dscrp_flag,vif_idx);
 

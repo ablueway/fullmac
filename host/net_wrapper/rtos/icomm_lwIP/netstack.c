@@ -347,7 +347,7 @@ retry:
     unsigned char *pucBuffer = ucBuffer;
 
 retry:
-    frame = os_frame_alloc(p->tot_len*sizeof(unsigned char ),FALSE);
+    frame = os_frame_alloc(p->tot_len * sizeof(unsigned char ), FALSE);
     if(NULL == frame)
     {
         retry_cnt--;
@@ -372,6 +372,7 @@ retry:
     } 
     else 
     {
+    	/* keep data buffer pointer */
       pucChar = ucBuffer;
       for( q = p; q != NULL; q = q->next ) 
       {

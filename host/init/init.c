@@ -188,8 +188,8 @@ int ssv_test_udp_init(void)
 
 void ssv6xxx_init_task_para(void)
 {
-    g_txrx_task_info[0].prio = OS_TX_TASK_PRIO;
-    g_txrx_task_info[1].prio = OS_RX_TASK_PRIO;
+    g_tx_task_info[0].prio = OS_TX_TASK_PRIO;
+    g_rx_task_info[0].prio = OS_RX_TASK_PRIO;
     g_host_task_info[0].prio = OS_CMD_ENG_PRIO;
     g_timer_task_info[0].prio = OS_TMR_TASK_PRIO;
     /* in */

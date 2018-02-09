@@ -16,7 +16,6 @@
 #endif
 
 #ifdef __linux__
-//#include <linux/llist.h>
 #include <linux/jiffies.h>
 #endif
 

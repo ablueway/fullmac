@@ -25,44 +25,6 @@
 
 #include <ssv_common.h>
 
-#if 0 //def __linux__
-int netmgr_task(void *arg)
-{
-	return 0;
-}
-
-struct task_info_st st_netmgr_task[] =
-{
-    { "netmgr_task",  (OsMsgQ)0, 4, OS_NETMGR_TASK_PRIO, NETMGR_STACK_SIZE, NULL, netmgr_task},
-};
-
-/* TODO:aaron , For Linux version we temply return -1(i.e false) to indicated not support now */
-int netmgr_wifi_switch_async(wifi_mode mode, wifi_ap_cfg *ap_cfg, wifi_sta_join_cfg *join_cfg)
-{
-    return -1;
-}
-
-int netmgr_wifi_control_async(wifi_mode mode, wifi_ap_cfg *ap_cfg, wifi_sta_cfg *sta_cfg)
-{
-	return -1;
-}
-
-bool netmgr_wifi_check_sta(u8 *vif_idx)
-{
-	return false;
-}
-
-void ssv_netmgr_init(bool default_cfg)
-{
-
-}
-void ssv_netmgr_init_netdev(bool default_cfg)
-{
-
-}
-
-#else
-
 
 
 extern u16 g_sta_channel_mask;
@@ -4071,5 +4033,3 @@ int netmgr_wifi_get_sconfig_result(wifi_sconfig_result *res)
     STRCPY((void *)res->password,(void *)(sconfig_result.password));
     return 0;
 }
-
-#endif

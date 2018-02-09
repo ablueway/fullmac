@@ -66,7 +66,8 @@ extern void Cli_Init(s32 argc, char *argv[]);
 #endif
 
 //=====================Task parameter setting========================
-extern struct task_info_st g_txrx_task_info[];
+extern struct task_info_st g_tx_task_info[];
+extern struct task_info_st g_rx_task_info[];
 extern struct task_info_st g_host_task_info[];
 extern struct task_info_st g_timer_task_info[];
 extern struct task_info_st st_netmgr_task[];
